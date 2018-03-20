@@ -1,0 +1,38 @@
+FROM ubuntu:16.04
+
+# Install python and nginx
+RUN apt-get update && \
+    apt-get -y install build-essential python-dev git wget curl nginx
+
+# Install pip
+RUN cd /tmp && \
+     curl -O https://bootstrap.pypa.io/get-pip.py && \
+     python2 get-pip.py
+
+# Install pip modules
+RUN pip2 install --no-cache \
+     numpy==1.13.3 requests==2.18.4 boto3==1.5.2 \
+     six==1.11.0 gevent==1.2.2 gunicorn==19.7.1 flask==0.11 Jinja2==2.9 scikit-learn==0.19.1
+
+# Install telegraf, used for metrics and benchmark
+RUN cd /tmp && \
+    curl -O https://dl.influxdata.com/telegraf/releases/telegraf_1.4.2-1_amd64.deb && \
+    dpkg -i telegraf_1.4.2-1_amd64.deb && \
+    rm telegraf_1.4.2-1_amd64.deb
+
+# Python won’t try to write .pyc or .pyo files on the import of source modules
+# Force stdin, stdout and stderr to be totally unbuffered. Good for logging
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+# TODO: getting PyTorch with CUDA support to get 'gloo' backend. Build from sources instead.
+# Install PyTorch https://github.com/pytorch/pytorch#installation
+RUN pip install http://download.pytorch.org/whl/cu90/torch-0.3.1-cp27-cp27mu-linux_x86_64.whl
+RUN pip install torchvision
+
+# Install container support
+# TODO: move it out of the base dockerfile to the final dockerfile
+# TODO: should be installed from PyPI when package is release there.
+# Manually clone and install sagemaker-container-support for this line to work or
+# run build-base-image-gpu.sh script instead of building dockerfile directly.
+COPY sagemaker-container-support/dist/sagemaker_container_support-1.0-py2-none-any.whl /sagemaker_container_support-1.0-py2-none-any.whl
+RUN pip install /sagemaker_container_support-1.0-py2-none-any.whl
