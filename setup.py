@@ -33,7 +33,7 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
-    install_requires=['sagemaker-container-support'],
+    install_requires=['sagemaker-container-support', 'torch'],
     extras_require={
         'test': ['tox', 'flake8', 'pytest', 'pytest', 'mock', 'sagemaker']
     },
