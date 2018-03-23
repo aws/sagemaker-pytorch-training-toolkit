@@ -3,3 +3,6 @@
 *.iml
 .cache/
 __pycache__
+*.pyc
+dist
+*.egg-info
