@@ -29,12 +29,13 @@ def train(user_module, training_environment):
     for host in training_environment.hosts:
         dns_lookup(host)
 
-    rank = sorted(training_environment.hosts).index(training_environment.current_host)
-    # TODO: should world size be something different?
-    world_size = len(training_environment.hosts)
+    sorted_hosts = sorted(training_environment.hosts)
+    host_rank = sorted_hosts.index(training_environment.current_host)
+    master_addr = sorted_hosts[0]
 
-    training_environment.training_parameters['rank'] = rank
-    training_environment.training_parameters['world_size'] = world_size
+    training_environment.training_parameters['host_rank'] = host_rank
+    training_environment.training_parameters['master_addr'] = master_addr
+    training_environment.training_parameters['master_port'] = '29500'
 
     model = user_module.train(**training_environment.training_parameters)
 
@@ -42,23 +43,21 @@ def train(user_module, training_environment):
         if hasattr(user_module, 'save'):
             logger.info("Using save function provided by the user.")
             user_module.save(model, training_environment.model_dir)
-        else:
-            _default_save(model, training_environment.model_dir, rank)
+        elif training_environment.current_host == master_addr:
+            _default_save(model, training_environment.model_dir)
 
 
-def _default_save(model, model_dir, rank):
-    """Default logic to save a model to self.model_dir folder (/opt/ml/model),
-    will save the model only if current host has rank=0.
+def _default_save(model, model_dir):
+    """Default logic to save a model to self.model_dir folder (/opt/ml/model).
     This function is called when a customer script does not provide a save() function.
         Args:
             model : module to save.
             model_dir : directory where module should be saved.
     """
-    if rank == 0:
-        logger.info("Saving the model using default save function.")
-        path = os.path.join(model_dir, MODEL_FILE_NAME)
-        # recommended way from http://pytorch.org/docs/master/notes/serialization.html
-        torch.save(model.state_dict(), path)
+    logger.info("Saving the model using default save function.")
+    path = os.path.join(model_dir, MODEL_FILE_NAME)
+    # recommended way from http://pytorch.org/docs/master/notes/serialization.html
+    torch.save(model.state_dict(), path)
 
 
 # TODO: needs to be moved to container support package

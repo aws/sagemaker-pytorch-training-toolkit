@@ -55,10 +55,9 @@ def _load_hyperparameters(hyperparameters):
     # how many batches to wait before logging training status
     log_interval = hyperparameters.get('log_interval', 100)
     logger.info(
-        'backend: {}, batch_size: {}, test_batch_size: {}, epochs: {}, ' +
-        'lr: {}, momentum: {}, seed: {}, log_interval: {}'.format(
-            backend, batch_size, test_batch_size, epochs, lr, momentum, seed, log_interval
-        ))
+        'backend: {}, batch_size: {}, test_batch_size: {}, '.format(backend, batch_size, test_batch_size) +
+        'epochs: {}, lr: {}, momentum: {}, seed: {}, log_interval: {}'.format(epochs, lr, momentum, seed, log_interval)
+    )
     return backend, batch_size, test_batch_size, epochs, lr, momentum, seed, log_interval
 
 
@@ -91,7 +90,7 @@ def _average_gradients(model):
         param.grad.data /= size
 
 
-def train(channel_input_dirs, num_gpus, hosts, hyperparameters, world_size, rank):
+def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
     training_dir = channel_input_dirs['training']
     backend, batch_size, test_batch_size, epochs, lr, momentum, \
         seed, log_interval = _load_hyperparameters(hyperparameters)
@@ -103,14 +102,14 @@ def train(channel_input_dirs, num_gpus, hosts, hyperparameters, world_size, rank
 
     if is_distributed:
         # Initialize the distributed environment.
+        world_size = len(hosts)
         os.environ['WORLD_SIZE'] = str(world_size)
-        os.environ['MASTER_ADDR'] = 'algo-1'
-        os.environ['MASTER_PORT'] = '29500'
-        dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
-        logger.info('Initialized the distributed environment: \'{}\' backend on {} nodes. ' +
-                    'Current host rank is {}. Using cuda: {}. Number of gpus: '.format(
-                        backend, dist.get_world_size(), dist.get_rank(), torch.cuda.is_available(), num_gpus
-                    ))
+        os.environ['MASTER_ADDR'] = master_addr
+        os.environ['MASTER_PORT'] = master_port
+        dist.init_process_group(backend=backend, rank=host_rank, world_size=world_size)
+        logger.info('Initialized the distributed environment: \'{}\' backend on {} nodes. '.format(
+            backend, dist.get_world_size()) + 'Current host rank is {}. Using cuda: {}. Number of gpus: '.format(
+            dist.get_rank(), torch.cuda.is_available(), num_gpus))
 
     # set the seed for generating random numbers
     torch.manual_seed(seed)

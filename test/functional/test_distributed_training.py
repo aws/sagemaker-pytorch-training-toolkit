@@ -20,18 +20,20 @@ def _dist_backend(request):
 
 
 def test_dist_operations_cpu(image_name, opt_ml, _dist_backend):
-    utils.train(dist_operations, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT, cluster_size=5,
+    utils.train(dist_operations, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT, cluster_size=3,
                 hyperparameters={'backend': _dist_backend})
 
+    assert utils.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
     assert utils.file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert not utils.file_exists(opt_ml, 'output/failure'), 'Failure happened'
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_dist_operations_gpu(image_name, opt_ml, _dist_backend):
-    utils.train(dist_operations, data_dir, image_name(device='gpu'), opt_ml, entrypoint=ENTRYPOINT, cluster_size=5,
+    utils.train(dist_operations, data_dir, image_name(device='gpu'), opt_ml, entrypoint=ENTRYPOINT, cluster_size=3,
                 hyperparameters={'backend': _dist_backend})
 
+    assert utils.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
     assert utils.file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert not utils.file_exists(opt_ml, 'output/failure'), 'Failure happened'
 
@@ -47,8 +49,8 @@ def test_mnist_cpu(image_name, opt_ml, _dist_backend):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_mnist_gpu(image_name, opt_ml, _dist_backend):
-    utils.train(mnist_script, data_dir, image_name(device='gpu'), opt_ml, entrypoint=ENTRYPOINT,
-                cluster_size=2, hyperparameters={'backend': _dist_backend})
+    utils.train(mnist_script, data_dir, image_name(device='gpu'), opt_ml, entrypoint=ENTRYPOINT, cluster_size=2,
+                hyperparameters={'backend': _dist_backend})
 
     assert utils.file_exists(opt_ml, 'model/model'), 'Model file was not created'
     assert utils.file_exists(opt_ml, 'output/success'), 'Success file was not created'

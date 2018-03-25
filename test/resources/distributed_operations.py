@@ -2,11 +2,12 @@ import logging
 import os
 import torch
 import torch.distributed as dist
+from torch.multiprocessing import Process
 import torch.utils.data
 import torch.utils.data.distributed
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 def _get_tensor(rank, rows, columns):
@@ -24,9 +25,7 @@ def _get_zeros_tensors_list(rows, columns):
 
 
 def _get_tensors_sum(rows, columns):
-    result = 0
-    for i in range(dist.get_world_size()):
-        result += i + 1
+    result = (1 + dist.get_world_size()) * dist.get_world_size() / 2
     tensor = torch.ones(rows, columns) * result
     return tensor.cuda() if torch.cuda.is_available() else tensor
 
@@ -99,15 +98,20 @@ def _all_gather(rank, rows, columns):
 def _gather(rank, rows, columns):
     dest = 0
     tensor = _get_tensor(rank, rows, columns)
-    tensors_list = _get_zeros_tensors_list(rows, columns)
-    logger.debug('Rank: {},\nTensor BEFORE gather: {}. tensors_list: {}'.format(
-        rank, tensor, tensors_list))
     if rank == dest:
+        tensors_list = _get_zeros_tensors_list(rows, columns)
+        logger.debug('Rank: {},\nTensor BEFORE gather: {}. tensors_list: {}'.format(
+            rank, tensor, tensors_list))
         dist.gather(tensor=tensor, gather_list=tensors_list)
+        logger.debug('Rank: {},\nTensor AFTER gather: {}. tensors_list: {}\n'.format(
+            rank, tensor, tensors_list))
+        for i in range(dist.get_world_size()):
+            assert torch.equal(tensors_list[i], _get_tensor(i, rows, columns)), \
+                'Rank {}: tensors lists are not the same after gather.'
     else:
+        logger.debug('Rank: {},\nTensor BEFORE gather: {}\n'.format(rank, tensor))
         dist.gather(tensor=tensor, dst=dest)
-    logger.debug('Rank: {},\nTensor AFTER gather: {}. tensors_list: {}\n'.format(
-        rank, tensor, tensors_list))
+        logger.debug('Rank: {},\nTensor AFTER gather: {}\n'.format(rank, tensor))
 
     # tensor shouldn't have changed
     assert torch.equal(tensor, _get_tensor(rank, rows, columns)), \
@@ -117,12 +121,13 @@ def _gather(rank, rows, columns):
 def _scatter(rank, rows, columns):
     source = 0
     tensor = _get_tensor(rank, rows, columns)
-    tensors_list = _get_zeros_tensors_list(rows, columns)
-    logger.debug('Rank: {},\nTensor BEFORE scatter: {}. tensors_list: {}'.format(
-        rank, tensor, tensors_list))
     if rank == source:
+        tensors_list = _get_zeros_tensors_list(rows, columns)
+        logger.debug('Rank: {},\nTensor BEFORE scatter: {}. tensors_list: {}'.format(
+            rank, tensor, tensors_list))
         dist.scatter(tensor=tensor, scatter_list=tensors_list)
     else:
+        logger.debug('Rank: {},\nTensor BEFORE scatter: {}\n'.format(rank, tensor))
         dist.scatter(tensor=tensor, src=source)
     logger.debug('Rank: {},\nTensor AFTER scatter: {}\n'.format(rank, tensor))
 
@@ -136,28 +141,62 @@ def _barrier(rank):
     logger.debug('Rank: {}, Passing the barrier'.format(rank))
 
 
-def train(rank, world_size, hyperparameters):
-    # Initialize the distributed environment.
-    os.environ['WORLD_SIZE'] = str(world_size)
-    os.environ['MASTER_ADDR'] = 'algo-1'
-    os.environ['MASTER_PORT'] = '29500'
+def train(master_addr, master_port, current_host, host_rank, hosts, num_cpus, num_gpus, hyperparameters):
     backend = hyperparameters.get('backend')
-    dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
-    logger.info('Running \'{}\' backend on {} nodes. Current host rank is {}. Using cuda: {}'.format(
-        backend, dist.get_world_size(), dist.get_rank(), torch.cuda.is_available()))
-
     rows = hyperparameters.get('rows', 1)
     columns = hyperparameters.get('columns', 1)
+    number_of_processes = num_cpus
+    world_size = num_cpus * len(hosts)
+    processes = []
+    for rank in range(number_of_processes):
+        logger.info('Running \'{}\' backend on {} nodes and {} processes. World size is {}. Using cuda: {}'.format(
+            backend, len(hosts), number_of_processes, world_size, torch.cuda.is_available()
+        ))
+        process_rank = host_rank * number_of_processes + rank
+        p = Process(
+            target=init_processes,
+            args=(backend, master_addr, master_port, process_rank, world_size, rows, columns, current_host)
+        )
+        p.start()
+        processes.append(p)
 
+    for p in processes:
+        p.join()
+
+    return 'success'
+
+
+def init_processes(backend, master_addr, master_port, rank, world_size, rows, columns, host):
+    # Initialize the distributed environment.
+    os.environ['WORLD_SIZE'] = str(world_size)
+    os.environ['MASTER_ADDR'] = master_addr
+    os.environ['MASTER_PORT'] = master_port
+
+    logger.info('Init process rank {} on host \'{}\''.format(rank, host))
+    dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
+    run(backend, rank, rows, columns)
+
+
+def run(backend, rank, rows, columns):
     # operations supported by all backends: http://pytorch.org/docs/master/distributed.html
+    logger.info('Run operations supported by all backends.')
     _broadcast(rank, rows, columns)
     _all_reduce(rank, rows, columns)
     _barrier(rank)
 
     # operations not supported by 'gloo'
     if backend != 'gloo':
+        logger.info('Run operations not supported by \'gloo\' backend.')
         _send_recv(rank, rows, columns)
         _reduce(rank, rows, columns)
         _all_gather(rank, rows, columns)
         _gather(rank, rows, columns)
         _scatter(rank, rows, columns)
+
+
+def save(model, model_dir):
+    filename = os.path.join(model_dir, model)
+    if not os.path.exists(filename):
+        logger.info("Saving success result")
+        with open(filename, 'w') as f:
+            f.write(model)
