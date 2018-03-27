@@ -141,27 +141,32 @@ def _barrier(rank):
     logger.debug('Rank: {}, Passing the barrier'.format(rank))
 
 
-def train(master_addr, master_port, current_host, host_rank, hosts, num_cpus, num_gpus, hyperparameters):
+def train(master_addr, master_port, current_host, host_rank, hosts, num_cpus, hyperparameters):
     backend = hyperparameters.get('backend')
     rows = hyperparameters.get('rows', 1)
     columns = hyperparameters.get('columns', 1)
-    number_of_processes = num_cpus
-    world_size = num_cpus * len(hosts)
-    processes = []
-    for rank in range(number_of_processes):
-        logger.info('Running \'{}\' backend on {} nodes and {} processes. World size is {}. Using cuda: {}'.format(
-            backend, len(hosts), number_of_processes, world_size, torch.cuda.is_available()
-        ))
-        process_rank = host_rank * number_of_processes + rank
-        p = Process(
-            target=init_processes,
-            args=(backend, master_addr, master_port, process_rank, world_size, rows, columns, current_host)
-        )
-        p.start()
-        processes.append(p)
+    cuda = torch.cuda.is_available()
+    number_of_processes = num_cpus if not cuda else 1
+    world_size = number_of_processes * len(hosts)
+    logger.info('Running \'{}\' backend on {} nodes and {} processes. World size is {}. Using cuda: {}'.format(
+        backend, len(hosts), number_of_processes, world_size, cuda
+    ))
 
-    for p in processes:
-        p.join()
+    if not cuda:
+        processes = []
+        for rank in range(number_of_processes):
+            process_rank = host_rank * number_of_processes + rank
+            p = Process(
+                target=init_processes,
+                args=(backend, master_addr, master_port, process_rank, world_size, rows, columns, current_host)
+            )
+            p.start()
+            processes.append(p)
+
+        for p in processes:
+            p.join()
+    else:
+        init_processes(backend, master_addr, master_port, host_rank, world_size, rows, columns, current_host)
 
     return 'success'
 
