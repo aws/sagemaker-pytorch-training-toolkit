@@ -108,7 +108,7 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
         os.environ['MASTER_PORT'] = master_port
         dist.init_process_group(backend=backend, rank=host_rank, world_size=world_size)
         logger.info('Initialized the distributed environment: \'{}\' backend on {} nodes. '.format(
-            backend, dist.get_world_size()) + 'Current host rank is {}. Using cuda: {}. Number of gpus: '.format(
+            backend, dist.get_world_size()) + 'Current host rank is {}. Using cuda: {}. Number of gpus: {}'.format(
             dist.get_rank(), torch.cuda.is_available(), num_gpus))
 
     # set the seed for generating random numbers
