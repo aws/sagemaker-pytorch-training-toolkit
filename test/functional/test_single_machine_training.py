@@ -27,7 +27,7 @@ def test_mnist_cpu(image_name, opt_ml):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_mnist_gpu(image_name, opt_ml):
-    utils.train(mnist_script, data_dir, image_name(device='gpu'), opt_ml, entrypoint=ENTRYPOINT)
+    utils.train(mnist_script, data_dir, image_name(device='gpu'), opt_ml, use_gpu=True, entrypoint=ENTRYPOINT)
 
     assert utils.file_exists(opt_ml, 'model/model'), 'Model file was not created'
     assert utils.file_exists(opt_ml, 'output/success'), 'Success file was not created'
