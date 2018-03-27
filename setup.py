@@ -35,6 +35,6 @@ setup(
 
     install_requires=['sagemaker-container-support', 'torch'],
     extras_require={
-        'test': ['tox', 'flake8', 'pytest', 'pytest', 'mock', 'sagemaker']
+        'test': ['tox', 'flake8', 'pytest', 'mock', 'sagemaker']
     },
 )

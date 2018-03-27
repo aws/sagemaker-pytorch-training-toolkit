@@ -6,6 +6,7 @@ import container_support as cs
 from container_support.app import TrainingEngine
 
 MODEL_FILE_NAME = 'model'
+MASTER_PORT = '29500'
 
 engine = TrainingEngine()
 logger = logging.getLogger(__name__)
@@ -27,15 +28,16 @@ def train(user_module, training_environment):
     # Block until all host DNS lookups succeed. Relies on retrying dns_lookup.
     logger.info("Block until all host DNS lookups succeed.")
     for host in training_environment.hosts:
-        dns_lookup(host)
+        _dns_lookup(host)
 
     sorted_hosts = sorted(training_environment.hosts)
     host_rank = sorted_hosts.index(training_environment.current_host)
     master_addr = sorted_hosts[0]
 
+    # TODO: needs to be moved to container support package
     training_environment.training_parameters['host_rank'] = host_rank
     training_environment.training_parameters['master_addr'] = master_addr
-    training_environment.training_parameters['master_port'] = '29500'
+    training_environment.training_parameters['master_port'] = MASTER_PORT
 
     model = user_module.train(**training_environment.training_parameters)
 
@@ -60,11 +62,10 @@ def _default_save(model, model_dir):
     torch.save(model.state_dict(), path)
 
 
-# TODO: needs to be moved to container support package
 @cs.retry(stop_max_delay=1000 * 60 * 15,
           wait_exponential_multiplier=100,
           wait_exponential_max=30000)
-def dns_lookup(host):
+def _dns_lookup(host):
     """ Retrying dns lookup on host """
     return socket.gethostbyname(host)
 
