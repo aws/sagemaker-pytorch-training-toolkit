@@ -338,7 +338,7 @@ def create_docker_compose(command, tmpdir, hosts, image, additional_volumes, add
                                       customer_script, source_dir, entrypoint)
     content = {
         # docker version on ACC hosts only supports compose 2.1 format
-        'version': '2.1',
+        'version': '2',
         'services': services
     }
 
