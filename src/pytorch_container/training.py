@@ -1,12 +1,15 @@
 import torch
 import os
 import logging
+import socket
+import container_support as cs
 from container_support.app import TrainingEngine
 
 MODEL_FILE_NAME = 'model'
+MASTER_PORT = '29500'
 
 engine = TrainingEngine()
-logger = logging.getLogger("pytorch_container:training")
+logger = logging.getLogger(__name__)
 
 
 @engine.train()
@@ -22,19 +25,32 @@ def train(user_module, training_environment):
         training_environment : training environment object containing environment variables,
                                training arguments and hyperparameters
     """
+    # Block until all host DNS lookups succeed. Relies on retrying dns_lookup.
+    logger.info("Block until all host DNS lookups succeed.")
+    for host in training_environment.hosts:
+        _dns_lookup(host)
+
+    sorted_hosts = sorted(training_environment.hosts)
+    host_rank = sorted_hosts.index(training_environment.current_host)
+    master_addr = sorted_hosts[0]
+
+    # TODO (mvsusp): needs to be moved to container support package
+    training_environment.training_parameters['host_rank'] = host_rank
+    training_environment.training_parameters['master_addr'] = master_addr
+    training_environment.training_parameters['master_port'] = MASTER_PORT
+
     model = user_module.train(**training_environment.training_parameters)
 
     if model:
         if hasattr(user_module, 'save'):
             logger.info("Using save function provided by the user.")
             user_module.save(model, training_environment.model_dir)
-        else:
+        elif training_environment.current_host == master_addr:
             _default_save(model, training_environment.model_dir)
 
 
 def _default_save(model, model_dir):
-    """Default logic to save a model to self.model_dir folder (/opt/ml/model),
-    will save the model only if current host has rank=0.
+    """Default logic to save a model to self.model_dir folder (/opt/ml/model).
     This function is called when a customer script does not provide a save() function.
         Args:
             model : module to save.
@@ -44,3 +60,12 @@ def _default_save(model, model_dir):
     path = os.path.join(model_dir, MODEL_FILE_NAME)
     # recommended way from http://pytorch.org/docs/master/notes/serialization.html
     torch.save(model.state_dict(), path)
+
+
+@cs.retry(stop_max_delay=1000 * 60 * 15,
+          wait_exponential_multiplier=100,
+          wait_exponential_max=30000)
+def _dns_lookup(host):
+    """ Retrying dns lookup on host """
+    return socket.gethostbyname(host)
+
