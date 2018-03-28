@@ -71,12 +71,11 @@ def test_train_with_default_save(_training_env, _user_module, _training_state):
 def test_default_save(_training_env):
     model = nn.Module()
     _default_save(model, _training_env.model_dir)
-
-    with open(os.path.join(_training_env.model_dir, MODEL_FILE_NAME), 'r') as f:
-        try:
-            the_model = nn.Module()
-            the_model.load_state_dict(torch.load(f))
-        except Exception as e:
+    f = os.path.join(_training_env.model_dir, MODEL_FILE_NAME)
+    try:
+        the_model = nn.Module()
+        the_model.load_state_dict(torch.load(f))
+    except Exception as e:
             pytest.fail('Failed loading saved model. Exception: \'{}\''.format(e.message))
 
 
