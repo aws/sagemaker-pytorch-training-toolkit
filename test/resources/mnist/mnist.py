@@ -83,7 +83,7 @@ def _get_test_data_loader(test_batch_size, training_dir, **kwargs):
 
 
 def _average_gradients(model):
-    # Gradient averaging.
+    logger.debug("Gradient averaging.")
     size = float(dist.get_world_size())
     for param in model.parameters():
         dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
