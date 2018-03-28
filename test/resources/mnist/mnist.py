@@ -130,8 +130,18 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
     ))
 
     model = Net()
-    if cuda:
-        model.cuda()
+    if is_distributed and cuda:
+        # multi-machine multi-gpu case
+        logger.debug("Multi-machine multi-gpu: using DistributedDataParallel.")
+        model = torch.nn.parallel.DistributedDataParallel(model.cuda())
+    elif cuda:
+        # single-machine multi-gpu case
+        logger.debug("Single-machine multi-gpu: using DataParallel().cuda().")
+        model = torch.nn.DataParallel(model.cuda()).cuda()
+    else:
+        # single-machine or multi-machine cpu case
+        logger.debug("Single-machine/multi-machine cpu: using DataParallel.")
+        model = torch.nn.DataParallel(model)
 
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
 
@@ -145,7 +155,8 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
             output = model(data)
             loss = F.nll_loss(output, target)
             loss.backward()
-            if is_distributed:
+            if is_distributed and not cuda:
+                # average gradients manually for multi-machine cpu case only
                 _average_gradients(model)
             optimizer.step()
             if batch_idx % log_interval == 0:
