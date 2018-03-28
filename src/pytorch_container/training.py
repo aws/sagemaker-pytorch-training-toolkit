@@ -34,7 +34,7 @@ def train(user_module, training_environment):
     host_rank = sorted_hosts.index(training_environment.current_host)
     master_addr = sorted_hosts[0]
 
-    # TODO: needs to be moved to container support package
+    # TODO (mvsusp): needs to be moved to container support package
     training_environment.training_parameters['host_rank'] = host_rank
     training_environment.training_parameters['master_addr'] = master_addr
     training_environment.training_parameters['master_port'] = MASTER_PORT

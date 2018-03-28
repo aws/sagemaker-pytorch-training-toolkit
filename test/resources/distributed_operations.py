@@ -146,13 +146,15 @@ def train(master_addr, master_port, current_host, host_rank, hosts, num_cpus, hy
     rows = hyperparameters.get('rows', 1)
     columns = hyperparameters.get('columns', 1)
     cuda = torch.cuda.is_available()
-    number_of_processes = num_cpus if not cuda else 1
+    number_of_processes = 1 if cuda else num_cpus
     world_size = number_of_processes * len(hosts)
     logger.info('Running \'{}\' backend on {} nodes and {} processes. World size is {}. Using cuda: {}'.format(
         backend, len(hosts), number_of_processes, world_size, cuda
     ))
 
-    if not cuda:
+    if cuda:
+        init_processes(backend, master_addr, master_port, host_rank, world_size, rows, columns, current_host)
+    else:
         processes = []
         for rank in range(number_of_processes):
             process_rank = host_rank * number_of_processes + rank
@@ -165,8 +167,6 @@ def train(master_addr, master_port, current_host, host_rank, hosts, num_cpus, hy
 
         for p in processes:
             p.join()
-    else:
-        init_processes(backend, master_addr, master_port, host_rank, world_size, rows, columns, current_host)
 
     return 'success'
 

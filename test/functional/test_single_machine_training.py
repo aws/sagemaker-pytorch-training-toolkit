@@ -2,17 +2,16 @@ import os
 import pytest
 import torch
 import utils
-from os.path import join
 import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-dir_path = join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'mnist')
-data_dir = join(dir_path, 'data')
+dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'mnist')
+data_dir = os.path.join(dir_path, 'data')
 training_dir = os.path.join(data_dir, 'training')
 
-mnist_script = join(dir_path, 'mnist.py')
+mnist_script = os.path.join(dir_path, 'mnist.py')
 
 ENTRYPOINT = ["python", "-m", "pytorch_container.start"]
 
