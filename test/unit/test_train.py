@@ -76,7 +76,7 @@ def test_default_save(_training_env):
         the_model = nn.Module()
         the_model.load_state_dict(torch.load(f))
     except Exception as e:
-            pytest.fail('Failed loading saved model. Exception: \'{}\''.format(e.message))
+            pytest.fail('Failed loading saved model. Exception: \'{}\''.format(e))
 
 
 def test_train_with_all_parameters(_training_env, _user_module, _training_state):
