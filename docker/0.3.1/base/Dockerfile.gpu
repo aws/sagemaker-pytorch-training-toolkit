@@ -10,18 +10,17 @@ RUN apt-get update && \
     apt-get -y install build-essential python-dev python3-dev git wget curl nginx
 
 # Symlink /usr/bin/python to the python version we're building for.
-RUN echo "/usr/bin/python$py_version"
 RUN rm /usr/bin/python && ln -s "/usr/bin/python$py_version" /usr/bin/python
 
 # Install pip
 RUN cd /tmp && \
-     curl -O https://bootstrap.pypa.io/get-pip.py && \
-     python get-pip.py
+    curl -O https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py
 
 # Install pip modules
 RUN pip install --no-cache \
-     numpy==1.13.3 requests==2.18.4 boto3==1.5.2 \
-     six==1.11.0 gevent==1.2.2 gunicorn==19.7.1 flask==0.11 Jinja2==2.9 scikit-learn==0.19.1
+    numpy==1.13.3 requests==2.18.4 boto3==1.5.2 \
+    six==1.11.0 gevent==1.2.2 gunicorn==19.7.1 flask==0.11 Jinja2==2.9 scikit-learn==0.19.1
 
 # Install telegraf, used for metrics and benchmark
 RUN cd /tmp && \
@@ -33,7 +32,7 @@ RUN cd /tmp && \
 # Force stdin, stdout and stderr to be totally unbuffered. Good for logging
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-# TODO: Build from sources instead remove unnecessary CUDA archs and potentially to have 'mpi' support.
+# TODO(nadiaya): Build from sources instead remove unnecessary CUDA archs and potentially to have 'mpi' support.
 # Install PyTorch https://github.com/pytorch/pytorch#installation
 RUN if [ $py_version -eq 2 ]; \
    then pip install http://download.pytorch.org/whl/cu90/torch-0.3.1-cp27-cp27mu-linux_x86_64.whl; \
@@ -41,8 +40,8 @@ RUN if [ $py_version -eq 2 ]; \
 RUN pip install torchvision
 
 # Install container support
-# TODO: move it out of the base dockerfile to the final dockerfile
-# TODO: should be installed from PyPI when package is release there.
+# TODO(nadiaya): move it out of the base dockerfile to the final dockerfile
+# TODO(nadiaya): should be installed from PyPI when package is release there.
 # Manually clone and install sagemaker-container-support for this line to work or
 # run build-base-image-gpu.sh script instead of building dockerfile directly.
 COPY sagemaker-container-support/dist/sagemaker_container_support-1.0-py2.py3-none-any.whl /sagemaker_container_support-1.0-py2.py3-none-any.whl
