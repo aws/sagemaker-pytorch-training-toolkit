@@ -11,7 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from container_support import ContainerSupport
-import training
+import pytorch_container.training as training
 
 cs = ContainerSupport()
 cs.register_engine(training.engine)

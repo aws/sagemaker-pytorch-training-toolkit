@@ -53,6 +53,7 @@ DEFAULT_HOSTING_ENV = [
 ]
 ENTRYPOINT = ["python", "-m", "pytorch_container.start"]
 
+
 def build_image(framework_version, device_type='cpu', py_version='py2', cwd='.'):
     image_tag = get_image_tag(framework_version, device_type, py_version)
 
@@ -99,7 +100,7 @@ def purge():
 
 
 def chain_docker_cmds(cmd, cmd2):
-    docker_tags = subprocess.check_output(cmd.split(' ')).split('\n')
+    docker_tags = subprocess.check_output(cmd.split(' ')).decode().split('\n')
 
     if any(docker_tags):
         try:
