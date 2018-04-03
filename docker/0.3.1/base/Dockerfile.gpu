@@ -15,12 +15,7 @@ RUN rm /usr/bin/python && ln -s "/usr/bin/python$py_version" /usr/bin/python
 # Install pip
 RUN cd /tmp && \
     curl -O https://bootstrap.pypa.io/get-pip.py && \
-    python get-pip.py
-
-# Install pip modules
-RUN pip install --no-cache \
-    numpy==1.13.3 requests==2.18.4 boto3==1.5.2 \
-    six==1.11.0 gevent==1.2.2 gunicorn==19.7.1 flask==0.11 Jinja2==2.9 scikit-learn==0.19.1
+    python get-pip.py && rm get-pip.py
 
 # Install telegraf, used for metrics and benchmark
 RUN cd /tmp && \
@@ -45,4 +40,4 @@ RUN pip install torchvision
 # Manually clone and install sagemaker-container-support for this line to work or
 # run build-base-image-gpu.sh script instead of building dockerfile directly.
 COPY sagemaker-container-support/dist/sagemaker_container_support-1.0-py2.py3-none-any.whl /sagemaker_container_support-1.0-py2.py3-none-any.whl
-RUN pip install /sagemaker_container_support-1.0-py2.py3-none-any.whl
+RUN pip install /sagemaker_container_support-1.0-py2.py3-none-any.whl && rm /sagemaker_container_support-1.0-py2.py3-none-any.whl
