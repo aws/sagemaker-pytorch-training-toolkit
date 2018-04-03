@@ -1,0 +1,6 @@
+FROM base-pytorch:0.3.1-gpu-py3
+
+COPY /src/pytorch_container /pytorch_container
+
+# Starts framework
+ENTRYPOINT ["python", "-m", "pytorch_container.start"]

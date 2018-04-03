@@ -1,16 +1,25 @@
 FROM ubuntu:16.04
 
+ARG py_version
+
+# Validate that arguments are specified
+RUN test $py_version || exit 1
+
 # Install python and nginx
 RUN apt-get update && \
-    apt-get -y install build-essential python-dev git wget curl nginx
+    apt-get -y install build-essential python-dev python3-dev git wget curl nginx
+
+# Symlink /usr/bin/python to the python version we're building for.
+RUN echo "/usr/bin/python$py_version"
+RUN rm /usr/bin/python && ln -s "/usr/bin/python$py_version" /usr/bin/python
 
 # Install pip
 RUN cd /tmp && \
      curl -O https://bootstrap.pypa.io/get-pip.py && \
-     python2 get-pip.py
+     python get-pip.py
 
 # Install pip modules
-RUN pip2 install --no-cache \
+RUN pip install --no-cache \
      numpy==1.13.3 requests==2.18.4 boto3==1.5.2 \
      six==1.11.0 gevent==1.2.2 gunicorn==19.7.1 flask==0.11 Jinja2==2.9 scikit-learn==0.19.1
 
@@ -26,7 +35,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 # TODO: getting PyTorch with CUDA support to get 'gloo' backend. Build from sources instead.
 # Install PyTorch https://github.com/pytorch/pytorch#installation
-RUN pip install http://download.pytorch.org/whl/cu90/torch-0.3.1-cp27-cp27mu-linux_x86_64.whl
+RUN if [ $py_version -eq 2 ]; \
+   then pip install http://download.pytorch.org/whl/cu90/torch-0.3.1-cp27-cp27mu-linux_x86_64.whl; \
+   else pip install http://download.pytorch.org/whl/cu90/torch-0.3.1-cp35-cp35m-linux_x86_64.whl; fi
 RUN pip install torchvision
 
 # Install container support

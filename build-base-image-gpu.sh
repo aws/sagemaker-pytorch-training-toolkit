@@ -6,6 +6,11 @@ cd sagemaker-container-support && python setup.py bdist_wheel
 pip install dist/sagemaker_container_support-1.0-py2.py3-none-any.whl
 cd ..
 
-docker build -t base-pytorch:0.3.1-gpu-py2 -f docker/0.3.1/base/Dockerfile.gpu  .
+default_py_version=2
+read -p "Enter python version to use (default is ${default_py_version}):" py_version
+py_version=${py_version:-default_py_version}
+echo $py_version
+
+docker build -t base-pytorch:0.3.1-cpu-py${py_version} -f docker/0.3.1/base/Dockerfile.cpu --build-arg py_version=${py_version} .
 
 rm -rf sagemaker-container-support/
