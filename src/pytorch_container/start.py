@@ -10,8 +10,9 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from __future__ import absolute_import
 from container_support import ContainerSupport
-import training
+import pytorch_container.training as training
 
 cs = ContainerSupport()
 cs.register_engine(training.engine)

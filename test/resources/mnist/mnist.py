@@ -59,7 +59,7 @@ def _load_hyperparameters(hyperparameters):
     # number of epochs to train (default: 10)
     epochs = hyperparameters.get('epochs', 3)
     # learning rate (default: 0.01)
-    lr = hyperparameters.get('lr', 0.01)
+    lr = hyperparameters.get('lr', 0.1)
     # SGD momentum (default: 0.5)
     momentum = hyperparameters.get('momentum', 0.5)
     # random seed (default: 1)
@@ -106,7 +106,7 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
     training_dir = channel_input_dirs['training']
     backend, batch_size, test_batch_size, epochs, lr, momentum, \
         seed, log_interval = _load_hyperparameters(hyperparameters)
-    is_distributed = hosts > 1 and backend is not None
+    is_distributed = len(hosts) > 1 and backend is not None
     logger.debug("Distributed training - {}".format(is_distributed))
     cuda = num_gpus > 0
     logger.debug("Number of gpus available - {}".format(num_gpus))
