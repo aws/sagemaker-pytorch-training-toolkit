@@ -7,10 +7,10 @@ RUN test $py_version || exit 1
 
 # Install python and nginx
 RUN apt-get update && \
-    apt-get -y install build-essential python-dev python3-dev git wget curl nginx
-
-# Symlink /usr/bin/python to the python version we're building for.
-RUN rm /usr/bin/python && ln -s "/usr/bin/python$py_version" /usr/bin/python
+    apt-get -y install build-essential git wget curl nginx && \
+    if [ $py_version -eq 2 ]; \
+       then apt-get -y install python-dev; \
+       else apt-get -y install python3-dev && ln -s /usr/bin/python3 /usr/bin/python; fi
 
 # Install pip
 RUN cd /tmp && \
