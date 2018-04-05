@@ -81,4 +81,3 @@ def _default_save(model, model_dir):
 def _dns_lookup(host):
     """ Retrying dns lookup on host """
     return socket.gethostbyname(host)
-

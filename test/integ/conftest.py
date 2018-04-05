@@ -21,6 +21,14 @@ import utils
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+def pytest_addoption(parser):
+    parser.addoption('--region', default='us-west-2')
+
+
+@pytest.fixture(scope='session')
+def region(request):
+    return request.config.getoption('--region')
+
 
 @pytest.fixture
 def opt_ml():
