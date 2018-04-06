@@ -78,14 +78,18 @@ def save_as_json(data, filename):
         json.dump(data, f)
 
 
-def train(customer_script, data_dir, image_name, opt_ml, cluster_size=1, hyperparameters={}, additional_volumes=[],
+def train(region, customer_script, data_dir, image_name, opt_ml, cluster_size=1, hyperparameters={}, additional_volumes=[],
           additional_env_vars=[], use_gpu=False, entrypoint=ENTRYPOINT, source_dir=None):
     print("training")
-    tmpdir = create_training(data_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
+    tmpdir = create_training(region, data_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
                              hyperparameters, cluster_size, entrypoint=entrypoint, source_dir=source_dir)
     command = create_docker_command(tmpdir, use_gpu)
     start_docker(tmpdir, command)
     purge()
+
+    if file_exists(opt_ml, 'output/failure'):
+        with open(os.path.join(opt_ml, 'algo-1', 'output/failure'), 'r') as f:
+            logging.error(f.read())
 
 
 def purge():
@@ -157,9 +161,9 @@ def create_docker_command(tmpdir, use_gpu=False, detached=False):
     return command
 
 
-def create_training(data_dir, customer_script, optml, image, additional_volumes, additional_env_vars,
+def create_training(region, data_dir, customer_script, optml, image, additional_volumes, additional_env_vars,
                     additional_hps={}, cluster_size=1, source_dir=None, entrypoint=None):
-    session = boto3.Session()
+    session = boto3.Session(region_name=region)
     tmpdir = os.path.abspath(optml)
 
     hosts = create_host_names(cluster_size)
@@ -189,7 +193,7 @@ def create_training(data_dir, customer_script, optml, image, additional_volumes,
 
         shutil.copytree(data_dir, os.path.join(tmpdir, host, 'input', 'data'))
 
-    write_docker_file('train', tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
+    write_docker_file(region, 'train', tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
                       source_dir, entrypoint)
 
     print("training dir: \n{}".format(str(subprocess.check_output(['ls', '-lR', tmpdir]).decode('utf-8'))))
@@ -227,10 +231,10 @@ def create_input_data_config(data_path):
     return config
 
 
-def write_docker_file(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
+def write_docker_file(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
                       source_dir, entrypoint):
     filename = os.path.join(tmpdir, DOCKER_COMPOSE_FILENAME)
-    content = create_docker_compose(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
+    content = create_docker_compose(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
                                     customer_script, source_dir, entrypoint)
 
     print('docker compose file: \n{}'.format(content))
@@ -238,10 +242,10 @@ def write_docker_file(command, tmpdir, hosts, image, additional_volumes, additio
         f.write(content)
 
 
-def create_docker_services(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
+def create_docker_services(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
                            source_dir, entrypoint):
     environment = []
-    session = boto3.Session()
+    session = boto3.Session(region_name=region)
 
     optml_dirs = set()
     if command == 'train':
@@ -334,20 +338,25 @@ def credentials_to_env(session):
         creds = session.get_credentials()
         access_key = creds.access_key
         secret_key = creds.secret_key
+        session_token = creds.token
 
-        return [
+        credentials_list = [
             'AWS_ACCESS_KEY_ID=%s' % (str(access_key)),
             'AWS_SECRET_ACCESS_KEY=%s' % (str(secret_key))
         ]
+
+        if session_token:
+            credentials_list.append('AWS_SESSION_TOKEN=%s' % (str(session_token)))
+        return credentials_list
     except Exception as e:
         print('Could not get AWS creds: %s' % e)
 
     return []
 
 
-def create_docker_compose(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
+def create_docker_compose(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
                           source_dir, entrypoint):
-    services = create_docker_services(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
+    services = create_docker_services(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
                                       customer_script, source_dir, entrypoint)
     content = {
         # docker version on ACC hosts only supports compose 2.1 format
@@ -401,8 +410,8 @@ def _print_cmd(cmd):
     sys.stdout.flush()
 
 
-def upload_source_files(script, credentials, path=None, job_name='test_job'):
-    session = _boto_session(credentials)
+def upload_source_files(region, script, credentials, path=None, job_name='test_job'):
+    session = _boto_session(credentials, region)
     bucket = default_bucket(session)
     s3_source_archive = tar_and_upload_dir(
         session,
@@ -413,9 +422,10 @@ def upload_source_files(script, credentials, path=None, job_name='test_job'):
     return s3_source_archive
 
 
-def _boto_session(credentials):
+def _boto_session(credentials, region):
     return boto3.Session(aws_access_key_id=credentials['AWS_ACCESS_KEY_ID'],
-                         aws_secret_access_key=credentials['AWS_SECRET_ACCESS_KEY'])
+                         aws_secret_access_key=credentials['AWS_SECRET_ACCESS_KEY'],
+                         region_name=region)
 
 
 def default_bucket(boto_session):
@@ -501,6 +511,7 @@ def copy_resource(resource_path, opt_ml_path, relative_src_path, relative_dst_pa
 
 
 def file_exists(resource_folder, file_name, host='algo-1'):
+    subprocess.check_call(['ls', '-lR', resource_folder])
     return os.path.exists(os.path.join(resource_folder, host, file_name))
 
 
