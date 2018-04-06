@@ -35,8 +35,8 @@ def fixture_dist_gpu_backend(request):
     return request.param
 
 
-def test_dist_operations_cpu(image_name, opt_ml, dist_cpu_backend):
-    utils.train(dist_operations, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT, cluster_size=3,
+def test_dist_operations_cpu(region, image_name, opt_ml, dist_cpu_backend):
+    utils.train(region, dist_operations, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT, cluster_size=3,
                 hyperparameters={'backend': dist_cpu_backend})
 
     assert utils.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
@@ -45,8 +45,8 @@ def test_dist_operations_cpu(image_name, opt_ml, dist_cpu_backend):
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_dist_operations_gpu(image_name, opt_ml, dist_gpu_backend):
-    utils.train(dist_operations, data_dir, image_name(device='gpu'), opt_ml, entrypoint=ENTRYPOINT, cluster_size=3,
+def test_dist_operations_gpu(region, image_name, opt_ml, dist_gpu_backend):
+    utils.train(region, dist_operations, data_dir, image_name(device='gpu'), opt_ml, entrypoint=ENTRYPOINT, cluster_size=3,
                 use_gpu=True, hyperparameters={'backend': dist_gpu_backend})
 
     assert utils.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
@@ -54,8 +54,8 @@ def test_dist_operations_gpu(image_name, opt_ml, dist_gpu_backend):
     assert not utils.file_exists(opt_ml, 'output/failure'), 'Failure happened'
 
 
-def test_mnist_cpu(image_name, opt_ml, dist_cpu_backend):
-    utils.train(mnist_script, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT, cluster_size=2,
+def test_mnist_cpu(region, image_name, opt_ml, dist_cpu_backend):
+    utils.train(region, mnist_script, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT, cluster_size=2,
                 hyperparameters={'backend': dist_cpu_backend})
 
     assert utils.file_exists(opt_ml, 'model/model'), 'Model file was not created'
@@ -64,8 +64,8 @@ def test_mnist_cpu(image_name, opt_ml, dist_cpu_backend):
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_mnist_gpu(image_name, opt_ml, dist_gpu_backend):
-    utils.train(mnist_script, data_dir, image_name(device='gpu'), opt_ml, entrypoint=ENTRYPOINT, cluster_size=2,
+def test_mnist_gpu(region, image_name, opt_ml, dist_gpu_backend):
+    utils.train(region, mnist_script, data_dir, image_name(device='gpu'), opt_ml, entrypoint=ENTRYPOINT, cluster_size=2,
                 use_gpu=True, hyperparameters={'backend': dist_gpu_backend})
 
     assert utils.file_exists(opt_ml, 'model/model'), 'Model file was not created'

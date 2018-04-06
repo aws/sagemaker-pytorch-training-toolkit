@@ -39,5 +39,5 @@ RUN pip install torchvision
 # TODO(nadiaya): should be installed from PyPI when package is release there.
 # Manually clone and install sagemaker-container-support for this line to work or
 # run build-base-image-gpu.sh script instead of building dockerfile directly.
-COPY sagemaker-container-support/dist/sagemaker_container_support-1.0-py2.py3-none-any.whl /sagemaker_container_support-1.0-py2.py3-none-any.whl
+COPY lib/sagemaker-container-support/dist/sagemaker_container_support-1.0-py2.py3-none-any.whl /sagemaker_container_support-1.0-py2.py3-none-any.whl
 RUN pip install /sagemaker_container_support-1.0-py2.py3-none-any.whl && rm /sagemaker_container_support-1.0-py2.py3-none-any.whl
