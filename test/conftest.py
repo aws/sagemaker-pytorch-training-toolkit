@@ -20,4 +20,4 @@ logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 
 
 def pytest_addoption(parser):
-    parser.addoption('--dont-build', '-D', action="store_false")
+    parser.addoption('--build-image', '-B', action="store_true")

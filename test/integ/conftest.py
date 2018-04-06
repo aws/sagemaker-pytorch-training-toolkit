@@ -46,7 +46,7 @@ def opt_ml():
 @pytest.fixture(scope='session', params=["0.3.1"])
 def image_name(request):
     def get_image_name(framework_version=request.param, device='cpu'):
-        build_image = request.config.getoption('--dont-build')
+        build_image = request.config.getoption('--build-image')
         py_version = 'py' + str(sys.version_info.major)
         if build_image:
             return utils.build_image(framework_version, device, py_version, cwd=join(dir_path, '..', '..'))
