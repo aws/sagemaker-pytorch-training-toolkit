@@ -55,6 +55,7 @@ ENTRYPOINT = ["python", "-m", "pytorch_container.start"]
 
 
 def build_image(framework_version, device_type='cpu', py_version='py2', cwd='.'):
+    check_call('python setup.py bdist_wheel', cwd=cwd)
     image_tag = get_image_tag(framework_version, device_type, py_version)
 
     dockerfile_location = os.path.join('docker', framework_version, 'final', py_version,
