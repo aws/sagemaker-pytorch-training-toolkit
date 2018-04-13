@@ -171,12 +171,12 @@ def purge():
     chain_docker_cmds('docker network ls -q', 'docker network rm')
 
 
-def chain_docker_cmds(cmd, cmd2):
-    docker_tags = subprocess.check_output(cmd.split(' ')).split('\n')
+def chain_docker_cmds(cmd1, cmd2):
+    docker_tags = subprocess.check_output(cmd1.split(' ')).decode('utf-8').split('\n')
 
     if any(docker_tags):
         try:
-            subprocess.check_output(cmd2.split(' ') + docker_tags, stderr=subprocess.STDOUT)
+            subprocess.check_call(cmd2.split(' ') + docker_tags, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
             pass
 
