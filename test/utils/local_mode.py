@@ -1,16 +1,3 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License"). You
-# may not use this file except in compliance with the License. A copy of
-# the License is located at
-#
-#     http://aws.amazon.com/apache2.0/
-#
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
-# ANY KIND, either express or implied. See the License for the specific
-# language governing permissions and limitations under the License.
-# TODO: use proper local mode when available
 import json
 import logging
 import pickle
@@ -20,14 +7,15 @@ import sys
 import tarfile
 import tempfile
 from time import sleep
-import torch
 
 import boto3
 import os
 import requests
 import yaml
+import csv_parser
 
 from botocore.exceptions import ClientError
+from os.path import join
 from sagemaker import fw_utils
 
 
@@ -36,11 +24,12 @@ END_COLOR = '\033[0m'
 
 REQUEST_URL = "http://localhost:8080/invocations"
 JSON_CONTENT_TYPE = "application/json"
-
+CSV_CONTENT_TYPE = "text/csv"
 
 CONTAINER_PREFIX = "algo"
 DOCKER_COMPOSE_FILENAME = 'docker-compose.yaml'
 SAGEMAKER_REGION = 'us-west-2'
+
 DEFAULT_HYPERPARAMETERS = {
     'sagemaker_enable_cloudwatch_metrics': False,
     'sagemaker_container_log_level': str(logging.INFO),
@@ -51,23 +40,75 @@ DEFAULT_HOSTING_ENV = [
     'SAGEMAKER_CONTAINER_LOG_LEVEL={}'.format(logging.DEBUG),
     'SAGEMAKER_REGION={}'.format(SAGEMAKER_REGION)
 ]
-ENTRYPOINT = ["python", "-m", "pytorch_container.start"]
+
+def build_base_image(framework_name, framework_version, py_version, processor, base_image_tag, cwd='.'):
+
+    base_image_uri = get_base_image_uri(framework_name, base_image_tag)
+
+    dockerfile_location = os.path.join('docker', framework_version, 'base', 'Dockerfile.{}'.format(processor))
+
+    subprocess.check_call(['docker', 'build', '-t', base_image_uri, '-f', dockerfile_location,
+        '--build-arg', 'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
+    print('created image {}'.format(base_image_uri))
+    return base_image_uri
 
 
-def build_image(framework_version, device_type='cpu', py_version='py2', cwd='.'):
-    check_call('python setup.py bdist_wheel', cwd=cwd)
-    image_tag = get_image_tag(framework_version, device_type, py_version)
+def build_image(framework_name, framework_version, py_version, processor, tag, cwd='.'):
+    check_call('python setup.py bdist_wheel')
+    check_call('python setup.py bdist_wheel', cwd='lib/sagemaker-container-support')
+
+    image_uri = get_image_uri(framework_name, tag)
 
     dockerfile_location = os.path.join('docker', framework_version, 'final', py_version,
-                                       'Dockerfile.{}'.format(device_type))
+                                       'Dockerfile.{}'.format(processor))
 
-    subprocess.check_call(['docker', 'build', '-t', image_tag, '-f', dockerfile_location, '.'], cwd=cwd)
-    print('created image {}'.format(image_tag))
-    return image_tag
+    subprocess.check_call(['docker', 'build', '-t', image_uri, '-f', dockerfile_location, cwd], cwd=cwd)
+    print('created image {}'.format(image_uri))
+    return image_uri
 
 
-def get_image_tag(framework_version, device_type='cpu', py_version='py2'):
-    return 'sagemaker-pytorch:{}-{}-{}'.format(framework_version, device_type, py_version)
+def get_base_image_uri(framework_name, base_image_tag):
+    return '{}-base:{}'.format(framework_name, base_image_tag)
+
+
+def get_image_uri(framework_name, tag):
+    return '{}:{}'.format(framework_name, tag)
+
+
+def create_config_files(program, s3_source_archive, path, additional_hp={}):
+    rc = {
+        "current_host": "algo-1",
+        "hosts": ["algo-1"]
+    }
+
+    hp = {'sagemaker_region': 'us-west-2',
+          'sagemaker_program': program,
+          'sagemaker_submit_directory': s3_source_archive,
+          'sagemaker_container_log_level': logging.INFO}
+
+    hp.update(additional_hp)
+
+    ic = {
+        "training": {"ContentType": "trainingContentType"},
+        "evaluation": {"ContentType": "evalContentType"},
+        "Validation": {}
+    }
+
+    write_conf_files(rc, hp, ic, path)
+
+
+def write_conf_files(rc, hp, ic, path):
+    os.makedirs('{}/input/config'.format(path))
+
+    rc_file = os.path.join(path, 'input/config/resourceconfig.json')
+    hp_file = os.path.join(path, 'input/config/hyperparameters.json')
+    ic_file = os.path.join(path, 'input/config/inputdataconfig.json')
+
+    hp = serialize_hyperparameters(hp)
+
+    save_as_json(rc, rc_file)
+    save_as_json(hp, hp_file)
+    save_as_json(ic, ic_file)
 
 
 def serialize_hyperparameters(hp):
@@ -79,18 +120,44 @@ def save_as_json(data, filename):
         json.dump(data, f)
 
 
-def train(region, customer_script, data_dir, docker_image, opt_ml, cluster_size=1, hyperparameters={}, additional_volumes=[],
-          additional_env_vars=[], use_gpu=False, entrypoint=ENTRYPOINT, source_dir=None):
-    print("training")
-    tmpdir = create_training(region, data_dir, customer_script, opt_ml, docker_image, additional_volumes, additional_env_vars,
+def train(customer_script, data_dir, image_name, opt_ml, cluster_size=1, hyperparameters={}, additional_volumes=[],
+          additional_env_vars=[], use_gpu=False, entrypoint=None, source_dir=None):
+    tmpdir = create_training(data_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
                              hyperparameters, cluster_size, entrypoint=entrypoint, source_dir=source_dir)
     command = create_docker_command(tmpdir, use_gpu)
     start_docker(tmpdir, command)
     purge()
 
-    if file_exists(opt_ml, 'output/failure'):
-        with open(os.path.join(opt_ml, 'algo-1', 'output/failure'), 'r') as f:
-            logging.error(f.read())
+
+def serve(customer_script, model_dir, image_name, opt_ml, cluster_size=1, additional_volumes=[],
+          additional_env_vars=[], use_gpu=False, entrypoint=None, source_dir=None):
+
+    tmpdir = create_hosting_dir(model_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
+                                cluster_size, source_dir, entrypoint)
+    command = create_docker_command(tmpdir, use_gpu)
+    return Container(tmpdir, command)
+
+
+def create_hosting_dir(model_dir, customer_script, optml, image, additional_volumes, additional_env_vars,
+                       cluster_size=1, source_dir=None, entrypoint=None):
+    tmpdir = os.path.abspath(optml)
+    print('creating hosting dir in {}'.format(tmpdir))
+
+    hosts = create_host_names(cluster_size)
+    print('creating hosts: {}'.format(hosts))
+
+    if model_dir:
+        for h in hosts:
+            host_dir = os.path.join(tmpdir, h)
+            os.makedirs(host_dir)
+            shutil.copytree(model_dir, os.path.join(tmpdir, h, 'model'))
+
+    write_docker_file('serve', tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
+                      source_dir, entrypoint)
+
+    print("hosting dir: \n{}".format(str(subprocess.check_output(['ls', '-lR', tmpdir]).decode('utf-8'))))
+
+    return tmpdir
 
 
 def purge():
@@ -105,7 +172,7 @@ def purge():
 
 
 def chain_docker_cmds(cmd, cmd2):
-    docker_tags = subprocess.check_output(cmd.split(' ')).decode().split('\n')
+    docker_tags = subprocess.check_output(cmd.split(' ')).split('\n')
 
     if any(docker_tags):
         try:
@@ -162,9 +229,9 @@ def create_docker_command(tmpdir, use_gpu=False, detached=False):
     return command
 
 
-def create_training(region, data_dir, customer_script, optml, image, additional_volumes, additional_env_vars,
+def create_training(data_dir, customer_script, optml, image, additional_volumes, additional_env_vars,
                     additional_hps={}, cluster_size=1, source_dir=None, entrypoint=None):
-    session = boto3.Session(region_name=region)
+    session = boto3.Session()
     tmpdir = os.path.abspath(optml)
 
     hosts = create_host_names(cluster_size)
@@ -194,7 +261,7 @@ def create_training(region, data_dir, customer_script, optml, image, additional_
 
         shutil.copytree(data_dir, os.path.join(tmpdir, host, 'input', 'data'))
 
-    write_docker_file(region, 'train', tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
+    write_docker_file('train', tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
                       source_dir, entrypoint)
 
     print("training dir: \n{}".format(str(subprocess.check_output(['ls', '-lR', tmpdir]).decode('utf-8'))))
@@ -232,10 +299,10 @@ def create_input_data_config(data_path):
     return config
 
 
-def write_docker_file(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
+def write_docker_file(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
                       source_dir, entrypoint):
     filename = os.path.join(tmpdir, DOCKER_COMPOSE_FILENAME)
-    content = create_docker_compose(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
+    content = create_docker_compose(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
                                     customer_script, source_dir, entrypoint)
 
     print('docker compose file: \n{}'.format(content))
@@ -243,10 +310,10 @@ def write_docker_file(region, command, tmpdir, hosts, image, additional_volumes,
         f.write(content)
 
 
-def create_docker_services(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
+def create_docker_services(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
                            source_dir, entrypoint):
     environment = []
-    session = boto3.Session(region_name=region)
+    session = boto3.Session()
 
     optml_dirs = set()
     if command == 'train':
@@ -344,8 +411,8 @@ def credentials_to_env(session):
         credentials_list = [
             'AWS_ACCESS_KEY_ID=%s' % (str(access_key)),
             'AWS_SECRET_ACCESS_KEY=%s' % (str(secret_key))
-        ]
 
+        ]
         if session_token:
             credentials_list.append('AWS_SESSION_TOKEN=%s' % (str(session_token)))
         return credentials_list
@@ -355,13 +422,13 @@ def credentials_to_env(session):
     return []
 
 
-def create_docker_compose(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
+def create_docker_compose(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
                           source_dir, entrypoint):
-    services = create_docker_services(region, command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
+    services = create_docker_services(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
                                       customer_script, source_dir, entrypoint)
     content = {
         # docker version on ACC hosts only supports compose 2.1 format
-        'version': '2',
+        'version': '2.1',
         'services': services
     }
 
@@ -372,7 +439,10 @@ def create_docker_compose(region, command, tmpdir, hosts, image, additional_volu
 def write_resource_config(path, hosts, current_host):
     content = {
         'current_host': current_host,
-        'hosts': hosts
+        'hosts': hosts,
+        # On EASE: container support uses 'ethwe' by default (for now)
+        # TODO: change key to correct one. point-of-contact is geevarj@.
+        'network_interface_name': 'eth0'
     }
 
     filename = os.path.join(path, current_host, 'input', 'config', 'resourceconfig.json')
@@ -388,17 +458,6 @@ def create_host_names(cluster_size):
     return ['{}-{}'.format(CONTAINER_PREFIX, i) for i in range(1, cluster_size + 1)]
 
 
-def _read_credentials():
-    creds = {}
-    credential_file = os.path.expanduser('~/.aws/credentials')
-    with open(credential_file) as f:
-        for line in f.readlines():
-            if not line.startswith('['):
-                k, v = line.split('=')
-                creds[k.strip().upper()] = v.strip()
-    return creds
-
-
 def check_call(cmd, *popenargs, **kwargs):
     if isinstance(cmd, str):
         cmd = cmd.split(" ")
@@ -411,8 +470,8 @@ def _print_cmd(cmd):
     sys.stdout.flush()
 
 
-def upload_source_files(region, script, credentials, path=None, job_name='test_job'):
-    session = _boto_session(credentials, region)
+def upload_source_files(script, credentials, path=None, job_name='test_job'):
+    session = _boto_session(credentials)
     bucket = default_bucket(session)
     s3_source_archive = tar_and_upload_dir(
         session,
@@ -423,10 +482,9 @@ def upload_source_files(region, script, credentials, path=None, job_name='test_j
     return s3_source_archive
 
 
-def _boto_session(credentials, region):
+def _boto_session(credentials):
     return boto3.Session(aws_access_key_id=credentials['AWS_ACCESS_KEY_ID'],
-                         aws_secret_access_key=credentials['AWS_SECRET_ACCESS_KEY'],
-                         region_name=region)
+                         aws_secret_access_key=credentials['AWS_SECRET_ACCESS_KEY'])
 
 
 def default_bucket(boto_session):
@@ -438,7 +496,8 @@ def default_bucket(boto_session):
     """
     s3 = boto_session.resource('s3')
     account = boto_session.client('sts').get_caller_identity()['Account']
-    region = boto_session.region_name
+    # TODO: make region configurable
+    region = boto_session.region_name or 'us-west-2'
     bucket = 'sagemaker-{}-{}'.format(region, account)
 
     if not bucket_exists(boto_session, bucket):
@@ -512,11 +571,11 @@ def copy_resource(resource_path, opt_ml_path, relative_src_path, relative_dst_pa
 
 
 def file_exists(resource_folder, file_name, host='algo-1'):
-    subprocess.check_call(['ls', '-lR', resource_folder])
     return os.path.exists(os.path.join(resource_folder, host, file_name))
 
 
-def load_model(resource_folder, file_name, host='algo-1', serializer=torch):
+def load_model(resource_folder, file_name, host='algo-1', serializer=None):
+    serializer = serializer if serializer else json
     with open(os.path.join(resource_folder, host, file_name), 'r') as f:
         return serializer.load(f)
 
@@ -525,11 +584,22 @@ def get_model_dir(resource_folder, host='algo-1'):
     return os.path.join(resource_folder, host)
 
 
+def install_container_support():
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    sagemaker_container_dir = join(dir_path, '..', '..', 'sagemaker-container-support')
+    check_call('pip install --upgrade .', cwd=sagemaker_container_dir)
+
+
 def request(data, request_type=JSON_CONTENT_TYPE):
-    serializer = json if request_type == JSON_CONTENT_TYPE else pickle
+    if request_type == JSON_CONTENT_TYPE:
+        serializer = json
+    elif request_type == CSV_CONTENT_TYPE:
+        serializer = csv_parser
+    else:
+        serializer = pickle
     serialized_output = requests.post(REQUEST_URL,
                                       data=serializer.dumps(data),
                                       headers={'Content-type': request_type,
                                                'Accept': request_type}).content
-
+    print(serialized_output)
     return serializer.loads(serialized_output)
