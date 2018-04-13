@@ -12,7 +12,7 @@ import boto3
 import os
 import requests
 import yaml
-import tests.csv_parser
+import test.utils.csv_parser
 
 from botocore.exceptions import ClientError
 from os.path import join
