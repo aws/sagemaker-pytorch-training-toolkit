@@ -13,33 +13,27 @@
 import os
 import pytest
 import torch
-import utils
+from test.utils import local_mode
+from test.utils.local_mode import request
 import logging
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'mnist')
-data_dir = os.path.join(dir_path, 'data')
+mnist_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'resources', 'mnist'))
+data_dir = os.path.join(mnist_path, 'data')
+
 training_dir = os.path.join(data_dir, 'training')
 
-mnist_script = os.path.join(dir_path, 'mnist.py')
+mnist_script = 'mnist.py'
 
 ENTRYPOINT = ["python", "-m", "pytorch_container.start"]
 
 
-def test_mnist_cpu(region, image_name, opt_ml):
-    utils.train(region, mnist_script, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT)
+def test_mnist_cpu(docker_image, opt_ml, use_gpu):
+    local_mode.train(mnist_script, data_dir, docker_image, opt_ml,
+                     source_dir=mnist_path, use_gpu=use_gpu, entrypoint=ENTRYPOINT)
 
-    assert utils.file_exists(opt_ml, 'model/model'), 'Model file was not created'
-    assert utils.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not utils.file_exists(opt_ml, 'output/failure'), 'Failure happened'
-
-
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_mnist_gpu(region, image_name, opt_ml):
-    utils.train(region, mnist_script, data_dir, image_name(device='gpu'), opt_ml, use_gpu=True, entrypoint=ENTRYPOINT)
-
-    assert utils.file_exists(opt_ml, 'model/model'), 'Model file was not created'
-    assert utils.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not utils.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+    assert local_mode.file_exists(opt_ml, 'model/model'), 'Model file was not created'
+    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
+    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
