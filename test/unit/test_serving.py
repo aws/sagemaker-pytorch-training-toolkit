@@ -1,16 +1,26 @@
 import pytest
 import json
-import numpy as np
-import os
 import csv
 from six import StringIO
 import torch
+import torch.nn as nn
 from torch.autograd import Variable
 
 from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, \
     UnsupportedContentTypeError, UnsupportedAcceptTypeError
 
 from pytorch_container.serving import model_fn, input_fn, predict_fn, output_fn, transform_fn
+
+
+class ModelMock(nn.Module):
+    def __init__(self, ):
+        super(ModelMock, self).__init__()
+
+    def forward(self, x):
+        pass
+
+    def __call__(self, variable):
+        return 3 * variable
 
 
 @pytest.fixture(scope='session', name='tensor')
@@ -61,9 +71,45 @@ def test_input_fn_bad_content_type():
 
 
 def test_predict_fn(tensor):
-    pass
-    #predicted_data = predict_fn(np_array, FakeModel())
-    #assert np.array_equal(fake_predict(np_array), predicted_data)
+    model = ModelMock()
+    prediction = predict_fn(tensor, model)
+    assert torch.equal(model(Variable(tensor)), prediction)
+    assert prediction.is_cuda == torch.cuda.is_available()
+
+
+def test_predict_fn_cpu_cpu(tensor):
+    tensor = tensor.cpu()
+    model = ModelMock().cpu()
+    prediction = predict_fn(tensor, model)
+    assert torch.equal(model(Variable(tensor)), prediction)
+    assert prediction.is_cuda == torch.cuda.is_available()
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
+def test_predict_fn_cpu_gpu(tensor):
+    tensor = tensor.cpu()
+    model = ModelMock().cuda()
+    prediction = predict_fn(tensor, model)
+    assert torch.equal(model(Variable(tensor)), prediction)
+    assert prediction.is_cuda is True
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
+def test_predict_fn_cpu_gpu(tensor):
+    tensor = tensor.cpu()
+    model = ModelMock().cuda()
+    prediction = predict_fn(tensor, model)
+    assert torch.equal(model(Variable(tensor)), prediction)
+    assert prediction.is_cuda is True
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
+def test_predict_fn_gpu_gpu(tensor):
+    tensor = tensor.cuda()
+    model = ModelMock().cuda()
+    prediction = predict_fn(tensor, model)
+    assert torch.equal(model(Variable(tensor)), prediction)
+    assert prediction.is_cuda is True
 
 
 def test_output_fn_json(tensor):
