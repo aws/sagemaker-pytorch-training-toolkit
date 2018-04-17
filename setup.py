@@ -35,6 +35,7 @@ setup(
 
     install_requires=['sagemaker-container-support', 'torch'],
     extras_require={
-        'test': ['tox', 'flake8', 'pytest', 'mock', 'sagemaker']
+        'test': ['tox', 'flake8', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock', 'Flask', 'boto3>=1.4.8',
+                 'docker-compose', 'nvidia-docker-compose', 'sagemaker', 'PyYAML']
     },
 )
