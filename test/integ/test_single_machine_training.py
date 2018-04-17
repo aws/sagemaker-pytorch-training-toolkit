@@ -11,10 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import os
-import pytest
-import torch
 from test.utils import local_mode
-from test.utils.local_mode import request
 import logging
 
 logger = logging.getLogger(__name__)

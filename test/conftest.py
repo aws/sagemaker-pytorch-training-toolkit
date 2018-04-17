@@ -11,12 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import os
-from os.path import join
 import logging
 import platform
 import pytest
 import shutil
-import sys
 import tempfile
 
 
@@ -41,7 +39,7 @@ def pytest_addoption(parser):
     parser.addoption('--region', default='us-west-2')
     parser.addoption('--framework-version', default='0.3.1')
     parser.addoption('--py-version', choices=['2', '3'], default='2')
-    parser.addoption('--processor', choices=['gpu','cpu'], default='cpu')
+    parser.addoption('--processor', choices=['gpu', 'cpu'], default='cpu')
     # If not specified, will default to {framework-version}-{processor}-py{py-version}
     parser.addoption('--tag', default=None)
 

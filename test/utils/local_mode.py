@@ -16,6 +16,7 @@ import yaml
 from botocore.exceptions import ClientError
 from os.path import join
 from sagemaker import fw_utils
+import test.utils
 
 
 CYAN_COLOR = '\033[36m'
@@ -40,14 +41,17 @@ DEFAULT_HOSTING_ENV = [
     'SAGEMAKER_REGION={}'.format(SAGEMAKER_REGION)
 ]
 
-def build_base_image(framework_name, framework_version, py_version, processor, base_image_tag, cwd='.'):
+
+def build_base_image(framework_name, framework_version, py_version,
+                     processor, base_image_tag, cwd='.'):
 
     base_image_uri = get_base_image_uri(framework_name, base_image_tag)
 
     dockerfile_location = os.path.join('docker', framework_version, 'base', 'Dockerfile.{}'.format(processor))
 
-    subprocess.check_call(['docker', 'build', '-t', base_image_uri, '-f', dockerfile_location,
-        '--build-arg', 'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
+    subprocess.check_call(['docker', 'build', '-t', base_image_uri,
+                           '-f', dockerfile_location, '--build-arg',
+                           'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
     print('created image {}'.format(base_image_uri))
     return base_image_uri
 
