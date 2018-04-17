@@ -13,7 +13,6 @@
 import os
 import pytest
 import torch
-import test.utils
 from test.utils import local_mode
 
 resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'resources'))
@@ -37,8 +36,9 @@ def fixture_dist_gpu_backend(request):
 
 
 def test_dist_operations_path_cpu(docker_image, opt_ml, dist_cpu_backend):
-    local_mode.train(dist_operations_path, data_dir, docker_image, opt_ml, entrypoint=ENTRYPOINT, cluster_size=3,
-                hyperparameters={'backend': dist_cpu_backend})
+    local_mode.train(dist_operations_path, data_dir, docker_image, opt_ml,
+                     entrypoint=ENTRYPOINT, cluster_size=3,
+                     hyperparameters={'backend': dist_cpu_backend})
 
     assert local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
@@ -47,8 +47,9 @@ def test_dist_operations_path_cpu(docker_image, opt_ml, dist_cpu_backend):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_dist_operations_path_gpu(docker_image, opt_ml, dist_gpu_backend):
-    local_mode.train(dist_operations_path, data_dir, docker_image, opt_ml, entrypoint=ENTRYPOINT, cluster_size=3,
-                use_gpu=True, hyperparameters={'backend': dist_gpu_backend})
+    local_mode.train(dist_operations_path, data_dir, docker_image, opt_ml,
+                     entrypoint=ENTRYPOINT, cluster_size=3,
+                     use_gpu=True, hyperparameters={'backend': dist_gpu_backend})
 
     assert local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
@@ -56,8 +57,9 @@ def test_dist_operations_path_gpu(docker_image, opt_ml, dist_gpu_backend):
 
 
 def test_mnist_cpu(docker_image, opt_ml, dist_cpu_backend):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, entrypoint=ENTRYPOINT, cluster_size=2,
-                hyperparameters={'backend': dist_cpu_backend})
+    local_mode.train(mnist_script, data_dir, docker_image, opt_ml,
+                     entrypoint=ENTRYPOINT, cluster_size=2,
+                     hyperparameters={'backend': dist_cpu_backend})
 
     assert local_mode.file_exists(opt_ml, 'model/model'), 'Model file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
@@ -66,8 +68,9 @@ def test_mnist_cpu(docker_image, opt_ml, dist_cpu_backend):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_mnist_gpu(docker_image, opt_ml, dist_gpu_backend):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, entrypoint=ENTRYPOINT, cluster_size=2,
-                use_gpu=True, hyperparameters={'backend': dist_gpu_backend})
+    local_mode.train(mnist_script, data_dir, docker_image, opt_ml,
+                     entrypoint=ENTRYPOINT, cluster_size=2,
+                     use_gpu=True, hyperparameters={'backend': dist_gpu_backend})
 
     assert local_mode.file_exists(opt_ml, 'model/model'), 'Model file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
