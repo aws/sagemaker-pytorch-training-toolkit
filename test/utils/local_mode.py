@@ -12,7 +12,6 @@ import boto3
 import os
 import requests
 import yaml
-import test.utils.csv_parser
 
 from botocore.exceptions import ClientError
 from os.path import join
@@ -588,18 +587,3 @@ def install_container_support():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     sagemaker_container_dir = join(dir_path, '..', '..', 'sagemaker-container-support')
     check_call('pip install --upgrade .', cwd=sagemaker_container_dir)
-
-
-def request(data, request_type=JSON_CONTENT_TYPE):
-    if request_type == JSON_CONTENT_TYPE:
-        serializer = json
-    elif request_type == CSV_CONTENT_TYPE:
-        serializer = csv_parser
-    else:
-        serializer = pickle
-    serialized_output = requests.post(REQUEST_URL,
-                                      data=serializer.dumps(data),
-                                      headers={'Content-type': request_type,
-                                               'Accept': request_type}).content
-    print(serialized_output)
-    return serializer.loads(serialized_output)

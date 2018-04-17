@@ -16,8 +16,8 @@ import numpy
 from six import StringIO, BytesIO
 import pytest
 import requests
+from test.utils import local_mode
 import torch
-import utils
 import logging
 import torch.utils.data
 import torch.utils.data.distributed
@@ -40,27 +40,27 @@ ENTRYPOINT = ["python", "-m", "pytorch_container.start"]
 
 
 def test_small_batch_data_cpu(region, image_name, opt_ml):
-    with utils.serve(region, customer_script=mnist_script, model_dir=model_cpu_dir, image_name=image_name(),
+    with local_mode.serve(customer_script=mnist_script, model_dir=model_cpu_dir, image_name=image_name(),
                      opt_ml=opt_ml, entrypoint=ENTRYPOINT):
         _assert_prediction(batch_size=2)
 
 
 def test_large_batch_data_cpu(region, image_name, opt_ml):
-    with utils.serve(region, customer_script=mnist_script, model_dir=model_cpu_dir, image_name=image_name(),
+    with local_mode.serve(customer_script=mnist_script, model_dir=model_cpu_dir, image_name=image_name(),
                      opt_ml=opt_ml, entrypoint=ENTRYPOINT):
         _assert_prediction(batch_size=300)  # client_max_body_size 5m
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_small_batch_data_gpu(region, image_name, opt_ml):
-    with utils.serve(region, customer_script=mnist_script, model_dir=model_gpu_dir, image_name=image_name(),
+    with local_mode.serve(customer_script=mnist_script, model_dir=model_gpu_dir, image_name=image_name(),
                      opt_ml=opt_ml, entrypoint=ENTRYPOINT):
         _assert_prediction(batch_size=1)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_large_batch_data_gpu(region, image_name, opt_ml):
-    with utils.serve(region, customer_script=mnist_script, model_dir=model_gpu_dir, image_name=image_name(),
+    with local_mode.serve(customer_script=mnist_script, model_dir=model_gpu_dir, image_name=image_name(),
                      opt_ml=opt_ml, entrypoint=ENTRYPOINT):
         _assert_prediction(batch_size=300)  # client_max_body_size 5m
 
@@ -76,7 +76,7 @@ def _get_test_data_loader(batch_size):
 
 
 def test_model(region, image_name, opt_ml):
-    utils.train(region, mnist_script, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT)
+    local_mode.train(region, mnist_script, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT)
 
 
 def test_csv():
@@ -136,7 +136,7 @@ def _assert_prediction(batch_size):
 
 
 def make_prediction(data, request_type, accept):
-    serialized_output = requests.post(utils.REQUEST_URL, data=_serialize_input(data, request_type),
+    serialized_output = requests.post(local_mode.REQUEST_URL, data=_serialize_input(data, request_type),
                                       headers={'Content-type': request_type, 'Accept': accept}).content
     return _deserialize_output(serialized_output, accept)
 
