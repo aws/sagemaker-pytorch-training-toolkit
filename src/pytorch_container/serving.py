@@ -1,39 +1,43 @@
+from __future__ import absolute_import
 import json
-import os
-import pickle
+import logging
 import numpy as np
+from six import StringIO, BytesIO
+import torch
+from torch.autograd import Variable
 
 from container_support.app import ServingEngine
-from container_support.serving import JSON_CONTENT_TYPE, UnsupportedContentTypeError, UnsupportedAcceptTypeError
-
-from ml_framework import PICKLE_CONTENT_TYPE
+from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_CONTENT_TYPE, \
+    UnsupportedContentTypeError, UnsupportedAcceptTypeError
 
 engine = ServingEngine()
+logger = logging.getLogger(__name__)
 
 
 @engine.model_fn()
 def model_fn(model_dir):
-    with open(os.path.join(model_dir, 'model.pickle'), 'r') as f:
-        return pickle.load(f)
+    """
+    Loads a model. For PyTorch, a default function to load a model cannot be provided.
+    Users should provide customized model_fn() in script.
+    Args:
+        model_dir:
+    Returns: A PyTorch model.
+    """
+    raise NotImplementedError('No default model_fn provided. User should provide model_fn in script.')
 
 
 @engine.input_fn()
 def input_fn(serialized_input_data, content_type):
-    """A default input fn to handle JSON and PICKLE formats. The required formats for a SageMaker Container are
-    JSON and CSV.
-
+    """A default input_fn that can handle JSON, CSV and NPZ formats.
     Args:
         serialized_input_data: the request payload serialized in the content_type format
         content_type: the request content_type
     Returns: deserialized input_data
     """
-    if content_type == JSON_CONTENT_TYPE:
-        return json.loads(serialized_input_data)
-
-    if content_type == PICKLE_CONTENT_TYPE:
-        return pickle.loads(serialized_input_data)
-
-    raise UnsupportedContentTypeError(content_type)
+    input_data = torch.from_numpy(_deserialize_input(serialized_input_data, content_type))
+    if torch.cuda.is_available():
+        input_data = input_data.cuda()
+    return input_data
 
 
 @engine.predict_fn()
@@ -46,7 +50,12 @@ def predict_fn(input_data, model):
 
     Returns: a prediction
     """
-    pass
+    if torch.cuda.is_available():
+        model.cuda()
+        input_data = input_data.cuda()
+    model.eval()
+    output = model(Variable(input_data))
+    return output
 
 
 @engine.output_fn()
@@ -60,28 +69,53 @@ def output_fn(prediction_output, accept):
     Returns
         output data serialized
     """
-    prediction_output = prediction_output.tolist() if hasattr(prediction_output, 'tolist') else prediction_output
+    if type(prediction_output) == Variable:
+        prediction_output = prediction_output.data
 
-    if accept == JSON_CONTENT_TYPE:
-        return json.dumps(prediction_output), JSON_CONTENT_TYPE
-
-    if accept == PICKLE_CONTENT_TYPE:
-        return pickle.dumps(prediction_output), PICKLE_CONTENT_TYPE
-
-    raise UnsupportedAcceptTypeError(accept)
+    return _serialize_output(prediction_output, accept), accept
 
 
+
+# TODO: this function is actually never called:
+#       https://github.com/aws/sagemaker-container-support/blob/mvs-poc/src/container_support/app.py#L110-L116
 @engine.transform_fn()
 def transform_fn(model, data, content_type, accept):
-    input_data = input_fn(data, content_type)
+    raise NotImplementedError('transform_fn is never called in framework container.')
+    input_data = input_fn(data, content_type, model)
     prediction = predict_fn(input_data, model)
     output_data, accept = output_fn(prediction, accept)
     return output_data, accept
 
 
-@engine.load_dependencies()
-def load_dependencies():
-    """This function is only called once by the container support before it starts the Flask servers, it useful to load
-    framework specific dependencies
-    """
-    pass
+def _deserialize_input(serialized_input_data, content_type):
+    # TODO: Move deserialization of serialized_input_data to np.array to conatiner_support
+    #       in order for it to be reused in all or some other containers
+    if content_type == JSON_CONTENT_TYPE:
+        return np.array(json.loads(serialized_input_data), dtype=np.float32)
+
+    if content_type == CSV_CONTENT_TYPE:
+        return np.genfromtxt(StringIO(serialized_input_data), dtype=np.float32, delimiter=',')
+
+    if content_type == NPY_CONTENT_TYPE:
+        return np.load(BytesIO(serialized_input_data))
+
+    raise UnsupportedContentTypeError(content_type)
+
+
+def _serialize_output(prediction_output, content_type):
+    # TODO: Move serialization of prediction from np.array to conatiner_support
+    #       in order for it to be reused in all or some other containers
+    if content_type == JSON_CONTENT_TYPE:
+        return json.dumps(prediction_output.tolist())
+
+    if content_type == CSV_CONTENT_TYPE:
+        stream = StringIO()
+        np.savetxt(stream, prediction_output, delimiter=',', fmt='%s')
+        return stream.getvalue()
+
+    if content_type == NPY_CONTENT_TYPE:
+        stream = BytesIO()
+        np.save(stream, prediction_output)
+        return stream.getvalue()
+
+    raise UnsupportedAcceptTypeError(content_type)

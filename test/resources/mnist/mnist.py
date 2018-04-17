@@ -59,7 +59,7 @@ def _load_hyperparameters(hyperparameters):
     # number of epochs to train (default: 10)
     epochs = hyperparameters.get('epochs', 3)
     # learning rate (default: 0.01)
-    lr = hyperparameters.get('lr', 0.1)
+    lr = hyperparameters.get('lr', 0.01)
     # SGD momentum (default: 0.5)
     momentum = hyperparameters.get('momentum', 0.5)
     # random seed (default: 1)
@@ -102,7 +102,7 @@ def _average_gradients(model):
         param.grad.data /= size
 
 
-def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
+def train2(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
     training_dir = channel_input_dirs['training']
     backend, batch_size, test_batch_size, epochs, lr, momentum, \
         seed, log_interval = _load_hyperparameters(hyperparameters)
@@ -195,5 +195,140 @@ def test(model, test_loader, cuda):
 
     test_loss /= len(test_loader.dataset)
     logger.debug('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        test_loss, correct, len(test_loader.dataset),
+        100. * correct / len(test_loader.dataset)))
+
+
+def model_fn(model_dir):
+    logger.info('model_fn')
+    model = torch.nn.DataParallel(Net())
+    with open(os.path.join(model_dir, 'model'), 'r') as f:
+        model.load_state_dict(torch.load(f))
+    return model
+
+
+def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
+    training_dir = channel_input_dirs['training']
+    backend, batch_size, test_batch_size, epochs, lr, momentum, \
+        seed, log_interval = _load_hyperparameters(hyperparameters)
+    logger.info('model_fn')
+    model = torch.nn.DataParallel(Net())
+    with open(os.path.join(training_dir, 'model'), 'r') as f:
+        model.load_state_dict(torch.load(f))
+
+    logger.info('Loaded the model')
+    # check that model is fine
+    test_loader = _get_test_data_loader(1000, training_dir)
+    logger.info('Testing the model')
+    # test_json(model, test_loader)
+    # test_csv(model, test_loader)
+    test_npz(model, test_loader)
+
+
+def test_json(model, test_loader):
+    model.eval()
+    test_loss = 0
+    correct = 0
+    for data, target in test_loader:
+        #logger.info('serialize to json')
+        import json
+        import numpy
+        json_data = json.dumps(data.tolist())
+
+       # logger.info('deserialize from json')
+        input_list = json.loads(json_data)
+        #data = torch.FloatTensor(input_list)
+        data = torch.from_numpy(numpy.array(input_list, dtype=numpy.float32))
+       # logger.info('data: {}'.format(data))
+
+        data, target = Variable(data, volatile=True), Variable(target)
+        output = model(data)
+        test_loss += F.nll_loss(output, target, size_average=False).data[0] # sum up batch loss
+        pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+        correct += pred.eq(target.data.view_as(pred)).long().cpu().sum()
+
+    test_loss /= len(test_loader.dataset)
+    logger.debug('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        test_loss, correct, len(test_loader.dataset),
+        100. * correct / len(test_loader.dataset)))
+
+
+def test_csv(model, test_loader):
+    model.eval()
+    test_loss = 0
+    correct = 0
+    for data, target in test_loader:
+        logger.info('serialize to csv')
+        import pandas
+        from six import StringIO
+        import numpy
+        df = pandas.DataFrame(data.numpy().tolist())
+        csv_data = df.to_csv()
+        #logger.info('csv data: {}'.format(csv_data))
+
+        logger.info('deserialize from csv')
+        df = pandas.read_csv(StringIO(csv_data))
+        logger.info('convert dataframe to numpy array')
+        ndarray = df.values()
+        logger.info('ndarray: {}'.format(ndarray))
+        # data = torch.FloatTensor(ndarray)
+        data = torch.from_numpy(ndarray)
+        logger.info('data: {}'.format(data))
+
+        data, target = Variable(data, volatile=True), Variable(target)
+        output = model(data)
+        test_loss += F.nll_loss(output, target, size_average=False).data[0] # sum up batch loss
+        pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+        correct += pred.eq(target.data.view_as(pred)).long().cpu().sum()
+
+    test_loss /= len(test_loader.dataset)
+    logger.debug('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        test_loss, correct, len(test_loader.dataset),
+        100. * correct / len(test_loader.dataset)))
+
+
+def test_npz(model, test_loader):
+    import numpy
+    from six import StringIO
+    logger.setLevel(logging.DEBUG)
+    logger.debug('test_npz')
+
+    model.eval()
+    test_loss = 0
+    correct = 0
+    batch_data_numpy = []
+    batch_target = []
+    for data, target in test_loader:
+        batch_data_numpy.append(data.numpy())
+        batch_target.append(target)
+
+    logger.debug('len(batch_data): {}'.format(len(batch_data_numpy)))
+    logger.debug('len(batch_target)" {}'.format(len(batch_target)))
+
+    logger.debug('serialize to npz')
+    stream = StringIO()
+    numpy.savez(stream, *batch_data_numpy)
+
+    logger.info('deserialize from npz')
+    npzfile = numpy.load(StringIO(stream.getvalue()))
+    logger.info(' npzfile.files: {}'.format(npzfile.files))
+
+    files = sorted(npzfile.files)
+    ndarrays = numpy.concatenate([npzfile[f] for f in files])
+
+    data = torch.FloatTensor(ndarrays)
+    logger.info('data: {}'.format(data))
+
+    target = torch.from_numpy(numpy.concatenate(batch_target))
+    logger.info('target: {}'.format(target))
+
+    data, target = Variable(data, volatile=True), Variable(target)
+    output = model(data)
+    test_loss += F.nll_loss(output, target, size_average=False).data[0] # sum up batch loss
+    pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+    correct += pred.eq(target.data.view_as(pred)).long().cpu().sum()
+
+    test_loss /= len(test_loader.dataset)
+    logger.info('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
