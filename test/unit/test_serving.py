@@ -51,7 +51,7 @@ def test_input_fn_csv():
 
     deserialized_np_array = input_fn(str_io.getvalue(), CSV_CONTENT_TYPE)
 
-    tensor = torch.FloatTensor(array)
+    tensor = torch.cuda.FloatTensor(array) if torch.cuda.is_available() else torch.FloatTensor(array)
     assert torch.equal(tensor, deserialized_np_array)
     assert deserialized_np_array.is_cuda == torch.cuda.is_available()
 
