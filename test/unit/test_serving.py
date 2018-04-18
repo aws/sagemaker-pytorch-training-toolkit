@@ -1,12 +1,13 @@
 import pytest
 import json
 import csv
-from six import StringIO
+import numpy as np
+from six import StringIO, BytesIO
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
-from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, \
+from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_CONTENT_TYPE, \
     UnsupportedContentTypeError, UnsupportedAcceptTypeError
 
 from pytorch_container.serving import model_fn, input_fn, predict_fn, output_fn, transform_fn
@@ -66,6 +67,15 @@ def test_input_fn_csv_bad_columns():
         input_fn(str_io.getvalue(), CSV_CONTENT_TYPE)
 
 
+def test_input_fn_npy(tensor):
+    stream = BytesIO()
+    np.save(stream, tensor.cpu().numpy())
+    deserialized_np_array = input_fn(stream.getvalue(), NPY_CONTENT_TYPE)
+
+    assert deserialized_np_array.is_cuda == torch.cuda.is_available()
+    assert torch.equal(tensor, deserialized_np_array)
+
+
 def test_input_fn_bad_content_type():
     with pytest.raises(UnsupportedContentTypeError):
         input_fn('', 'application/not_supported')
@@ -118,6 +128,16 @@ def test_output_fn_json(tensor):
 
     assert json.dumps(tensor.cpu().numpy().tolist()) in output
     assert JSON_CONTENT_TYPE in output
+
+
+def test_output_fn_npy(tensor):
+    output = output_fn(tensor, NPY_CONTENT_TYPE)
+
+    stream = BytesIO()
+    np.save(stream, tensor.cpu().numpy())
+
+    assert stream.getvalue() in output
+    assert NPY_CONTENT_TYPE in output
 
 
 def test_output_fn_csv_long():
