@@ -39,6 +39,7 @@ class Net(nn.Module):
         self.fc2 = nn.Linear(50, 10)
 
     def forward(self, x):
+        x = x.view(x.shape[0], 1, 28, 28)
         x = F.relu(F.max_pool2d(self.conv1(x), 2))
         x = F.relu(F.max_pool2d(self.conv2_drop(self.conv2(x)), 2))
         x = x.view(-1, 320)
@@ -54,10 +55,10 @@ def _load_hyperparameters(hyperparameters):
     backend = hyperparameters.get('backend', None)
     # batch size for training (default: 64)
     batch_size = hyperparameters.get('batch_size', 60)
-    # batch size for testing (default: 1000)
-    test_batch_size = hyperparameters.get('test_batch_size', 1000)
+    # batch size for _testing (default: 1000)
+    _test_batch_size = hyperparameters.get('_test_batch_size', 1000)
     # number of epochs to train (default: 10)
-    epochs = hyperparameters.get('epochs', 3)
+    epochs = hyperparameters.get('epochs', 10)
     # learning rate (default: 0.01)
     lr = hyperparameters.get('lr', 0.01)
     # SGD momentum (default: 0.5)
@@ -67,10 +68,10 @@ def _load_hyperparameters(hyperparameters):
     # how many batches to wait before logging training status
     log_interval = hyperparameters.get('log_interval', 100)
     logger.info(
-        'backend: {}, batch_size: {}, test_batch_size: {}, '.format(backend, batch_size, test_batch_size) +
+        'backend: {}, batch_size: {}, _test_batch_size: {}, '.format(backend, batch_size, _test_batch_size) +
         'epochs: {}, lr: {}, momentum: {}, seed: {}, log_interval: {}'.format(epochs, lr, momentum, seed, log_interval)
     )
-    return backend, batch_size, test_batch_size, epochs, lr, momentum, seed, log_interval
+    return backend, batch_size, _test_batch_size, epochs, lr, momentum, seed, log_interval
 
 
 def _get_train_data_loader(batch_size, training_dir, is_distributed, **kwargs):
@@ -84,14 +85,14 @@ def _get_train_data_loader(batch_size, training_dir, is_distributed, **kwargs):
                                        sampler=train_sampler, **kwargs)
 
 
-def _get_test_data_loader(test_batch_size, training_dir, **kwargs):
-    logger.info("Get test data loader")
+def _get__test_data_loader(_test_batch_size, training_dir, **kwargs):
+    logger.info("Get _test data loader")
     return torch.utils.data.DataLoader(
         datasets.MNIST(training_dir, train=False, transform=transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))
         ])),
-        batch_size=test_batch_size, shuffle=True, **kwargs)
+        batch_size=_test_batch_size, shuffle=True, **kwargs)
 
 
 def _average_gradients(model):
@@ -104,7 +105,7 @@ def _average_gradients(model):
 
 def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
     training_dir = channel_input_dirs['training']
-    backend, batch_size, test_batch_size, epochs, lr, momentum, \
+    backend, batch_size, _test_batch_size, epochs, lr, momentum, \
         seed, log_interval = _load_hyperparameters(hyperparameters)
     is_distributed = len(hosts) > 1 and backend is not None
     logger.debug("Distributed training - {}".format(is_distributed))
@@ -129,7 +130,7 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
         torch.cuda.manual_seed(seed)
 
     train_loader = _get_train_data_loader(batch_size, training_dir, is_distributed, **kwargs)
-    test_loader = _get_test_data_loader(test_batch_size, training_dir, **kwargs)
+    _test_loader = _get__test_data_loader(_test_batch_size, training_dir, **kwargs)
 
     # TODO: assert the logs when we move to the SDK local mode
     logger.debug("Processes {}/{} ({:.0f}%) of train data".format(
@@ -137,9 +138,9 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
         100. * len(train_loader.sampler) / len(train_loader.dataset)
     ))
 
-    logger.debug("Processes {}/{} ({:.0f}%) of test data".format(
-        len(test_loader.sampler), len(test_loader.dataset),
-        100. * len(test_loader.sampler) / len(test_loader.dataset)
+    logger.debug("Processes {}/{} ({:.0f}%) of _test data".format(
+        len(_test_loader.sampler), len(_test_loader.dataset),
+        100. * len(_test_loader.sampler) / len(_test_loader.dataset)
     ))
 
     model = Net()
@@ -157,10 +158,10 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
         model = torch.nn.DataParallel(model)
 
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
-
     for epoch in range(1, epochs + 1):
         model.train()
         for batch_idx, (data, target) in enumerate(train_loader, 1):
+            data = data.view(batch_size, -1)
             if cuda:
                 data, target = data.cuda(), target.cuda()
             data, target = Variable(data), Variable(target)
@@ -176,27 +177,29 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
                 logger.debug('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_loader.sampler),
                     100. * batch_idx / len(train_loader), loss.data[0]))
-        test(model, test_loader, cuda)
+        _test(model, _test_batch_size, _test_loader, cuda)
     return model
 
 
-def test(model, test_loader, cuda):
+def _test(model, _test_batch_size, _test_loader, cuda):
     model.eval()
-    test_loss = 0
+    _test_loss = 0
     correct = 0
-    for data, target in test_loader:
+    for data, target in _test_loader:
+        data = data.view(_test_batch_size, -1)
+        logger.debug("Reshaped _test data")
         if cuda:
             data, target = data.cuda(), target.cuda()
         data, target = Variable(data, volatile=True), Variable(target)
         output = model(data)
-        test_loss += F.nll_loss(output, target, size_average=False).data[0]  # sum up batch loss
+        _test_loss += F.nll_loss(output, target, size_average=False).data[0]  # sum up batch loss
         pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
         correct += pred.eq(target.data.view_as(pred)).long().cpu().sum()
 
-    test_loss /= len(test_loader.dataset)
+    _test_loss /= len(_test_loader.dataset)
     logger.debug('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-        test_loss, correct, len(test_loader.dataset),
-        100. * correct / len(test_loader.dataset)))
+        _test_loss, correct, len(_test_loader.dataset),
+        100. * correct / len(_test_loader.dataset)))
 
 
 def model_fn(model_dir):
@@ -205,3 +208,146 @@ def model_fn(model_dir):
     with open(os.path.join(model_dir, 'model'), 'rb') as f:
         model.load_state_dict(torch.load(f))
     return model
+
+
+def train3(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
+    training_dir = channel_input_dirs['training']
+    backend, batch_size, _test_batch_size, epochs, lr, momentum, \
+        seed, log_interval = _load_hyperparameters(hyperparameters)
+    logger.info('model_fn')
+    model = torch.nn.DataParallel(Net())
+    with open(os.path.join(training_dir, 'model'), 'rb') as f:
+        model.load_state_dict(torch.load(f))
+
+    logger.info('Loaded the model')
+    # check that model is fine
+    _test_loader = _get__test_data_loader(1000, training_dir)
+    logger.info('Testing the model')
+    # _test_json(model, _test_loader)
+    # _test_csv(model, _test_loader)
+    _test_npz(model, _test_loader)
+
+
+def _test_json(model, _test_loader):
+    model.eval()
+    _test_loss = 0
+    correct = 0
+    for data, target in _test_loader:
+        #logger.info('serialize to json')
+        import json
+        import numpy
+        json_data = json.dumps(data.tolist())
+
+       # logger.info('deserialize from json')
+        input_list = json.loads(json_data)
+        #data = torch.FloatTensor(input_list)
+        data = torch.from_numpy(numpy.array(input_list, dtype=numpy.float32))
+       # logger.info('data: {}'.format(data))
+
+        data, target = Variable(data, volatile=True), Variable(target)
+        output = model(data)
+        _test_loss += F.nll_loss(output, target, size_average=False).data[0] # sum up batch loss
+        pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+        correct += pred.eq(target.data.view_as(pred)).long().cpu().sum()
+
+    _test_loss /= len(_test_loader.dataset)
+    logger.debug('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        _test_loss, correct, len(_test_loader.dataset),
+        100. * correct / len(_test_loader.dataset)))
+
+
+def _test_csv(model, _test_loader):
+    model.eval()
+    _test_loss = 0
+    correct = 0
+    for data, target in _test_loader:
+        logger.info('serialize to csv')
+        import pandas
+        from six import StringIO
+        import numpy
+        df = pandas.DataFrame(data.numpy().tolist())
+        csv_data = df.to_csv()
+        #logger.info('csv data: {}'.format(csv_data))
+
+        logger.info('deserialize from csv')
+        df = pandas.read_csv(StringIO(csv_data))
+        logger.info('convert dataframe to numpy array')
+        ndarray = df.values()
+        logger.info('ndarray: {}'.format(ndarray))
+        # data = torch.FloatTensor(ndarray)
+        data = torch.from_numpy(ndarray)
+        logger.info('data: {}'.format(data))
+
+        data, target = Variable(data, volatile=True), Variable(target)
+        output = model(data)
+        _test_loss += F.nll_loss(output, target, size_average=False).data[0] # sum up batch loss
+        pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+        correct += pred.eq(target.data.view_as(pred)).long().cpu().sum()
+
+    _test_loss /= len(_test_loader.dataset)
+    logger.debug('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        _test_loss, correct, len(_test_loader.dataset),
+        100. * correct / len(_test_loader.dataset)))
+
+
+def _test_npz(model, _test_loader):
+    import numpy
+    from six import StringIO
+    logger.setLevel(logging.DEBUG)
+    logger.debug('_test_npz')
+
+    model.eval()
+    _test_loss = 0
+    correct = 0
+    batch_data_numpy = []
+    batch_target = []
+    for data, target in _test_loader:
+        batch_data_numpy.append(data.numpy())
+        batch_target.append(target)
+
+    logger.debug('len(batch_data): {}'.format(len(batch_data_numpy)))
+    logger.debug('len(batch_target)" {}'.format(len(batch_target)))
+
+    logger.debug('serialize to npz')
+    stream = StringIO()
+    numpy.savez(stream, *batch_data_numpy)
+
+    logger.info('deserialize from npz')
+    npzfile = numpy.load(StringIO(stream.getvalue()))
+    logger.info(' npzfile.files: {}'.format(npzfile.files))
+
+    files = sorted(npzfile.files)
+    ndarrays = numpy.concatenate([npzfile[f] for f in files])
+
+    data = torch.FloatTensor(ndarrays)
+    logger.info('data: {}'.format(data))
+
+    target = torch.from_numpy(numpy.concatenate(batch_target))
+    logger.info('target: {}'.format(target))
+
+    data, target = Variable(data, volatile=True), Variable(target)
+    output = model(data)
+    _test_loss += F.nll_loss(output, target, size_average=False).data[0] # sum up batch loss
+    pred = output.data.max(1, keepdim=True)[1] # get the index of the max log-probability
+    correct += pred.eq(target.data.view_as(pred)).long().cpu().sum()
+
+    _test_loss /= len(_test_loader.dataset)
+    logger.info('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        _test_loss, correct, len(_test_loader.dataset),
+        100. * correct / len(_test_loader.dataset)))
+
+
+mnist_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'mnist')
+mnist_script = os.path.join(mnist_path, 'mnist.py')
+model_cpu_dir = os.path.join(mnist_path, 'model_cpu')
+model_gpu_dir = os.path.join(mnist_path, 'model_gpu')
+
+data_dir = os.path.join(mnist_path, 'data')
+training_dir = os.path.join(data_dir, 'training')
+
+
+def test_mnist():
+    model = train({'training': training_dir}, 0, ['algo-1'], 0, 'algo-1', '198073', {})
+    path = os.path.join(model_cpu_dir, 'model_1d')
+    # recommended way from http://pytorch.org/docs/master/notes/serialization.html
+    torch.save(model.state_dict(), path)

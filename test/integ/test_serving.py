@@ -29,8 +29,11 @@ logger.setLevel(logging.DEBUG)
 
 mnist_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'mnist')
 mnist_script = os.path.join(mnist_path, 'mnist.py')
+mnist_1d_script = os.path.join(mnist_path, 'mnist_1d.py')
 model_cpu_dir = os.path.join(mnist_path, 'model_cpu')
+model_cpu_1d_dir = os.path.join(model_cpu_dir, '1d')
 model_gpu_dir = os.path.join(mnist_path, 'model_gpu')
+model_gpu_1d_dir = os.path.join(model_gpu_dir, '1d')
 
 data_dir = os.path.join(mnist_path, 'data')
 training_dir = os.path.join(data_dir, 'training')
@@ -38,38 +41,81 @@ training_dir = os.path.join(data_dir, 'training')
 ENTRYPOINT = ["python", "-m", "pytorch_container.start"]
 
 
-@pytest.fixture(name='serving_cpu')
-def fixture_serving_cpu(docker_image, opt_ml):
-    return local_mode.serve(customer_script=mnist_script, model_dir=model_cpu_dir, image_name=docker_image,
-                            opt_ml=opt_ml, entrypoint=ENTRYPOINT)
+@pytest.fixture(name='serve_cpu')
+def fixture_serve_cpu(docker_image, opt_ml):
+    def serve(model_dir=model_cpu_dir, script=mnist_script):
+        return local_mode.serve(customer_script=script, model_dir=model_dir, image_name=docker_image,
+                                opt_ml=opt_ml, entrypoint=ENTRYPOINT)
+    return serve
 
 
-@pytest.fixture(name='serving_gpu')
-def fixture_serving_gpu(docker_image, opt_ml):
-    return local_mode.serve(customer_script=mnist_script, model_dir=model_cpu_dir, image_name=docker_image,
-                            use_gpu=True, opt_ml=opt_ml, entrypoint=ENTRYPOINT)
+@pytest.fixture(name='serve_gpu')
+def fixture_serve_gpu(docker_image, opt_ml):
+    def serve(model_dir=model_cpu_dir, script=mnist_script):
+        return local_mode.serve(customer_script=script, model_dir=model_dir, image_name=docker_image,
+                                use_gpu=True, opt_ml=opt_ml, entrypoint=ENTRYPOINT)
+    return serve
 
 
-def test_small_batch_data_cpu(serving_cpu):
-    with serving_cpu:
-        _assert_prediction(batch_size=2)
+@pytest.fixture(name='test_loader')
+def fixture_test_loader():
+    #  Largest batch size is only 300 because client_max_body_size is 5M
+    return _get_test_data_loader(batch_size=300)
 
 
-def test_large_batch_data_cpu(serving_cpu):
-    with serving_cpu:
-        _assert_prediction(batch_size=300)  # client_max_body_size 5m
+def test_serve_cpu_json_npy(serve_cpu, test_loader):
+    with serve_cpu():
+        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, JSON_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, CSV_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, NPY_CONTENT_TYPE)
+
+        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, JSON_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, CSV_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, NPY_CONTENT_TYPE)
+
+
+def test_serve_cpu_csv(serve_cpu, test_loader):
+    with serve_cpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
+        _assert_prediction_csv(test_loader, JSON_CONTENT_TYPE)
+        _assert_prediction_csv(test_loader, CSV_CONTENT_TYPE)
+        _assert_prediction_csv(test_loader, NPY_CONTENT_TYPE)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_small_batch_data_gpu(serving_gpu):
-    with serving_gpu:
-        _assert_prediction(batch_size=1)
+def test_serve_gpu_json_npy(serve_gpu, test_loader):
+    with serve_gpu():
+        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, JSON_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, CSV_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, NPY_CONTENT_TYPE)
+
+        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, JSON_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, CSV_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, NPY_CONTENT_TYPE)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_large_batch_data_gpu(serving_gpu):
-    with serving_gpu:
-        _assert_prediction(batch_size=300)  # client_max_body_size 5m
+def test_serve_gpu_csv(serve_gpu, test_loader):
+    with serve_gpu(model_dir=model_gpu_1d_dir, script=mnist_1d_script):
+        _assert_prediction_csv(test_loader, JSON_CONTENT_TYPE)
+        _assert_prediction_csv(test_loader, CSV_CONTENT_TYPE)
+        _assert_prediction_csv(test_loader, NPY_CONTENT_TYPE)
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
+def test_serve_cpu_model_on_gpu(serve_gpu, test_loader):
+    with serve_gpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
+        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, JSON_CONTENT_TYPE)
+
+
+def _assert_prediction_npy_json(test_loader, request_type, accept):
+    output = _make_prediction(_get_mnist_batch(test_loader).numpy(), request_type, accept)
+    assert np.asarray(output).shape == (test_loader.batch_size, 10)
+
+
+def _assert_prediction_csv(test_loader, accept):
+    data = _get_mnist_batch(test_loader).view(test_loader.batch_size, -1)
+    output = _make_prediction(data, CSV_CONTENT_TYPE, accept)
+    assert np.asarray(output).shape == (test_loader.batch_size, 10)
 
 
 def _get_test_data_loader(batch_size):
@@ -82,26 +128,9 @@ def _get_test_data_loader(batch_size):
         batch_size=batch_size, shuffle=True)
 
 
-def _test_model(docker_image, opt_ml):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, entrypoint=ENTRYPOINT)
-
-
-def _assert_prediction(batch_size):
-    test_loader = _get_test_data_loader(batch_size)
-
-   # output = _mnist_prediction(test_loader, JSON_CONTENT_TYPE)
-   # assert np.asarray(output).shape == (batch_size, 10)
-
-   # output = _mnist_prediction(test_loader, NPY_CONTENT_TYPE)
-   # assert np.asarray(output).shape == (batch_size, 10)
-
-    output = _make_prediction(torch.rand(batch_size, 784), CSV_CONTENT_TYPE, CSV_CONTENT_TYPE)
-    assert np.asarray(output).shape == (batch_size, 10)
-
-
-def _mnist_prediction(test_loader, content_type):
+def _get_mnist_batch(test_loader):
     for data in test_loader:
-        return _make_prediction(data[0].numpy(), content_type, content_type)
+        return data[0]
 
 
 def _make_prediction(data, request_type, accept):
@@ -130,7 +159,7 @@ def _deserialize_output(serialized_data, content_type):
         return np.array(json.loads(serialized_data.decode()))
 
     if content_type == CSV_CONTENT_TYPE:
-        return np.genfromtxt(StringIO(serialized_data), delimiter=',')
+        return np.genfromtxt(StringIO(serialized_data.decode()), delimiter=',')
 
     if content_type == NPY_CONTENT_TYPE:
         return np.load(BytesIO(serialized_data))

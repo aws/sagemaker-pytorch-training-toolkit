@@ -93,7 +93,7 @@ def opt_ml():
     opt_ml_dir = '/private{}'.format(tmp) if platform.system() == 'Darwin' else tmp
     yield opt_ml_dir
 
-    shutil.rmtree(tmp, True)
+    #shutil.rmtree(tmp, True)
 
 
 @pytest.fixture(scope='session')
