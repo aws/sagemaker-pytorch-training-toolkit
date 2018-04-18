@@ -95,7 +95,7 @@ def test_serve_gpu_json_npy(serve_gpu, test_loader):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_serve_gpu_csv(serve_gpu, test_loader):
-    with serve_gpu(model_dir=model_gpu_1d_dir, script=mnist_1d_script):
+    with serve_gpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
         _assert_prediction_csv(test_loader, JSON_CONTENT_TYPE)
         _assert_prediction_csv(test_loader, CSV_CONTENT_TYPE)
         _assert_prediction_csv(test_loader, NPY_CONTENT_TYPE)
