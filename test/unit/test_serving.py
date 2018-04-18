@@ -37,7 +37,7 @@ def test_model_fn():
 
 
 def test_input_fn_json(tensor):
-    json_data = json.dumps(tensor.numpy().tolist())
+    json_data = json.dumps(tensor.cpu().numpy().tolist())
     deserialized_np_array = input_fn(json_data, JSON_CONTENT_TYPE)
 
     assert deserialized_np_array.is_cuda == torch.cuda.is_available()
@@ -52,7 +52,6 @@ def test_input_fn_csv():
     deserialized_np_array = input_fn(str_io.getvalue(), CSV_CONTENT_TYPE)
 
     tensor = torch.FloatTensor(array)
-    assert type(deserialized_np_array) == torch.FloatTensor
     assert torch.equal(tensor, deserialized_np_array)
     assert deserialized_np_array.is_cuda == torch.cuda.is_available()
 
@@ -91,7 +90,6 @@ def test_predict_fn_cpu_cpu(tensor):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_predict_fn_cpu_gpu(tensor):
-    tensor = tensor.cpu()
     model = ModelMock().cuda()
     prediction = predict_fn(tensor.cpu(), model)
     assert torch.equal(model(Variable(tensor)), prediction)
@@ -100,7 +98,7 @@ def test_predict_fn_cpu_gpu(tensor):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_predict_fn_gpu_cpu(tensor):
-    prediction = predict_fn(tensor.cpu(), ModelMock().cuda())
+    prediction = predict_fn(tensor.cpu(), ModelMock().cpu())
     model = ModelMock().cuda()
     assert torch.equal(model(Variable(tensor)), prediction)
     assert prediction.is_cuda is True
@@ -118,7 +116,7 @@ def test_predict_fn_gpu_gpu(tensor):
 def test_output_fn_json(tensor):
     output = output_fn(tensor, JSON_CONTENT_TYPE)
 
-    assert json.dumps(tensor.numpy().tolist()) in output
+    assert json.dumps(tensor.cpu().numpy().tolist()) in output
     assert JSON_CONTENT_TYPE in output
 
 
