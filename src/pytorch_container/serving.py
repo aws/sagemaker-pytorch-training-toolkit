@@ -20,7 +20,7 @@ def model_fn(model_dir):
     Loads a model. For PyTorch, a default function to load a model cannot be provided.
     Users should provide customized model_fn() in script.
     Args:
-        model_dir:
+        model_dir: a directory where model is saved.
     Returns: A PyTorch model.
     """
     raise NotImplementedError('No default model_fn provided. User should provide model_fn in script.')
@@ -32,7 +32,7 @@ def input_fn(serialized_input_data, content_type):
     Args:
         serialized_input_data: the request payload serialized in the content_type format
         content_type: the request content_type
-    Returns: deserialized input_data
+    Returns: deserialized into torch.FloatTensor input_data
     """
     input_data = torch.from_numpy(_deserialize_input(serialized_input_data, content_type))
     if torch.cuda.is_available():
@@ -42,11 +42,11 @@ def input_fn(serialized_input_data, content_type):
 
 @engine.predict_fn()
 def predict_fn(input_data, model):
-    """A default prediction function for a Generic Framework.
+    """A default predict_fn for PyTorch. Calls a model on data deserialized in input_fn.
 
     Args:
-        input_data: input data for prediction deserialized by input_fn
-        model: model loaded in memory by model_fn
+        input_data: input data (torch.FloatTensor) for prediction deserialized by input_fn
+        model: PyTvorch model loaded in memory by model_fn
 
     Returns: a prediction
     """
@@ -60,7 +60,7 @@ def predict_fn(input_data, model):
 
 @engine.output_fn()
 def output_fn(prediction_output, accept):
-    """A default output_fn for a Generic Framework
+    """A default output_fn for PyTorch. Serializes predictions from predict_fn to JSON, CSV or NPZ format.
 
     Args:
         prediction_output: a prediction result from predict_fn
