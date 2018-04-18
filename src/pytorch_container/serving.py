@@ -16,8 +16,7 @@ logger = logging.getLogger(__name__)
 
 @engine.model_fn()
 def model_fn(model_dir):
-    """
-    Loads a model. For PyTorch, a default function to load a model cannot be provided.
+    """Loads a model. For PyTorch, a default function to load a model cannot be provided.
     Users should provide customized model_fn() in script.
     Args:
         model_dir: a directory where model is saved.
@@ -32,18 +31,16 @@ def input_fn(serialized_input_data, content_type):
     Args:
         serialized_input_data: the request payload serialized in the content_type format
         content_type: the request content_type
-    Returns: deserialized into torch.FloatTensor input_data
+    Returns: input_data deserialized into torch.FloatTensor or torch.cuda.FloatTensor depending if cuda is available.
     """
-    input_data = torch.from_numpy(_deserialize_input(serialized_input_data, content_type))
-    if torch.cuda.is_available():
-        input_data = input_data.cuda()
-    return input_data
+    input_data = _deserialize_input(serialized_input_data, content_type)
+    return torch.cuda.FloatTensor(input_data) if torch.cuda.is_available() else torch.FloatTensor(input_data)
 
 
 @engine.predict_fn()
 def predict_fn(input_data, model):
     """A default predict_fn for PyTorch. Calls a model on data deserialized in input_fn.
-
+    Runs prediction on GPU if cuda is available.
     Args:
         input_data: input data (torch.FloatTensor) for prediction deserialized by input_fn
         model: PyTvorch model loaded in memory by model_fn
