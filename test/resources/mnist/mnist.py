@@ -102,7 +102,7 @@ def _average_gradients(model):
         param.grad.data /= size
 
 
-def train2(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
+def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
     training_dir = channel_input_dirs['training']
     backend, batch_size, test_batch_size, epochs, lr, momentum, \
         seed, log_interval = _load_hyperparameters(hyperparameters)
@@ -202,18 +202,18 @@ def test(model, test_loader, cuda):
 def model_fn(model_dir):
     logger.info('model_fn')
     model = torch.nn.DataParallel(Net())
-    with open(os.path.join(model_dir, 'model'), 'r') as f:
+    with open(os.path.join(model_dir, 'model'), 'rb') as f:
         model.load_state_dict(torch.load(f))
     return model
 
 
-def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
+def train3(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
     training_dir = channel_input_dirs['training']
     backend, batch_size, test_batch_size, epochs, lr, momentum, \
         seed, log_interval = _load_hyperparameters(hyperparameters)
     logger.info('model_fn')
     model = torch.nn.DataParallel(Net())
-    with open(os.path.join(training_dir, 'model'), 'r') as f:
+    with open(os.path.join(training_dir, 'model'), 'rb') as f:
         model.load_state_dict(torch.load(f))
 
     logger.info('Loaded the model')

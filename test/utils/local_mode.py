@@ -1,6 +1,5 @@
 import json
 import logging
-import pickle
 import shutil
 import subprocess
 import sys
@@ -10,14 +9,11 @@ from time import sleep
 
 import boto3
 import os
-import requests
 import yaml
 
 from botocore.exceptions import ClientError
 from os.path import join
 from sagemaker import fw_utils
-import test.utils
-
 
 CYAN_COLOR = '\033[36m'
 END_COLOR = '\033[0m'

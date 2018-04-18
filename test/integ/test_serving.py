@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 import os
 import json
-import numpy
 from six import StringIO, BytesIO
 import pytest
 import requests
@@ -39,29 +38,37 @@ training_dir = os.path.join(data_dir, 'training')
 ENTRYPOINT = ["python", "-m", "pytorch_container.start"]
 
 
-def test_small_batch_data_cpu(region, image_name, opt_ml):
-    with local_mode.serve(customer_script=mnist_script, model_dir=model_cpu_dir, image_name=image_name(),
-                     opt_ml=opt_ml, entrypoint=ENTRYPOINT):
+@pytest.fixture(name='serving_cpu')
+def fixture_serving_cpu(docker_image, opt_ml):
+    return local_mode.serve(customer_script=mnist_script, model_dir=model_cpu_dir, image_name=docker_image,
+                            opt_ml=opt_ml, entrypoint=ENTRYPOINT)
+
+
+@pytest.fixture(name='serving_gpu')
+def fixture_serving_gpu(docker_image, opt_ml):
+    return local_mode.serve(customer_script=mnist_script, model_dir=model_cpu_dir, image_name=docker_image,
+                            use_gpu=True, opt_ml=opt_ml, entrypoint=ENTRYPOINT)
+
+
+def test_small_batch_data_cpu(serving_cpu):
+    with serving_cpu:
         _assert_prediction(batch_size=2)
 
 
-def test_large_batch_data_cpu(region, image_name, opt_ml):
-    with local_mode.serve(customer_script=mnist_script, model_dir=model_cpu_dir, image_name=image_name(),
-                     opt_ml=opt_ml, entrypoint=ENTRYPOINT):
+def test_large_batch_data_cpu(serving_cpu):
+    with serving_cpu:
         _assert_prediction(batch_size=300)  # client_max_body_size 5m
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_small_batch_data_gpu(region, image_name, opt_ml):
-    with local_mode.serve(customer_script=mnist_script, model_dir=model_gpu_dir, image_name=image_name(),
-                     opt_ml=opt_ml, entrypoint=ENTRYPOINT):
+def test_small_batch_data_gpu(serving_gpu):
+    with serving_gpu:
         _assert_prediction(batch_size=1)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_large_batch_data_gpu(region, image_name, opt_ml):
-    with local_mode.serve(customer_script=mnist_script, model_dir=model_gpu_dir, image_name=image_name(),
-                     opt_ml=opt_ml, entrypoint=ENTRYPOINT):
+def test_large_batch_data_gpu(serving_gpu):
+    with serving_gpu:
         _assert_prediction(batch_size=300)  # client_max_body_size 5m
 
 
@@ -75,93 +82,55 @@ def _get_test_data_loader(batch_size):
         batch_size=batch_size, shuffle=True)
 
 
-def test_model(region, image_name, opt_ml):
-    local_mode.train(region, mnist_script, data_dir, image_name(), opt_ml, entrypoint=ENTRYPOINT)
-
-
-def test_csv():
-    import pandas
-    from six import StringIO
-    import numpy
-
-    data = numpy.ones((2, 3, 4)) * 2
-    logger.info('serialize to csv: {}'.format(data))
-    df = pandas.DataFrame(data.tolist())
-    csv_data = df.to_csv()
-    #logger.info('csv data: {}'.format(csv_data))
-
-    logger.info('deserialize from csv: {}'.format(csv_data))
-    df = pandas.read_csv(StringIO(csv_data))
-    logger.info('convert dataframe to numpy array')
-    ndarray = numpy.array(df.values, dtype=numpy.float32)
-    logger.info('ndarray: {}'.format(ndarray))
-    # data = torch.FloatTensor(ndarray)
-    data = torch.from_numpy(ndarray)
-    logger.info('data: {}'.format(data))
-
-
-def test_npz():
-    logger.info('serialize to npz')
-    import numpy
-    from six import StringIO
-
-    arr_0 = numpy.zeros((1, 1, 3, 4))
-    arr_1 = numpy.ones((1, 1, 3, 4))
-    arr_2 = numpy.ones((1, 1, 3, 4)) * 2
-    stream = StringIO()
-    numpy.savez(stream, arr_2=arr_2, arr_0=arr_0, arr_1=arr_1)
-
-    logger.info('deserialize from npz')
-    npzfile = numpy.load(StringIO(stream.getvalue()))
-    ndarrays = numpy.concatenate([npzfile[f] for f in npzfile.files])
-    data = torch.FloatTensor(ndarrays)
-    logger.info('data: {}'.format(data))
-
-
-def _mnist_prediction(test_loader, content_type):
-    for data in test_loader:
-        logger.info(data[0])
-        logger.info(data[0].numpy())
-        return make_prediction(data[0].numpy(), content_type)
+def _test_model(docker_image, opt_ml):
+    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, entrypoint=ENTRYPOINT)
 
 
 def _assert_prediction(batch_size):
     test_loader = _get_test_data_loader(batch_size)
 
-    output = _mnist_prediction(test_loader, JSON_CONTENT_TYPE)
+   # output = _mnist_prediction(test_loader, JSON_CONTENT_TYPE)
+   # assert np.asarray(output).shape == (batch_size, 10)
+
+   # output = _mnist_prediction(test_loader, NPY_CONTENT_TYPE)
+   # assert np.asarray(output).shape == (batch_size, 10)
+
+    output = _make_prediction(torch.rand(batch_size, 784), CSV_CONTENT_TYPE, CSV_CONTENT_TYPE)
     assert np.asarray(output).shape == (batch_size, 10)
 
-    #output = _mnist_prediction(test_loader, CSV_CONTENT_TYPE)
-    #assert np.asarray(output).shape == (batch_size, 10)
+
+def _mnist_prediction(test_loader, content_type):
+    for data in test_loader:
+        return _make_prediction(data[0].numpy(), content_type, content_type)
 
 
-def make_prediction(data, request_type, accept):
+def _make_prediction(data, request_type, accept):
     serialized_output = requests.post(local_mode.REQUEST_URL, data=_serialize_input(data, request_type),
                                       headers={'Content-type': request_type, 'Accept': accept}).content
     return _deserialize_output(serialized_output, accept)
 
 
-def _deserialize_output(serialized_input_data, content_type):
+def _serialize_input(data_to_serialize, content_type):
     if content_type == JSON_CONTENT_TYPE:
-        return np.array(json.loads(serialized_input_data), dtype=np.float32)
-
-    if content_type == CSV_CONTENT_TYPE:
-        return np.genfromtxt(StringIO(serialized_input_data), dtype=np.float32, delimiter=',')
-
-    if content_type == NPY_CONTENT_TYPE:
-        return np.load(BytesIO(serialized_input_data))
-
-
-def _serialize_input(prediction_output, content_type):
-    if content_type == JSON_CONTENT_TYPE:
-        return json.dumps(prediction_output.tolist())
+        return json.dumps(data_to_serialize.tolist())
 
     if content_type == CSV_CONTENT_TYPE:
         stream = StringIO()
-        np.savetxt(stream, prediction_output, delimiter=',', fmt='%s')
+        np.savetxt(stream, data_to_serialize, delimiter=',', fmt='%s')
         return stream.getvalue()
 
     if content_type == NPY_CONTENT_TYPE:
         stream = BytesIO()
-        np.save(stream, prediction_output)
+        np.save(stream, data_to_serialize)
         return stream.getvalue()
+
+
+def _deserialize_output(serialized_data, content_type):
+    if content_type == JSON_CONTENT_TYPE:
+        return np.array(json.loads(serialized_data.decode()))
+
+    if content_type == CSV_CONTENT_TYPE:
+        return np.genfromtxt(StringIO(serialized_data), delimiter=',')
+
+    if content_type == NPY_CONTENT_TYPE:
+        return np.load(BytesIO(serialized_data))

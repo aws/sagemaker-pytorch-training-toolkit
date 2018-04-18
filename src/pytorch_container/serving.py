@@ -13,6 +13,14 @@ from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_C
 engine = ServingEngine()
 logger = logging.getLogger(__name__)
 
+logging.getLogger('boto').setLevel(logging.ERROR)
+logging.getLogger('boto3').setLevel(logging.ERROR)
+logging.getLogger('botocore').setLevel(logging.ERROR)
+logging.getLogger('s3transfer').setLevel(logging.ERROR)
+logging.getLogger('factory.py').setLevel(logging.ERROR)
+logging.getLogger('auth.py').setLevel(logging.ERROR)
+logging.getLogger('connectionpool.py').setLevel(logging.ERROR)
+
 
 @engine.model_fn()
 def model_fn(model_dir):
@@ -75,7 +83,6 @@ def output_fn(prediction_output, accept):
     return _serialize_output(prediction_output, accept), accept
 
 
-
 # TODO: this function is actually never called:
 #       https://github.com/aws/sagemaker-container-support/blob/mvs-poc/src/container_support/app.py#L110-L116
 @engine.transform_fn()
@@ -90,6 +97,7 @@ def transform_fn(model, data, content_type, accept):
 def _deserialize_input(serialized_input_data, content_type):
     # TODO: Move deserialization of serialized_input_data to np.array to conatiner_support
     #       in order for it to be reused in all or some other containers
+    logger.debug('_deserialize_input: {}'.format(content_type))
     if content_type == JSON_CONTENT_TYPE:
         return np.array(json.loads(serialized_input_data), dtype=np.float32)
 
@@ -105,6 +113,7 @@ def _deserialize_input(serialized_input_data, content_type):
 def _serialize_output(prediction_output, content_type):
     # TODO: Move serialization of prediction from np.array to conatiner_support
     #       in order for it to be reused in all or some other containers
+    logger.debug('_serialize_output: {}'.format(content_type))
     if content_type == JSON_CONTENT_TYPE:
         return json.dumps(prediction_output.tolist())
 
