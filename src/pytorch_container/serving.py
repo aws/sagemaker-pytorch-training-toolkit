@@ -13,14 +13,6 @@ from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_C
 engine = ServingEngine()
 logger = logging.getLogger(__name__)
 
-logging.getLogger('boto').setLevel(logging.ERROR)
-logging.getLogger('boto3').setLevel(logging.ERROR)
-logging.getLogger('botocore').setLevel(logging.ERROR)
-logging.getLogger('s3transfer').setLevel(logging.ERROR)
-logging.getLogger('factory.py').setLevel(logging.ERROR)
-logging.getLogger('auth.py').setLevel(logging.ERROR)
-logging.getLogger('connectionpool.py').setLevel(logging.ERROR)
-
 
 @engine.model_fn()
 def model_fn(model_dir):
