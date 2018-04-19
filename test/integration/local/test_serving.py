@@ -27,7 +27,7 @@ from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_C
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-mnist_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'resources', 'mnist')
+mnist_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'resources', 'mnist')
 mnist_script = os.path.join(mnist_path, 'mnist.py')
 mnist_1d_script = os.path.join(mnist_path, 'mnist_1d.py')
 model_cpu_dir = os.path.join(mnist_path, 'model_cpu')

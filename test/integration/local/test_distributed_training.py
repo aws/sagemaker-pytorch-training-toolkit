@@ -15,7 +15,7 @@ import pytest
 import torch
 from test.utils import local_mode
 
-resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'resources'))
+resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'resources'))
 mnist_path = os.path.join(resources_path, 'mnist')
 mnist_script = os.path.join(mnist_path, 'mnist.py')
 data_dir = os.path.join(mnist_path, 'data')
