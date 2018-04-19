@@ -1,6 +1,5 @@
 import json
 import logging
-import pickle
 import shutil
 import subprocess
 import sys
@@ -10,14 +9,11 @@ from time import sleep
 
 import boto3
 import os
-import requests
 import yaml
 
 from botocore.exceptions import ClientError
 from os.path import join
 from sagemaker import fw_utils
-import test.utils
-
 
 CYAN_COLOR = '\033[36m'
 END_COLOR = '\033[0m'
@@ -591,18 +587,3 @@ def install_container_support():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     sagemaker_container_dir = join(dir_path, '..', '..', 'sagemaker-container-support')
     check_call('pip install --upgrade .', cwd=sagemaker_container_dir)
-
-
-def request(data, request_type=JSON_CONTENT_TYPE):
-    if request_type == JSON_CONTENT_TYPE:
-        serializer = json
-    elif request_type == CSV_CONTENT_TYPE:
-        serializer = test.utils.csv_parser
-    else:
-        serializer = pickle
-    serialized_output = requests.post(REQUEST_URL,
-                                      data=serializer.dumps(data),
-                                      headers={'Content-type': request_type,
-                                               'Accept': request_type}).content
-    print(serialized_output)
-    return serializer.loads(serialized_output)

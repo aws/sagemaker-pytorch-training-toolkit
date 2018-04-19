@@ -59,7 +59,7 @@ def _load_hyperparameters(hyperparameters):
     # number of epochs to train (default: 10)
     epochs = hyperparameters.get('epochs', 3)
     # learning rate (default: 0.01)
-    lr = hyperparameters.get('lr', 0.1)
+    lr = hyperparameters.get('lr', 0.01)
     # SGD momentum (default: 0.5)
     momentum = hyperparameters.get('momentum', 0.5)
     # random seed (default: 1)
@@ -197,3 +197,11 @@ def test(model, test_loader, cuda):
     logger.debug('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
+
+
+def model_fn(model_dir):
+    logger.info('model_fn')
+    model = torch.nn.DataParallel(Net())
+    with open(os.path.join(model_dir, 'model'), 'rb') as f:
+        model.load_state_dict(torch.load(f))
+    return model
