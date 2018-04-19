@@ -10,7 +10,7 @@ from torch.autograd import Variable
 from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_CONTENT_TYPE, \
     UnsupportedContentTypeError, UnsupportedAcceptTypeError
 
-from pytorch_container.serving import model_fn, input_fn, predict_fn, output_fn, transform_fn
+from pytorch_container.serving import model_fn, input_fn, predict_fn, output_fn
 
 
 class ModelMock(nn.Module):
