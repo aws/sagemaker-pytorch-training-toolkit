@@ -10,6 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import boto3
 import os
 import logging
 import platform
@@ -18,7 +19,7 @@ import shutil
 import sys
 import tempfile
 
-
+from sagemaker import Session
 from test.utils import local_mode
 
 logger = logging.getLogger(__name__)
@@ -36,8 +37,10 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 def pytest_addoption(parser):
     parser.addoption('--build-image', '-D', action="store_true")
     parser.addoption('--build-base-image', '-B', action="store_true")
+    parser.addoption('--aws-id')
+    parser.addoption('--instance-type')
     parser.addoption('--install-container-support', '-C', action="store_true")
-    parser.addoption('--docker-base-name', default='pytorch')
+    parser.addoption('--docker-base-name', default='sagemaker-pytorch')
     parser.addoption('--region', default='us-west-2')
     parser.addoption('--framework-version', default='0.3.1')
     parser.addoption('--py-version', choices=['2', '3'], default=str(sys.version_info.major))
@@ -46,40 +49,40 @@ def pytest_addoption(parser):
     parser.addoption('--tag', default=None)
 
 
-@pytest.fixture(scope='session')
-def docker_base_name(request):
+@pytest.fixture(scope='session', name='docker_base_name')
+def fixture_docker_base_name(request):
     return request.config.getoption('--docker-base-name')
 
 
-@pytest.fixture(scope='session')
-def region(request):
+@pytest.fixture(scope='session', name='region')
+def fixture_region(request):
     return request.config.getoption('--region')
 
 
-@pytest.fixture(scope='session')
-def framework_version(request):
+@pytest.fixture(scope='session', name='framework_version')
+def fixture_framework_version(request):
     return request.config.getoption('--framework-version')
 
 
-@pytest.fixture(scope='session')
-def py_version(request):
+@pytest.fixture(scope='session', name='py_version')
+def fixture_py_version(request):
     return 'py{}'.format(int(request.config.getoption('--py-version')))
 
 
-@pytest.fixture(scope='session')
-def processor(request):
+@pytest.fixture(scope='session', name='processor')
+def fixture_processor(request):
     return request.config.getoption('--processor')
 
 
-@pytest.fixture(scope='session')
-def tag(request, framework_version, processor, py_version):
+@pytest.fixture(scope='session', name='tag')
+def fixture_tag(request, framework_version, processor, py_version):
     provided_tag = request.config.getoption('--tag')
     default_tag = '{}-{}-{}'.format(framework_version, processor, py_version)
     return provided_tag if provided_tag else default_tag
 
 
-@pytest.fixture(scope='session')
-def docker_image(docker_base_name, tag):
+@pytest.fixture(scope='session', name='docker_image')
+def fixture_docker_image(docker_base_name, tag):
     return '{}:{}'.format(docker_base_name, tag)
 
 
@@ -96,20 +99,20 @@ def opt_ml():
     shutil.rmtree(tmp, True)
 
 
-@pytest.fixture(scope='session')
-def use_gpu(processor):
+@pytest.fixture(scope='session', name='use_gpu')
+def fixture_use_gpu(processor):
     return processor == 'gpu'
 
 
-@pytest.fixture(scope='session', autouse=True)
-def install_container_support(request):
+@pytest.fixture(scope='session', name='install_container_support', autouse=True)
+def fixture_install_container_support(request):
     install = request.config.getoption('--install-container-support')
     if install:
         local_mode.install_container_support()
 
 
-@pytest.fixture(scope='session', autouse=True)
-def build_base_image(request, framework_version, py_version, processor, tag, docker_base_name):
+@pytest.fixture(scope='session', name='build_base_image', autouse=True)
+def fixture_build_base_image(request, framework_version, py_version, processor, tag, docker_base_name):
     build_base_image = request.config.getoption('--build-base-image')
     if build_base_image:
         return local_mode.build_base_image(framework_name=docker_base_name,
@@ -122,8 +125,8 @@ def build_base_image(request, framework_version, py_version, processor, tag, doc
     return tag
 
 
-@pytest.fixture(scope='session', autouse=True)
-def build_image(request, framework_version, py_version, processor, tag, docker_base_name):
+@pytest.fixture(scope='session', name='build_image', autouse=True)
+def fixture_build_image(request, framework_version, py_version, processor, tag, docker_base_name):
     build_image = request.config.getoption('--build-image')
     if build_image:
         return local_mode.build_image(framework_name=docker_base_name,
@@ -134,3 +137,38 @@ def build_image(request, framework_version, py_version, processor, tag, docker_b
                                       cwd=os.path.join(dir_path, '..'))
 
     return tag
+
+
+@pytest.fixture(scope='session', name='sagemaker_session')
+def fixture_sagemaker_session(region):
+    return Session(boto_session=boto3.Session(region_name=region))
+
+
+@pytest.fixture(name='aws_id', scope='session')
+def fixture_aws_id(request):
+    return request.config.getoption('--aws-id')
+
+
+@pytest.fixture(name='instance_type', scope='session')
+def fixture_instance_type(request):
+    return request.config.getoption('--instance-type')
+
+
+@pytest.fixture(name='docker_registry', scope='session')
+def fixture_docker_registry(aws_id, region):
+    return '{}.dkr.ecr.{}.amazonaws.com'.format(aws_id, region)
+
+
+@pytest.fixture(name='ecr_image', scope='session')
+def fixture_ecr_image(docker_registry, docker_base_name, tag):
+    return '{}/{}:{}'.format(docker_registry, docker_base_name, tag)
+
+
+@pytest.fixture(scope='session', name='dist_cpu_backend', params=['tcp', 'gloo'])
+def fixture_dist_cpu_backend(request):
+    return request.param
+
+
+@pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo'])
+def fixture_dist_gpu_backend(request):
+    return request.param
