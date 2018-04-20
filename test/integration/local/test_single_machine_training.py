@@ -17,7 +17,7 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-mnist_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'resources', 'mnist'))
+mnist_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'resources', 'mnist'))
 data_dir = os.path.join(mnist_path, 'data')
 
 training_dir = os.path.join(data_dir, 'training')
