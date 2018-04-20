@@ -10,13 +10,10 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-import os
 import pytest
+from test.integration import dist_operations_path
 from test.integration.sagemaker.test_estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout
-
-resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'resources'))
-dist_operations_path = os.path.join(resources_path, 'distributed_operations.py')
 
 
 @pytest.mark.skip_gpu

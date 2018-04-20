@@ -11,20 +11,11 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 import numpy as np
-import os
 import pytest
+from test.integration import training_dir, mnist_script
+
 from test.integration.sagemaker.test_estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout, timeout_and_delete_endpoint
-
-mnist_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'resources', 'mnist'))
-mnist_script = os.path.join(mnist_path, 'mnist.py')
-data_dir = os.path.join(mnist_path, 'data')
-training_dir = os.path.join(data_dir, 'training')
-mnist_1d_script = os.path.join(mnist_path, 'mnist_1d.py')
-model_cpu_dir = os.path.join(mnist_path, 'model_cpu')
-model_cpu_1d_dir = os.path.join(model_cpu_dir, '1d')
-model_gpu_dir = os.path.join(mnist_path, 'model_gpu')
-model_gpu_1d_dir = os.path.join(model_gpu_dir, '1d')
 
 
 @pytest.mark.skip_gpu

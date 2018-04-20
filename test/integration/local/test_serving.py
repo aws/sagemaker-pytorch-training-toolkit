@@ -10,35 +10,19 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-import os
 import json
 from six import StringIO, BytesIO
 import pytest
 import requests
 from test.utils import local_mode
 import torch
-import logging
 import torch.utils.data
 import torch.utils.data.distributed
 from torchvision import datasets, transforms
 import numpy as np
 from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_CONTENT_TYPE
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-mnist_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'resources', 'mnist')
-mnist_script = os.path.join(mnist_path, 'mnist.py')
-mnist_1d_script = os.path.join(mnist_path, 'mnist_1d.py')
-model_cpu_dir = os.path.join(mnist_path, 'model_cpu')
-model_cpu_1d_dir = os.path.join(model_cpu_dir, '1d')
-model_gpu_dir = os.path.join(mnist_path, 'model_gpu')
-model_gpu_1d_dir = os.path.join(model_gpu_dir, '1d')
-
-data_dir = os.path.join(mnist_path, 'data')
-training_dir = os.path.join(data_dir, 'training')
-
-ENTRYPOINT = ["python", "-m", "pytorch_container.start"]
+from test.integration import training_dir, mnist_script, mnist_1d_script, model_cpu_dir, model_gpu_dir, \
+    model_cpu_1d_dir,  ENTRYPOINT
 
 
 @pytest.fixture(name='serve_cpu')
@@ -51,7 +35,7 @@ def fixture_serve_cpu(docker_image, opt_ml):
 
 @pytest.fixture(name='serve_gpu')
 def fixture_serve_gpu(docker_image, opt_ml):
-    def serve(model_dir=model_cpu_dir, script=mnist_script):
+    def serve(model_dir=model_gpu_dir, script=mnist_script):
         return local_mode.serve(customer_script=script, model_dir=model_dir, image_name=docker_image,
                                 use_gpu=True, opt_ml=opt_ml, entrypoint=ENTRYPOINT)
     return serve
@@ -119,7 +103,6 @@ def _assert_prediction_csv(test_loader, accept):
 
 
 def _get_test_data_loader(batch_size):
-    logger.info('training dir: {}'.format(os.listdir(training_dir)))
     return torch.utils.data.DataLoader(
         datasets.MNIST(training_dir, train=False, transform=transforms.Compose([
             transforms.ToTensor(),
