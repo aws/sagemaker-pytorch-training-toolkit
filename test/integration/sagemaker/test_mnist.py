@@ -14,7 +14,7 @@ import numpy as np
 import pytest
 from test.integration import training_dir, mnist_script
 
-from test.integration.sagemaker.test_estimator import PytorchTestEstimator
+from test.integration.sagemaker.estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout, timeout_and_delete_endpoint
 
 

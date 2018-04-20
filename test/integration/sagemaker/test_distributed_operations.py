@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 import pytest
 from test.integration import dist_operations_path
-from test.integration.sagemaker.test_estimator import PytorchTestEstimator
+from test.integration.sagemaker.estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout
 
 
