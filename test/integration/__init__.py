@@ -24,5 +24,3 @@ model_cpu_dir = os.path.join(mnist_path, 'model_cpu')
 model_cpu_1d_dir = os.path.join(model_cpu_dir, '1d')
 model_gpu_dir = os.path.join(mnist_path, 'model_gpu')
 model_gpu_1d_dir = os.path.join(model_gpu_dir, '1d')
-
-ENTRYPOINT = ["python", "-m", "pytorch_container.start"]

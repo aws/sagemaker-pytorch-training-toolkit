@@ -22,14 +22,14 @@ from torchvision import datasets, transforms
 import numpy as np
 from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_CONTENT_TYPE
 from test.integration import training_dir, mnist_script, mnist_1d_script, model_cpu_dir, model_gpu_dir, \
-    model_cpu_1d_dir,  ENTRYPOINT
+    model_cpu_1d_dir
 
 
 @pytest.fixture(name='serve_cpu')
 def fixture_serve_cpu(docker_image, opt_ml):
     def serve(model_dir=model_cpu_dir, script=mnist_script):
         return local_mode.serve(customer_script=script, model_dir=model_dir, image_name=docker_image,
-                                opt_ml=opt_ml, entrypoint=ENTRYPOINT)
+                                opt_ml=opt_ml)
     return serve
 
 
@@ -37,7 +37,7 @@ def fixture_serve_cpu(docker_image, opt_ml):
 def fixture_serve_gpu(docker_image, opt_ml):
     def serve(model_dir=model_gpu_dir, script=mnist_script):
         return local_mode.serve(customer_script=script, model_dir=model_dir, image_name=docker_image,
-                                use_gpu=True, opt_ml=opt_ml, entrypoint=ENTRYPOINT)
+                                use_gpu=True, opt_ml=opt_ml)
     return serve
 
 
