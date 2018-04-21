@@ -10,13 +10,10 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-from test.utils import local_mode
-from test.integration import data_dir, mnist_script
+import pytest
 
 
-def test_mnist_cpu(docker_image, opt_ml, use_gpu):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, use_gpu=use_gpu)
-
-    assert local_mode.file_exists(opt_ml, 'model/model'), 'Model file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+@pytest.fixture(autouse=True)
+def skip_by_device_type(request, tag):
+    if (request.node.get_marker('skip_gpu') and 'gpu' in tag) or (request.node.get_marker('skip_cpu') and 'cpu' in tag):
+        pytest.skip('Skipping because tag is: {}'.format(tag))
