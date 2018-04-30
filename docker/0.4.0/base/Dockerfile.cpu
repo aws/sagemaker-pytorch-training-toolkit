@@ -30,7 +30,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 # TODO(nadiaya): getting PyTorch with CUDA support to get 'gloo' backend. Build from sources instead.
 # Install PyTorch https://github.com/pytorch/pytorch#installation
 RUN if [ $py_version -eq 2 ]; \
-    then pip install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp27-cp27mu-linux_x86_64.whl ; \
+    then pip install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp27-cp27mu-linux_x86_64.whl; \
     else pip install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp35-cp35m-linux_x86_64.whl; fi
 RUN pip install torchvision
 
