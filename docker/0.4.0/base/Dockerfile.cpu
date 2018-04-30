@@ -1,0 +1,43 @@
+FROM ubuntu:16.04
+
+ARG py_version
+
+# Validate that arguments are specified
+RUN test $py_version || exit 1
+
+# Install python and nginx
+RUN apt-get update && \
+    apt-get -y install build-essential git wget curl nginx && \
+    if [ $py_version -eq 2 ]; \
+       then apt-get -y install python-dev; \
+       else apt-get -y install python3-dev && ln -s /usr/bin/python3 /usr/bin/python; fi
+
+# Install pip
+RUN cd /tmp && \
+    curl -O https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py && rm get-pip.py
+
+# Install telegraf, used for metrics and benchmark
+RUN cd /tmp && \
+    curl -O https://dl.influxdata.com/telegraf/releases/telegraf_1.4.2-1_amd64.deb && \
+    dpkg -i telegraf_1.4.2-1_amd64.deb && \
+    rm telegraf_1.4.2-1_amd64.deb
+
+# Python won’t try to write .pyc or .pyo files on the import of source modules
+# Force stdin, stdout and stderr to be totally unbuffered. Good for logging
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+# TODO(nadiaya): getting PyTorch with CUDA support to get 'gloo' backend. Build from sources instead.
+# Install PyTorch https://github.com/pytorch/pytorch#installation
+RUN if [ $py_version -eq 2 ]; \
+    then pip install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp27-cp27mu-linux_x86_64.whl ; \
+    else pip install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp35-cp35m-linux_x86_64.whl; fi
+RUN pip install torchvision
+
+# Install container support
+# TODO(nadiaya): move it out of the base dockerfile to the final dockerfile
+# TODO(nadiaya): should be installed from PyPI when package is release there.
+# Manually clone and install sagemaker-container-support for this line to work or
+# run build-base-image-gpu.sh script instead of building dockerfile directly.
+COPY lib/sagemaker-container-support/dist/sagemaker_container_support-1.0-py2.py3-none-any.whl /sagemaker_container_support-1.0-py2.py3-none-any.whl
+RUN pip install /sagemaker_container_support-1.0-py2.py3-none-any.whl && rm /sagemaker_container_support-1.0-py2.py3-none-any.whl
