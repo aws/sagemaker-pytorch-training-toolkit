@@ -123,10 +123,10 @@ def train(channel_input_dirs, model_dir, host_rank, master_addr, master_port, hy
     data_dir = channel_input_dirs['wikitext-2']
     logger.debug('data_dir: {}'.format(data_dir))
     model_path = os.path.join(model_dir, 'model')
-    model, emsize, nhid, nlayers, lr, clip, epochs, \
+    model_type, emsize, nhid, nlayers, lr, clip, epochs, \
         batch_size, bptt, dropout, tied, seed, log_interval = _load_hyperparameters(hyperparameters)
     logger.debug('model - {}, emsize - {}, nhid - {}, nlayers - {}, lr - {}, clip - {}, epochs - {}, batch_size - {}, bptt - {}, dropout - {}, tied - {}, seed - {}, log_interval - {}'.format(
-        model, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
+        model_type, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
     ))
 
     # Set the random seed manually for reproducibility.
@@ -145,7 +145,7 @@ def train(channel_input_dirs, model_dir, host_rank, master_addr, master_port, hy
 
     # Build the model
     ntokens = len(corpus.dictionary)
-    model = RNNModel(model, ntokens, emsize, nhid, nlayers, dropout, tied).to(
+    model = RNNModel(model_type, ntokens, emsize, nhid, nlayers, dropout, tied).to(
         device)
 
     criterion = nn.CrossEntropyLoss()
@@ -190,7 +190,7 @@ def train(channel_input_dirs, model_dir, host_rank, master_addr, master_port, hy
 def _load_hyperparameters(hyperparameters):
     logger.info("Load hyperparameters")
     # type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)
-    model = hyperparameters.get('model', 'LSTM')
+    model_type = hyperparameters.get('model_type', 'LSTM')
     logger.debug('model: {}'.format(model))
     # size of word embeddings
     emsize = hyperparameters.get('emsize', 200)
@@ -227,10 +227,10 @@ def _load_hyperparameters(hyperparameters):
     logger.debug('seed: {}'.format(seed))
     # report interval
     log_interval = hyperparameters.get('log_interval', 200)
-    logger.debug('model - {}, emsize - {}, nhid - {}, nlayers - {}, lr - {}, clip - {}, epochs - {}, batch_size - {}, bptt - {}, dropout - {}, tied - {}, seed - {}, log_interval - {}'.format(
-        model, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
+    logger.debug('model_type - {}, emsize - {}, nhid - {}, nlayers - {}, lr - {}, clip - {}, epochs - {}, batch_size - {}, bptt - {}, dropout - {}, tied - {}, seed - {}, log_interval - {}'.format(
+        model_type, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
     ))
-    return model, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
+    return model_type, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
 
 
 '''
