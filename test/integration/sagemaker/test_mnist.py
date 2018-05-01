@@ -36,14 +36,15 @@ def _test_mnist_distributed(sagemaker_session, ecr_image, instance_type, dist_ba
                                        train_instance_count=2, train_instance_type=instance_type,
                                        sagemaker_session=sagemaker_session, docker_image_uri=ecr_image,
                                        hyperparameters={'backend': dist_backend, 'epochs': 1})
-        fake_input = pytorch.sagemaker_session.upload_data(path=training_dir,
-                                                           key_prefix='pytorch/mnist')
-        pytorch.fit({'required_argument': fake_input})
+        training_input = pytorch.sagemaker_session.upload_data(path=training_dir,
+                                                               key_prefix='pytorch/mnist')
+        pytorch.fit({'training': training_input})
 
     with timeout_and_delete_endpoint(estimator=pytorch, minutes=30):
         predictor = pytorch.deploy(initial_instance_count=1, instance_type=instance_type)
 
         batch_size = 100
-        data = np.zeros(shape=(batch_size, 1, 28, 28))
+        data = np.random.rand(batch_size, 1, 28, 28)
         output = predictor.predict(data)
-    assert len(output) == batch_size
+
+        assert np.asarray(output).shape == (batch_size, 10)
