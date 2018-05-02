@@ -18,7 +18,7 @@ import socket
 import container_support as cs
 from container_support.app import TrainingEngine
 
-MODEL_FILE_NAME = 'model'
+MODEL_FILE_NAME = 'model.pth'
 MASTER_PORT = '29500'
 
 engine = TrainingEngine()
