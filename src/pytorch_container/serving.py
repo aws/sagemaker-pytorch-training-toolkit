@@ -66,8 +66,13 @@ def output_fn(prediction_output, accept):
     Returns
         output data serialized
     """
-    if type(prediction_output) == Variable:
-        prediction_output = prediction_output.data
+    output_type = type(prediction_output)
+    if output_type == Variable:
+        # pytorch 0.3.1: converts variable -> tensor -> numpy.ndarray
+        prediction_output = prediction_output.data.cpu().numpy()
+    elif output_type == torch.Tensor and hasattr(prediction_output, 'detach'):
+        # pytorch 0.4.0: detaches tensor from the current graph and converts to numpy.ndarray
+        prediction_output = prediction_output.detach().cpu().numpy()
 
     return _serialize_output(prediction_output, accept), accept
 
