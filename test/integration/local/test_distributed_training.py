@@ -39,7 +39,7 @@ def test_mnist_cpu(docker_image, opt_ml, dist_cpu_backend):
     local_mode.train(mnist_script, data_dir, docker_image, opt_ml, cluster_size=2,
                      hyperparameters={'backend': dist_cpu_backend})
 
-    assert local_mode.file_exists(opt_ml, 'model/model'), 'Model file was not created'
+    assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
 
@@ -49,6 +49,6 @@ def test_mnist_gpu(docker_image, opt_ml, dist_gpu_backend):
     local_mode.train(mnist_script, data_dir, docker_image, opt_ml, cluster_size=2,
                      use_gpu=True, hyperparameters={'backend': dist_gpu_backend})
 
-    assert local_mode.file_exists(opt_ml, 'model/model'), 'Model file was not created'
+    assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
