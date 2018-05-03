@@ -17,6 +17,6 @@ from test.integration import data_dir, mnist_script
 def test_mnist_cpu(docker_image, opt_ml, use_gpu):
     local_mode.train(mnist_script, data_dir, docker_image, opt_ml, use_gpu=use_gpu)
 
-    assert local_mode.file_exists(opt_ml, 'model/model'), 'Model file was not created'
+    assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'

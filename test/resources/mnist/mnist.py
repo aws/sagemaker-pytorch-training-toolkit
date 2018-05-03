@@ -202,6 +202,6 @@ def test(model, test_loader, cuda):
 def model_fn(model_dir):
     logger.info('model_fn')
     model = torch.nn.DataParallel(Net())
-    with open(os.path.join(model_dir, 'model'), 'rb') as f:
+    with open(os.path.join(model_dir, 'model.pth'), 'rb') as f:
         model.load_state_dict(torch.load(f))
     return model
