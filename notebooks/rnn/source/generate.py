@@ -73,7 +73,7 @@ def predict_fn(input_data, model):
             word = word if type(word) == str else word.decode()
             if word == '<eos>':
                 word = '\n'
-            elif i % 20 == 19:
+            elif i % 12 == 11:
                 word = word + '\n'
             result.append(word)
     return ' '.join(result)
