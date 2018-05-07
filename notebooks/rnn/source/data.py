@@ -21,9 +21,9 @@ class Corpus(object):
     def __init__(self, path):
         self.path = path
         self.dictionary = Dictionary()
-        self.train = self.tokenize(os.path.join(path, 'wiki.test.tokens'))
-        self.valid = self.tokenize(os.path.join(path, 'wiki.valid.tokens'))
-        self.test = self.tokenize(os.path.join(path, 'wiki.test.tokens'))
+        self.train = self.tokenize(os.path.join(path, 'train'))
+        self.valid = self.tokenize(os.path.join(path, 'valid'))
+        self.test = self.tokenize(os.path.join(path, 'test'))
 
     def tokenize(self, path):
         """Tokenizes a text file."""
