@@ -121,8 +121,9 @@ def train(channel_input_dirs, model_dir, host_rank, master_addr, master_port, hy
     model_path = os.path.join(model_dir, 'model.pth')
     model_info_path = os.path.join(model_dir, 'model_info.pth')
     model_state_path = os.path.join(model_dir, 'model_state.txt')
-    rnn_type, emsize, nhid, nlayers, lr, clip, epochs, \
-        batch_size, bptt, dropout, tied, seed, log_interval = _load_hyperparameters(hyperparameters)
+    emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, \
+        dropout, tied, seed, log_interval = _load_hyperparameters(hyperparameters)
+    rnn_type = 'LSTM'
 
     # Set the random seed manually for reproducibility.
     torch.manual_seed(seed)
@@ -215,9 +216,6 @@ def train(channel_input_dirs, model_dir, host_rank, master_addr, master_port, hy
 
 def _load_hyperparameters(hyperparameters):
     logger.info("Load hyperparameters")
-    # type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)
-    rnn_type = hyperparameters.get('rnn_type', 'LSTM')
-    logger.debug('model: {}'.format(rnn_type))
     # size of word embeddings
     emsize = hyperparameters.get('emsize', 200)
     logger.debug('emsize: {}'.format(emsize))
@@ -254,4 +252,4 @@ def _load_hyperparameters(hyperparameters):
     # report interval
     log_interval = hyperparameters.get('log_interval', 200)
     logger.debug('log_interval: {}'.format(log_interval))
-    return rnn_type, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
+    return emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
