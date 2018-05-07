@@ -3,6 +3,7 @@ import time
 import logging
 import math
 import os
+from shutil import copy
 import torch
 import torch.nn as nn
 
@@ -11,12 +12,7 @@ from rnn import RNNModel
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-print("user script!!!")
-print("user script!!!")
-print("user script!!!")
-print("user script!!!")
-print("user script!!!")
-print("user script!!!")
+
 
 # Starting from sequential data, batchify arranges the dataset into columns.
 # For instance, with the alphabet as the sequence and batch size 4, we'd get
@@ -118,24 +114,29 @@ def train_model(model, corpus, train_data, criterion, lr, epoch, batch_size, bpt
             start_time = time.time()
 
 
+# TODO(nadiaya): remove host_rank, master_addr, master_port arguments after container_support exists
 def train(channel_input_dirs, model_dir, host_rank, master_addr, master_port, hyperparameters={}):
-    logger.info('def train')
-    data_dir = channel_input_dirs['wikitext-2']
-    logger.debug('data_dir: {}'.format(data_dir))
-    model_path = os.path.join(model_dir, 'model')
-    model_type, emsize, nhid, nlayers, lr, clip, epochs, \
+    logger.info('Starting training.')
+    data_dir = channel_input_dirs['training']
+    model_path = os.path.join(model_dir, 'model.pth')
+    model_info_path = os.path.join(model_dir, 'model_info.pth')
+    model_state_path = os.path.join(model_dir, 'model_state.txt')
+    rnn_type, emsize, nhid, nlayers, lr, clip, epochs, \
         batch_size, bptt, dropout, tied, seed, log_interval = _load_hyperparameters(hyperparameters)
-    logger.debug('model - {}, emsize - {}, nhid - {}, nlayers - {}, lr - {}, clip - {}, epochs - {}, batch_size - {}, bptt - {}, dropout - {}, tied - {}, seed - {}, log_interval - {}'.format(
-        model_type, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
-    ))
 
     # Set the random seed manually for reproducibility.
     torch.manual_seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     logger.debug('Device: {}'.format(device))
+
     # Load data
     corpus = data.Corpus(data_dir)
-    logger.debug('corpus: {}'.format(corpus))
+
+    # Save the data into model dir to be used with the model later
+    for file_name in os.listdir(data_dir):
+        full_file_name = os.path.join(data_dir, file_name)
+        if os.path.isfile(full_file_name):
+            copy(full_file_name, model_dir)
 
     # Batchify
     eval_batch_size = 10
@@ -145,14 +146,26 @@ def train(channel_input_dirs, model_dir, host_rank, master_addr, master_port, hy
 
     # Build the model
     ntokens = len(corpus.dictionary)
-    model = RNNModel(model_type, ntokens, emsize, nhid, nlayers, dropout, tied).to(
+    # Save arguments used to create model for restoring the model later
+    with open(model_info_path, 'wb') as f:
+        model_info = {
+            'rnn_type': rnn_type,
+            'ntoken': ntokens,
+            'ninp': emsize,
+            'nhid': nhid,
+            'nlayers': nlayers,
+            'dropout': dropout,
+            'tie_weights': tied
+        }
+        torch.save(model_info, f)
+    model = RNNModel(rnn_type, ntokens, emsize, nhid, nlayers, dropout, tied).to(
         device)
 
     criterion = nn.CrossEntropyLoss()
 
     # Loop over epochs.
     lr = lr
-    best_val_loss = None
+    best_state = None
 
     for epoch in range(1, epochs + 1):
         epoch_start_time = time.time()
@@ -164,10 +177,19 @@ def train(channel_input_dirs, model_dir, host_rank, master_addr, master_port, hy
                                          val_loss, math.exp(val_loss)))
         print('-' * 89)
         # Save the model if the validation loss is the best we've seen so far.
-        if not best_val_loss or val_loss < best_val_loss:
+        if not best_state or val_loss < best_state['val_loss']:
+            best_state = {
+                'epoch': epoch,
+                'lr': lr,
+                'val_loss': val_loss,
+                'val_ppl': math.exp(val_loss),
+            }
+            logger.info('Saving the best model: {}'.format(best_state))
             with open(model_path, 'wb') as f:
                 torch.save(model.state_dict(), f)
-            best_val_loss = val_loss
+            with open(model_state_path, 'w') as f:
+                f.write('epoch {:3d} | lr: {:5.2f} | valid loss {:5.2f} | '
+                        'valid ppl {:8.2f}'.format(epoch, lr, val_loss, math.exp(val_loss)))
         else:
             # Anneal the learning rate if no improvement has been seen in the validation dataset.
             lr /= 4.0
@@ -186,12 +208,16 @@ def train(channel_input_dirs, model_dir, host_rank, master_addr, master_port, hy
         test_loss, math.exp(test_loss)))
     print('=' * 89)
 
+    # Return a cpu model so we can open it on any device
+    logger.info('Return the best model from: {}'.format(best_state))
+    return model.cpu()
+
 
 def _load_hyperparameters(hyperparameters):
     logger.info("Load hyperparameters")
     # type of recurrent net (RNN_TANH, RNN_RELU, LSTM, GRU)
-    model_type = hyperparameters.get('model_type', 'LSTM')
-    logger.debug('model: {}'.format(model))
+    rnn_type = hyperparameters.get('rnn_type', 'LSTM')
+    logger.debug('model: {}'.format(rnn_type))
     # size of word embeddings
     emsize = hyperparameters.get('emsize', 200)
     logger.debug('emsize: {}'.format(emsize))
@@ -227,15 +253,5 @@ def _load_hyperparameters(hyperparameters):
     logger.debug('seed: {}'.format(seed))
     # report interval
     log_interval = hyperparameters.get('log_interval', 200)
-    logger.debug('model_type - {}, emsize - {}, nhid - {}, nlayers - {}, lr - {}, clip - {}, epochs - {}, batch_size - {}, bptt - {}, dropout - {}, tied - {}, seed - {}, log_interval - {}'.format(
-        model_type, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
-    ))
-    return model_type, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval
-
-
-'''
-if __name__ == '__main__':
-    rnn_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-    data_dir = os.path.join(rnn_dir,  'data', 'wikitext-2')
-    train({'training': data_dir}, data_dir)
-'''
+    logger.debug('log_interval: {}'.format(log_interval))
+    return rnn_type, emsize, nhid, nlayers, lr, clip, epochs, batch_size, bptt, dropout, tied, seed, log_interval

@@ -1,68 +1,79 @@
-###############################################################################
-# Language Modeling on Penn Tree Bank
-#
-# This file generates new sentences sampled from the language model
-#
-###############################################################################
-
-import argparse
+import json
+import logging
+import os
 
 import torch
-from torch.autograd import Variable
+from rnn import RNNModel
 
 import data
 
-parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 Language Model')
+JSON_CONTENT_TYPE = 'application/json'
 
-# Model parameters.
-parser.add_argument('--data', type=str, default='./data/wikitext-2',
-                    help='location of the data corpus')
-parser.add_argument('--checkpoint', type=str, default='./model.pt',
-                    help='model checkpoint to use')
-parser.add_argument('--outf', type=str, default='generated.txt',
-                    help='output file for generated text')
-parser.add_argument('--words', type=int, default='1000',
-                    help='number of words to generate')
-parser.add_argument('--seed', type=int, default=1111,
-                    help='random seed')
-parser.add_argument('--cuda', action='store_true',
-                    help='use CUDA')
-parser.add_argument('--temperature', type=float, default=1.0,
-                    help='temperature - higher will increase diversity')
-parser.add_argument('--log-interval', type=int, default=100,
-                    help='reporting interval')
-args = parser.parse_args()
+logger = logging.getLogger(__name__)
 
-# Set the random seed manually for reproducibility.
-torch.manual_seed(args.seed)
-if torch.cuda.is_available():
-    if not args.cuda:
-        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
 
-device = torch.device("cuda" if args.cuda else "cpu")
+def model_fn(model_dir):
+    logger.info('Loading the model.')
+    model_info = {}
+    with open(os.path.join(model_dir, 'model_info.pth'), 'rb') as f:
+        model_info = torch.load(f)
+    print('model_info: {}'.format(model_info))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info('Current device: {}'.format(device))
+    model = RNNModel(rnn_type=model_info['rnn_type'], ntoken=model_info['ntoken'],
+                     ninp=model_info['ninp'], nhid=model_info['nhid'], nlayers=model_info['nlayers'],
+                     dropout=model_info['dropout'], tie_weights=model_info['tie_weights'])
+    with open(os.path.join(model_dir, 'model.pth'), 'rb') as f:
+        model.load_state_dict(torch.load(f))
+    model.to(device).eval()
+    logger.info('Loading the data.')
+    corpus = data.Corpus(model_dir)
+    logger.info('Done loading model and corpus. Corpus dictionary size: {}'.format(len(corpus.dictionary)))
+    return {'model': model, 'corpus': corpus}
 
-if args.temperature < 1e-3:
-    parser.error("--temperature has to be greater or equal 1e-3")
 
-with open(args.checkpoint, 'rb') as f:
-    model = torch.load(f).to(device)
-model.eval()
+def input_fn(serialized_input_data, content_type=JSON_CONTENT_TYPE):
+    logger.info('Deserializing the input data.')
+    if content_type == JSON_CONTENT_TYPE:
+        input_data = json.loads(serialized_input_data)
+        if input_data['temperature'] < 1e-3:
+            raise Exception('\'temperature\' has to be greater or equal 1e-3')
+        return input_data
+    raise Exception('Requested unsupported ContentType in content_type: ' + content_type)
 
-corpus = data.Corpus(args.data)
-ntokens = len(corpus.dictionary)
-hidden = model.init_hidden(1)
-input = torch.randint(ntokens, (1, 1), dtype=torch.long).to(device)
 
-with open(args.outf, 'w') as outf:
+def output_fn(prediction_output, accept=JSON_CONTENT_TYPE):
+    logger.info('Serializing the generated output.')
+    if accept == JSON_CONTENT_TYPE:
+        return json.dumps(prediction_output), accept
+    raise Exception('Requested unsupported ContentType in Accept: ' + accept)
+
+
+def predict_fn(input_data, model):
+    logger.info('Generating text based on input parameters.')
+    corpus = model['corpus']
+    model = model['model']
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info('Current device: {}'.format(device))
+    torch.manual_seed(input_data['seed'])
+    ntokens = len(corpus.dictionary)
+    input = torch.randint(ntokens, (1, 1), dtype=torch.long).to(device)
+    hidden = model.init_hidden(1)
+
+    logger.info('Generating {} words.'.format(input_data['words']))
+    result = []
     with torch.no_grad():  # no tracking history
-        for i in range(args.words):
+        for i in range(input_data['words']):
             output, hidden = model(input, hidden)
-            word_weights = output.squeeze().div(args.temperature).exp().cpu()
+            word_weights = output.squeeze().div(input_data['temperature']).exp().cpu()
             word_idx = torch.multinomial(word_weights, 1)[0]
             input.fill_(word_idx)
             word = corpus.dictionary.idx2word[word_idx]
-
-            outf.write(word + ('\n' if i % 20 == 19 else ' '))
-
-            if i % args.log_interval == 0:
-                print('| Generated {}/{} words'.format(i, args.words))
+            word = word if type(word) == str else word.decode()
+            if word == '<eos>':
+                word = '\n'
+            elif i % 20 == 19:
+                word = word + '\n'
+            result.append(word)
+    return ' '.join(result)
