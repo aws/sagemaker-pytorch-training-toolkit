@@ -12,6 +12,8 @@ from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_C
 
 from pytorch_container.serving import model_fn, input_fn, predict_fn, output_fn
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class DummyModel(nn.Module):
     def __init__(self, ):
@@ -20,16 +22,14 @@ class DummyModel(nn.Module):
     def forward(self, x):
         pass
 
-    def __call__(self, variable):
-        return 3 * variable
+    def __call__(self, tensor):
+        return 3 * tensor
 
 
 @pytest.fixture(scope='session', name='tensor')
 def _tensor():
     tensor = torch.rand(5, 10, 7, 9)
-    if torch.cuda.is_available():
-        tensor = tensor.cuda()
-    return tensor
+    return tensor.to(device)
 
 
 def test_model_fn():
@@ -52,7 +52,7 @@ def test_input_fn_csv():
 
     deserialized_np_array = input_fn(str_io.getvalue(), CSV_CONTENT_TYPE)
 
-    tensor = torch.cuda.FloatTensor(array) if torch.cuda.is_available() else torch.FloatTensor(array)
+    tensor = torch.FloatTensor(array).to(device)
     assert torch.equal(tensor, deserialized_np_array)
     assert deserialized_np_array.is_cuda == torch.cuda.is_available()
 
@@ -91,9 +91,7 @@ def test_predict_fn(tensor):
 def test_predict_fn_cpu_cpu(tensor):
     prediction = predict_fn(tensor.cpu(), DummyModel().cpu())
 
-    model = DummyModel()
-    if torch.cuda.is_available():
-        model = model.cuda()
+    model = DummyModel().to(device)
     assert torch.equal(model(Variable(tensor)), prediction)
     assert prediction.is_cuda == torch.cuda.is_available()
 
@@ -102,7 +100,7 @@ def test_predict_fn_cpu_cpu(tensor):
 def test_predict_fn_cpu_gpu(tensor):
     model = DummyModel().cuda()
     prediction = predict_fn(tensor.cpu(), model)
-    assert torch.equal(model(Variable(tensor)), prediction)
+    assert torch.equal(model(tensor), prediction)
     assert prediction.is_cuda is True
 
 
@@ -110,7 +108,7 @@ def test_predict_fn_cpu_gpu(tensor):
 def test_predict_fn_gpu_cpu(tensor):
     prediction = predict_fn(tensor.cpu(), DummyModel().cpu())
     model = DummyModel().cuda()
-    assert torch.equal(model(Variable(tensor)), prediction)
+    assert torch.equal(model(tensor), prediction)
     assert prediction.is_cuda is True
 
 
@@ -119,7 +117,7 @@ def test_predict_fn_gpu_gpu(tensor):
     tensor = tensor.cuda()
     model = DummyModel().cuda()
     prediction = predict_fn(tensor, model)
-    assert torch.equal(model(Variable(tensor)), prediction)
+    assert torch.equal(model(tensor), prediction)
     assert prediction.is_cuda is True
 
 
