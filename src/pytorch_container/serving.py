@@ -50,7 +50,8 @@ def predict_fn(input_data, model):
     model.to(device)
     input_data = input_data.to(device)
     model.eval()
-    output = model(input_data)
+    with torch.no_grad():
+        output = model(input_data)
     return output
 
 
