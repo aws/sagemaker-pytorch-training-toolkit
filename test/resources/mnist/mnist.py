@@ -57,7 +57,7 @@ def _load_hyperparameters(hyperparameters):
     # batch size for testing (default: 1000)
     test_batch_size = hyperparameters.get('test_batch_size', 1000)
     # number of epochs to train (default: 10)
-    epochs = hyperparameters.get('epochs', 3)
+    epochs = hyperparameters.get('epochs', 2)
     # learning rate (default: 0.01)
     lr = hyperparameters.get('lr', 0.01)
     # SGD momentum (default: 0.5)
@@ -108,9 +108,10 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
         seed, log_interval = _load_hyperparameters(hyperparameters)
     is_distributed = len(hosts) > 1 and backend is not None
     logger.debug("Distributed training - {}".format(is_distributed))
-    cuda = num_gpus > 0
+    use_cuda = num_gpus > 0
     logger.debug("Number of gpus available - {}".format(num_gpus))
-    kwargs = {'num_workers': 1, 'pin_memory': True} if cuda else {}
+    kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
+    device = torch.device("cuda" if use_cuda else "cpu")
 
     if is_distributed:
         # Initialize the distributed environment.
@@ -125,7 +126,7 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
 
     # set the seed for generating random numbers
     torch.manual_seed(seed)
-    if cuda:
+    if use_cuda:
         torch.cuda.manual_seed(seed)
 
     train_loader = _get_train_data_loader(batch_size, training_dir, is_distributed, **kwargs)
@@ -142,15 +143,15 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
         100. * len(test_loader.sampler) / len(test_loader.dataset)
     ))
 
-    model = Net()
-    if is_distributed and cuda:
+    model = Net().to(device)
+    if is_distributed and use_cuda:
         # multi-machine multi-gpu case
         logger.debug("Multi-machine multi-gpu: using DistributedDataParallel.")
         model = torch.nn.parallel.DistributedDataParallel(model.cuda())
-    elif cuda:
+    elif use_cuda:
         # single-machine multi-gpu case
         logger.debug("Single-machine multi-gpu: using DataParallel().cuda().")
-        model = torch.nn.DataParallel(model.cuda()).cuda()
+        model = torch.nn.DataParallel(model).to(device)
     else:
         # single-machine or multi-machine cpu case
         logger.debug("Single-machine/multi-machine cpu: using DataParallel.")
@@ -161,37 +162,34 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
     for epoch in range(1, epochs + 1):
         model.train()
         for batch_idx, (data, target) in enumerate(train_loader, 1):
-            if cuda:
-                data, target = data.cuda(), target.cuda()
-            data, target = Variable(data), Variable(target)
+            data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
             loss.backward()
-            if is_distributed and not cuda:
+            if is_distributed and not use_cuda:
                 # average gradients manually for multi-machine cpu case only
                 _average_gradients(model)
             optimizer.step()
             if batch_idx % log_interval == 0:
                 logger.debug('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_loader.sampler),
-                    100. * batch_idx / len(train_loader), loss.data[0]))
-        test(model, test_loader, cuda)
+                    100. * batch_idx / len(train_loader), loss.item()))
+        test(model, test_loader, device)
     return model
 
 
-def test(model, test_loader, cuda):
+def test(model, test_loader, device):
     model.eval()
     test_loss = 0
     correct = 0
-    for data, target in test_loader:
-        if cuda:
-            data, target = data.cuda(), target.cuda()
-        data, target = Variable(data, volatile=True), Variable(target)
-        output = model(data)
-        test_loss += F.nll_loss(output, target, size_average=False).data[0]  # sum up batch loss
-        pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
-        correct += pred.eq(target.data.view_as(pred)).long().cpu().sum()
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            test_loss += F.nll_loss(output, target, size_average=False).item()  # sum up batch loss
+            pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
+            correct += pred.eq(target.view_as(pred)).sum().item()
 
     test_loss /= len(test_loader.dataset)
     logger.debug('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
