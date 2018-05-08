@@ -75,5 +75,7 @@ def predict_fn(input_data, model):
                 word = '\n'
             elif i % 12 == 11:
                 word = word + '\n'
+            else:
+                word = word + ' '
             result.append(word)
-    return ' '.join(result)
+    return ''.join(result)
