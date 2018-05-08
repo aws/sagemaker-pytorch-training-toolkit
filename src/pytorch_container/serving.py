@@ -4,7 +4,6 @@ import logging
 import numpy as np
 from six import StringIO, BytesIO
 import torch
-from torch.autograd import Variable
 
 from container_support.app import ServingEngine
 from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_CONTENT_TYPE, \
@@ -12,6 +11,7 @@ from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_C
 
 engine = ServingEngine()
 logger = logging.getLogger(__name__)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 @engine.model_fn()
@@ -34,7 +34,7 @@ def input_fn(serialized_input_data, content_type):
     Returns: input_data deserialized into torch.FloatTensor or torch.cuda.FloatTensor depending if cuda is available.
     """
     input_data = _deserialize_input(serialized_input_data, content_type)
-    return torch.cuda.FloatTensor(input_data) if torch.cuda.is_available() else torch.FloatTensor(input_data)
+    return torch.FloatTensor(input_data).to(device)
 
 
 @engine.predict_fn()
@@ -47,11 +47,11 @@ def predict_fn(input_data, model):
 
     Returns: a prediction
     """
-    if torch.cuda.is_available():
-        model.cuda()
-        input_data = input_data.cuda()
+    model.to(device)
+    input_data = input_data.to(device)
     model.eval()
-    output = model(Variable(input_data))
+    with torch.no_grad():
+        output = model(input_data)
     return output
 
 
@@ -67,11 +67,7 @@ def output_fn(prediction_output, accept):
         output data serialized
     """
     output_type = type(prediction_output)
-    if output_type == Variable:
-        # pytorch 0.3.1: converts variable -> tensor -> numpy.ndarray
-        prediction_output = prediction_output.data.cpu().numpy()
-    elif output_type == torch.Tensor and hasattr(prediction_output, 'detach'):
-        # pytorch 0.4.0: detaches tensor from the current graph and converts to numpy.ndarray
+    if output_type == torch.Tensor:
         prediction_output = prediction_output.detach().cpu().numpy()
 
     return _serialize_output(prediction_output, accept), accept
