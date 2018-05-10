@@ -119,7 +119,6 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
     train_loader = _get_train_data_loader(batch_size, training_dir, is_distributed, **kwargs)
     test_loader = _get_test_data_loader(test_batch_size, training_dir, **kwargs)
 
-    # TODO: assert the logs when we move to the SDK local mode
     logger.debug("Processes {}/{} ({:.0f}%) of train data".format(
         len(train_loader.sampler), len(train_loader.dataset),
         100. * len(train_loader.sampler) / len(train_loader.dataset)
