@@ -20,15 +20,17 @@ import torch.utils.data.distributed
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def _get_tensor(rank, rows, columns):
+    device = torch.device("cuda:" + torch.cuda.current_device() if torch.cuda.is_available() else "cpu")
     tensor = torch.ones(rows, columns) * (rank + 1)
     return tensor.to(device)
 
 
 def _get_zeros_tensor(rows, columns):
+    device = torch.device("cuda:" + torch.cuda.current_device() if torch.cuda.is_available() else "cpu")
     tensor = torch.zeros(rows, columns)
     return tensor.to(device)
 
@@ -38,6 +40,7 @@ def _get_zeros_tensors_list(rows, columns):
 
 
 def _get_tensors_sum(rows, columns):
+    device = torch.device("cuda:" + torch.cuda.current_device() if torch.cuda.is_available() else "cpu")
     result = (1 + dist.get_world_size()) * dist.get_world_size() / 2
     tensor = torch.ones(rows, columns) * result
     return tensor.to(device)
