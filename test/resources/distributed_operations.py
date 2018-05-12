@@ -24,8 +24,10 @@ logger.setLevel(logging.DEBUG)
 
 
 def _get_tensor(rank, rows, columns):
-    device = torch.device("cuda:{}".format(dist.get_rank()) if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:{}".format(rank) if torch.cuda.is_available() else "cpu")
+    print(device)
     tensor = torch.ones(rows, columns) * (rank + 1)
+    print('{}: tensor:{}'.format(rank, tensor))
     return tensor.to(device)
 
 
@@ -171,6 +173,11 @@ def train(master_addr, master_port, current_host, host_rank, num_gpus, hosts, nu
   #  if cuda:
   #      init_processes(backend, master_addr, master_port, host_rank, world_size, rows, columns, current_host)
   #  else:
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(device)
+    tensor = torch.ones(rows, columns)
+    print('tensor:{}'.format(tensor))
+
     processes = []
     for rank in range(number_of_processes):
         process_rank = host_rank * number_of_processes + rank
@@ -221,3 +228,7 @@ def save(model, model_dir):
         logger.info("Saving success result")
         with open(filename, 'w') as f:
             f.write(model)
+
+
+if __name__ == '__main__':
+    train('algo-1', '29500', 'algo-1', 0, 4, 1, 2, {'backend': 'gloo'})
