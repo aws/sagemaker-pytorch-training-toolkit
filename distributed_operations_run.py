@@ -230,7 +230,7 @@ def save(model, model_dir):
             f.write(model)
 
 
-def main():
+def test_dist():
     master_addr = '127.0.0.1'
     os.environ['MASTER_PORT'] = '29500'
     train(
