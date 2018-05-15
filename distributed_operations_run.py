@@ -27,7 +27,7 @@ def _get_tensor(rank, rows, columns):
     device = torch.device("cuda:{}".format(rank) if torch.cuda.is_available() else "cpu")
     print(device)
     tensor = torch.ones(rows, columns) * (rank + 1)
-    print('{}: tensor:{}'.format(rank, tensor))
+    print('{}: tensor:{}'.format(rank, tensor.to(device)))
     return tensor.to(device)
 
 
@@ -206,16 +206,26 @@ def init_processes(backend, master_addr, master_port, rank, world_size, rows, co
 
 
 def run(backend, rank, rows, columns):
-    # operations supported by all backends: http://pytorch.org/docs/master/distributed.html
-    logger.info('Run operations supported by all backends.')
-    _broadcast(rank, rows, columns)
-    _all_reduce(rank, rows, columns)
-    _barrier(rank)
-
-    # operations not supported by 'gloo'
-    if backend != 'gloo':
-        logger.info('Run operations not supported by \'gloo\' backend.')
+    # http://pytorch.org/docs/master/distributed.html
+    if backend != 'tcp':
+        logger.info('Run operations supported by \'tcp\' backend.')
+        _broadcast(rank, rows, columns)
+        _all_reduce(rank, rows, columns)
+        _barrier(rank)
         _send_recv(rank, rows, columns)
+        _reduce(rank, rows, columns)
+        _all_gather(rank, rows, columns)
+        _gather(rank, rows, columns)
+        _scatter(rank, rows, columns)
+    elif backend == 'gloo':
+        logger.info('Run operations supported by \'gloo\' backend.')
+        _broadcast(rank, rows, columns)
+        _all_reduce(rank, rows, columns)
+        _barrier(rank)
+    elif backend == 'nccl':
+        logger.info('Run operations supported by \'nccl\' backend.')
+        _broadcast(rank, rows, columns)
+        _all_reduce(rank, rows, columns)
         _reduce(rank, rows, columns)
         _all_gather(rank, rows, columns)
         _gather(rank, rows, columns)
@@ -232,7 +242,6 @@ def save(model, model_dir):
 
 def test_dist():
     master_addr = '127.0.0.1'
-    os.environ['MASTER_PORT'] = '29500'
     train(
         master_addr=master_addr,
         master_port='29500',
@@ -245,3 +254,24 @@ def test_dist():
             'backend': 'gloo'
         }
     )
+
+
+def init_processes2(rank, size, backend='nccl'):
+    """ Initialize the distributed environment. """
+    os.environ['MASTER_ADDR'] = '127.0.0.1'
+    os.environ['MASTER_PORT'] = '29500'
+    dist.init_process_group(backend, rank=rank, world_size=size)
+    #run(backend, rank, rows=1, columns=1)
+    _broadcast(rank, 1, 1)
+
+
+def test_dist2():
+    size = 2
+    processes = []
+    for rank in range(size):
+        p = Process(target=init_processes2, args=(rank, size))
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
