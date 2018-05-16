@@ -20,14 +20,11 @@ import torch.utils.data.distributed
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def _get_tensor(rank, rows, columns):
-    device = torch.device("cuda:{}".format(rank) if torch.cuda.is_available() else "cpu")
-    print(device)
+    device = torch.device("cuda:{}".format(dist.get_rank()) if torch.cuda.is_available() else "cpu")
     tensor = torch.ones(rows, columns) * (rank + 1)
-    print('{}: tensor:{}'.format(rank, tensor))
     return tensor.to(device)
 
 
@@ -163,21 +160,11 @@ def train(master_addr, master_port, current_host, host_rank, num_gpus, hosts, nu
     backend = hyperparameters.get('backend')
     rows = hyperparameters.get('rows', 1)
     columns = hyperparameters.get('columns', 1)
-    cuda = torch.cuda.is_available()
-    number_of_processes = num_gpus if cuda else num_cpus
+    number_of_processes = num_gpus if num_gpus > 0 else num_cpus
     world_size = number_of_processes * len(hosts)
-    logger.info('Running \'{}\' backend on {} nodes and {} processes. World size is {}. Using cuda: {}'.format(
-        backend, len(hosts), number_of_processes, world_size, cuda
+    logger.info('Running \'{}\' backend on {} nodes and {} processes. World size is {}.'.format(
+        backend, len(hosts), number_of_processes, world_size
     ))
-
-  #  if cuda:
-  #      init_processes(backend, master_addr, master_port, host_rank, world_size, rows, columns, current_host)
-  #  else:
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(device)
-    tensor = torch.ones(rows, columns)
-    print('tensor:{}'.format(tensor))
-
     processes = []
     for rank in range(number_of_processes):
         process_rank = host_rank * number_of_processes + rank
@@ -206,20 +193,30 @@ def init_processes(backend, master_addr, master_port, rank, world_size, rows, co
 
 
 def run(backend, rank, rows, columns):
-    # operations supported by all backends: http://pytorch.org/docs/master/distributed.html
-    logger.info('Run operations supported by all backends.')
-    _broadcast(rank, rows, columns)
-    _all_reduce(rank, rows, columns)
-    _barrier(rank)
-
-    # operations not supported by 'gloo'
-    if backend != 'gloo':
-        logger.info('Run operations not supported by \'gloo\' backend.')
+    # http://pytorch.org/docs/master/distributed.html
+    if backend == 'tcp':
+        print('Run operations supported by \'tcp\' backend.')
+        _broadcast(rank, rows, columns)
+        _all_reduce(rank, rows, columns)
+        _barrier(rank)
         _send_recv(rank, rows, columns)
         _reduce(rank, rows, columns)
         _all_gather(rank, rows, columns)
         _gather(rank, rows, columns)
         _scatter(rank, rows, columns)
+    elif backend == 'gloo':
+        print('Run operations supported by \'gloo\' backend.')
+        _broadcast(rank, rows, columns)
+        _all_reduce(rank, rows, columns)
+        _barrier(rank)
+    elif backend == 'nccl':
+        print('Run operations supported by \'nccl\' backend.')
+        # Note: nccl does not support gather or scatter as well:
+        # https://github.com/pytorch/pytorch/blob/v0.4.0/torch/lib/THD/base/data_channels/DataChannelNccl.cpp
+        _broadcast(rank, rows, columns)
+        _all_reduce(rank, rows, columns)
+        _reduce(rank, rows, columns)
+        _all_gather(rank, rows, columns)
 
 
 def save(model, model_dir):
@@ -228,7 +225,3 @@ def save(model, model_dir):
         logger.info("Saving success result")
         with open(filename, 'w') as f:
             f.write(model)
-
-
-if __name__ == '__main__':
-    train('algo-1', '29500', 'algo-1', 0, 4, 1, 2, {'backend': 'gloo'})

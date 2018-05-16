@@ -218,12 +218,12 @@ def run(backend, rank, rows, columns):
         _barrier(rank)
     elif backend == 'nccl':
         print('Run operations supported by \'nccl\' backend.')
+        # Note: nccl does not support gather or scatter as well:
+        # https://github.com/pytorch/pytorch/blob/v0.4.0/torch/lib/THD/base/data_channels/DataChannelNccl.cpp
         _broadcast(rank, rows, columns)
         _all_reduce(rank, rows, columns)
         _reduce(rank, rows, columns)
         _all_gather(rank, rows, columns)
-        _gather(rank, rows, columns)
-        _scatter(rank, rows, columns)
 
 
 def save(model, model_dir):
