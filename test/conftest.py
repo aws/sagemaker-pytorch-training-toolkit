@@ -20,7 +20,7 @@ import shutil
 import sys
 import tempfile
 
-#from sagemaker import Session
+from sagemaker import Session
 from test.utils import local_mode
 
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ def pytest_addoption(parser):
     parser.addoption('--region', default='us-west-2')
     parser.addoption('--framework-version', default='0.4.0')
     parser.addoption('--py-version', choices=['2', '3'], default=str(sys.version_info.major))
-    parser.addoption('--processor', choices=['gpu', 'cpu'], default='gpu')
+    parser.addoption('--processor', choices=['gpu', 'cpu'], default='cpu')
     # If not specified, will default to {framework-version}-{processor}-py{py-version}
     parser.addoption('--tag', default=None)
 
@@ -140,9 +140,9 @@ def fixture_build_image(request, framework_version, py_version, processor, tag, 
     return tag
 
 
-#@pytest.fixture(scope='session', name='sagemaker_session')
-#def fixture_sagemaker_session(region):
-#    return Session(boto_session=boto3.Session(region_name=region))
+@pytest.fixture(scope='session', name='sagemaker_session')
+def fixture_sagemaker_session(region):
+    return Session(boto_session=boto3.Session(region_name=region))
 
 
 @pytest.fixture(name='aws_id', scope='session')
@@ -170,6 +170,6 @@ def fixture_dist_cpu_backend(request):
     return request.param
 
 
-@pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo'])
+@pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo', 'nccl'])
 def fixture_dist_gpu_backend(request):
     return request.param
