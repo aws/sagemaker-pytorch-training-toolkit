@@ -272,12 +272,12 @@ def test_dist2():
 
 def test_dist3():
     master_addr = '127.0.0.1'
-    master_port = '29900',
-    current_host = master_addr,
-    host_rank = 0,
-    num_gpus = 2,
-    hosts = ['master_addr'],
-    num_cpus = 32,
+    master_port = '29900'
+    current_host = master_addr
+    host_rank = 0
+    num_gpus = 2
+    hosts = ['master_addr']
+    num_cpus = 32
     hyperparameters = {
         'backend': 'gloo'
     }
