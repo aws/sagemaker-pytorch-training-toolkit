@@ -194,12 +194,13 @@ def init_processes(backend, master_addr, master_port, rank, world_size, rows, co
 
     print ('Init process rank {} on host \'{}\''.format(rank, host))
     dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
-    run(backend, rank, rows, columns)
+    #run(backend, rank, rows, columns)
+    _broadcast(rank, rows, columns)
 
 
 def run(backend, rank, rows, columns):
     # http://pytorch.org/docs/master/distributed.html
-    if backend != 'tcp':
+    if backend == 'tcp':
         print ('Run operations supported by \'tcp\' backend.')
         _broadcast(rank, rows, columns)
         _all_reduce(rank, rows, columns)
