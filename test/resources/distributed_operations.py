@@ -19,7 +19,7 @@ import torch.utils.data
 import torch.utils.data.distributed
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 
 def _get_tensor(rank, rows, columns):
