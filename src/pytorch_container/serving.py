@@ -11,7 +11,6 @@ from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_C
 
 engine = ServingEngine()
 logger = logging.getLogger(__name__)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 @engine.model_fn()
@@ -33,6 +32,7 @@ def input_fn(serialized_input_data, content_type):
         content_type: the request content_type
     Returns: input_data deserialized into torch.FloatTensor or torch.cuda.FloatTensor depending if cuda is available.
     """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     input_data = _deserialize_input(serialized_input_data, content_type)
     return torch.FloatTensor(input_data).to(device)
 
@@ -47,6 +47,7 @@ def predict_fn(input_data, model):
 
     Returns: a prediction
     """
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.to(device)
     input_data = input_data.to(device)
     model.eval()
