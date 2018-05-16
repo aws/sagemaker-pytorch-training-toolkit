@@ -268,3 +268,39 @@ def test_dist2():
 
     for p in processes:
         p.join()
+
+
+def test_dist3():
+    master_addr = '127.0.0.1'
+    master_port = '29900',
+    current_host = master_addr,
+    host_rank = 0,
+    num_gpus = 2,
+    hosts = ['master_addr'],
+    num_cpus = 32,
+    hyperparameters = {
+        'backend': 'gloo'
+    }
+
+    backend = hyperparameters.get('backend')
+    rows = hyperparameters.get('rows', 1)
+    columns = hyperparameters.get('columns', 1)
+    cuda = torch.cuda.is_available()
+    number_of_processes = num_gpus if cuda else num_cpus
+    world_size = number_of_processes * len(hosts)
+    print ('Running \'{}\' backend on {} nodes and {} processes. World size is {}. Using cuda: {}'.format(
+        backend, len(hosts), number_of_processes, world_size, cuda
+    ))
+
+    processes = []
+    for rank in range(number_of_processes):
+        process_rank = host_rank * number_of_processes + rank
+        p = Process(
+            target=init_processes,
+            args=(backend, master_addr, master_port, process_rank, world_size, rows, columns, current_host)
+        )
+        p.start()
+        processes.append(p)
+
+    for p in processes:
+        p.join()
