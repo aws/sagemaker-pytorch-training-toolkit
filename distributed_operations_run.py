@@ -244,10 +244,10 @@ def test_dist():
     master_addr = '127.0.0.1'
     train(
         master_addr=master_addr,
-        master_port='29500',
+        master_port='29900',
         current_host=master_addr,
         host_rank=0,
-        num_gpus=8,
+        num_gpus=2,
         hosts=['master_addr'],
         num_cpus=32,
         hyperparameters = {
@@ -256,20 +256,20 @@ def test_dist():
     )
 
 
-def init_processes2(rank, size, backend='nccl'):
-    """ Initialize the distributed environment. """
-    os.environ['MASTER_ADDR'] = '127.0.0.1'
-    os.environ['MASTER_PORT'] = '29500'
-    dist.init_process_group(backend, rank=rank, world_size=size)
-    #run(backend, rank, rows=1, columns=1)
-    _broadcast(rank, 1, 1)
-
-
 def test_dist2():
     size = 2
     processes = []
+    backend = 'gloo'
+    master_addr = '127.0.0.1'
+    master_port = '29700'
+    world_size = 2
+    rows = 1
+    columns =1
+    host = '127.0.0.1'
     for rank in range(size):
-        p = Process(target=init_processes2, args=(rank, size))
+        p = Process(target=init_processes, args=(
+            backend, master_addr, master_port, rank, world_size, rows, columns, host
+        ))
         p.start()
         processes.append(p)
 
