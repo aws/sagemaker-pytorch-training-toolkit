@@ -20,7 +20,6 @@ import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
 from torchvision import datasets, transforms
-from torch.autograd import Variable
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -103,6 +102,7 @@ def _average_gradients(model):
 
 
 def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
+    torch.multiprocessing.set_start_method('spawn')
     training_dir = channel_input_dirs['training']
     backend, batch_size, test_batch_size, epochs, lr, momentum, \
         seed, log_interval = _load_hyperparameters(hyperparameters)
@@ -147,7 +147,7 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
     if is_distributed and use_cuda:
         # multi-machine multi-gpu case
         logger.debug("Multi-machine multi-gpu: using DistributedDataParallel.")
-        model = torch.nn.parallel.DistributedDataParallel(model.cuda())
+        model = torch.nn.parallel.DistributedDataParallel(model)
     elif use_cuda:
         # single-machine multi-gpu case
         logger.debug("Single-machine multi-gpu: using DataParallel().cuda().")
