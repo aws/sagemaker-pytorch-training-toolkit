@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-echo $@
-
-cat /opt/ml/input/config/resourceconfig.json
 CURRENT_HOST=$(jq .current_host  /opt/ml/input/config/resourceconfig.json)
 
 sed -ie "s/PLACEHOLDER_HOSTNAME/$CURRENT_HOST/g" changehostname.c
