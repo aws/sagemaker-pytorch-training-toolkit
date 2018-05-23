@@ -19,7 +19,7 @@ import container_support as cs
 from container_support.app import TrainingEngine
 
 MODEL_FILE_NAME = 'model.pth'
-MASTER_PORT = '29500'
+MASTER_PORT = '7777'
 
 engine = TrainingEngine()
 logger = logging.getLogger(__name__)
@@ -42,6 +42,11 @@ def train(user_module, training_environment):
     logger.info("Block until all host DNS lookups succeed.")
     for host in training_environment.hosts:
         _dns_lookup(host)
+
+    # NCCL environment variables https://docs.nvidia.com/deeplearning/sdk/nccl-developer-guide/index.html#ncclknobs
+    os.environ['NCCL_SOCKET_IFNAME'] = training_environment.network_interface_name
+    # Set to INFO for more NCCL debugging information
+    os.environ['NCCL_DEBUG'] = 'WARN'
 
     sorted_hosts = sorted(training_environment.hosts)
     host_rank = sorted_hosts.index(training_environment.current_host)

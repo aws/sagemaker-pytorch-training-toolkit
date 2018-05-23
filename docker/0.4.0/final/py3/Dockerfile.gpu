@@ -4,4 +4,4 @@ COPY dist/sagemaker_pytorch_container-1.0-py2.py3-none-any.whl /sagemaker_pytorc
 RUN pip install /sagemaker_pytorch_container-1.0-py2.py3-none-any.whl && rm /sagemaker_pytorch_container-1.0-py2.py3-none-any.whl
 
 # Starts framework
-ENTRYPOINT ["python", "-m", "pytorch_container.start"]
+ENTRYPOINT ["bash", "-m", "start_with_right_hostname.sh"]
