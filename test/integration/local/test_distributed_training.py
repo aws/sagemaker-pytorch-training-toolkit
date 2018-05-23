@@ -36,6 +36,16 @@ def test_dist_operations_path_gpu(docker_image, opt_ml, dist_gpu_backend):
     assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
 
 
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
+def test_dist_operations_path_gpu_nccl(docker_image, opt_ml):
+    local_mode.train(dist_operations_path, data_dir, docker_image, opt_ml, cluster_size=1,
+                     use_gpu=True, hyperparameters={'backend': 'nccl'})
+
+    assert local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
+    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
+    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+
+
 def test_mnist_cpu(docker_image, opt_ml, dist_cpu_backend):
     local_mode.train(mnist_script, data_dir, docker_image, opt_ml, cluster_size=2,
                      hyperparameters={'backend': dist_cpu_backend})

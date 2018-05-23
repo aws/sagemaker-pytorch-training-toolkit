@@ -28,10 +28,18 @@ def test_dist_operations_gpu(sagemaker_session, instance_type, ecr_image, dist_g
     _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_gpu_backend)
 
 
-def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend):
+# TODO: when running in EASE all containers have hostname 'aws',
+#       until this fix we can use NCCL only in single host multi-gpu use case
+@pytest.mark.skip_cpu
+def test_dist_operations_nccl(sagemaker_session, instance_type, ecr_image):
+    instance_type = instance_type or 'ml.p2.8xlarge'
+    _test_dist_operations(sagemaker_session, ecr_image, instance_type, 'nccl', 1)
+
+
+def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=3):
     with timeout(minutes=8):
         pytorch = PytorchTestEstimator(entry_point=dist_operations_path, role='SageMakerRole',
-                                       train_instance_count=3, train_instance_type=instance_type,
+                                       train_instance_count=train_instance_count, train_instance_type=instance_type,
                                        sagemaker_session=sagemaker_session, docker_image_uri=ecr_image,
                                        hyperparameters={'backend': dist_backend})
         pytorch.sagemaker_session.default_bucket()
