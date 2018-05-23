@@ -170,6 +170,6 @@ def fixture_dist_cpu_backend(request):
     return request.param
 
 
-@pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo'])
+@pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo', 'nccl'])
 def fixture_dist_gpu_backend(request):
     return request.param
