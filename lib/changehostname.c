@@ -8,7 +8,7 @@
  * not realizing that it needs to use NET/Socket.
  *
  * When docker container starts we read 'current_host' value  from /opt/ml/input/config/resourceconfig.json
- * and replace place PLACEHOLDER_HOSTNAME with it before compiling this code into a shared library.
+ * and replace PLACEHOLDER_HOSTNAME with it before compiling this code into a shared library.
  */
 int gethostname(char *name, size_t len)
 {
