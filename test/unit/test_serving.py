@@ -27,7 +27,7 @@ class DummyModel(nn.Module):
 
 
 @pytest.fixture(scope='session', name='tensor')
-def _tensor():
+def fixture_tensor():
     tensor = torch.rand(5, 10, 7, 9)
     return tensor.to(device)
 
