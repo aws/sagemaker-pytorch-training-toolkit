@@ -43,12 +43,7 @@ def train(user_module, training_environment):
     for host in training_environment.hosts:
         _dns_lookup(host)
 
-    # NCCL environment variables https://docs.nvidia.com/deeplearning/sdk/nccl-developer-guide/index.html#ncclknobs
-    os.environ['NCCL_SOCKET_IFNAME'] = training_environment.network_interface_name
-    # Disable IB transport and force to use IP sockets by default
-    os.environ['NCCL_IB_DISABLE'] = '1'
-    # Set to INFO for more NCCL debugging information
-    os.environ['NCCL_DEBUG'] = 'WARN'
+    _set_nccl_environment(training_environment.network_interface_name)
 
     sorted_hosts = sorted(training_environment.hosts)
     host_rank = sorted_hosts.index(training_environment.current_host)
@@ -88,3 +83,17 @@ def _default_save(model, model_dir):
 def _dns_lookup(host):
     """ Retrying dns lookup on host """
     return socket.gethostbyname(host)
+
+
+def _set_nccl_environment(network_interface_name):
+    """ Sets NCCL environment variables for the container:
+    https://docs.nvidia.com/deeplearning/sdk/nccl-developer-guide/index.html#ncclknobs
+        Args:
+            network_interface_name : The name of the network interface to use for distributed training.
+    """
+    # Set the network interface for inter node communication
+    os.environ['NCCL_SOCKET_IFNAME'] = network_interface_name
+    # Disable IB transport and force to use IP sockets by default
+    os.environ['NCCL_IB_DISABLE'] = '1'
+    # Set to INFO for more NCCL debugging information
+    os.environ['NCCL_DEBUG'] = 'WARN'
