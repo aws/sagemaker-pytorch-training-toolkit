@@ -102,7 +102,6 @@ def _average_gradients(model):
 
 
 def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
-    torch.multiprocessing.set_start_method('spawn')
     training_dir = channel_input_dirs['training']
     backend, batch_size, test_batch_size, epochs, lr, momentum, \
         seed, log_interval = _load_hyperparameters(hyperparameters)
