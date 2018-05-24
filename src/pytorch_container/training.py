@@ -45,8 +45,10 @@ def train(user_module, training_environment):
 
     # NCCL environment variables https://docs.nvidia.com/deeplearning/sdk/nccl-developer-guide/index.html#ncclknobs
     os.environ['NCCL_SOCKET_IFNAME'] = training_environment.network_interface_name
-    # Set to INFO for more NCCL debugging information
-    os.environ['NCCL_DEBUG'] = 'WARN'
+    # Disable IB transport and force to use IP sockets by default
+    os.environ['NCCL_IB_DISABLE'] = 1
+    # Uncomment for more NCCL debugging information
+    # os.environ['NCCL_DEBUG'] = 'INFO'
 
     sorted_hosts = sorted(training_environment.hosts)
     host_rank = sorted_hosts.index(training_environment.current_host)

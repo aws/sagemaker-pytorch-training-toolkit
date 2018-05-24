@@ -25,8 +25,7 @@ def test_mnist_distributed_cpu(sagemaker_session, ecr_image, instance_type, dist
 
 
 @pytest.mark.skip_cpu
-def test_mnist_distributed_gpu(sagemaker_session, ecr_image, instance_type):
-    dist_gpu_backend = 'gloo'
+def test_mnist_distributed_gpu(sagemaker_session, ecr_image, instance_type, dist_gpu_backend):
     instance_type = instance_type or 'ml.p2.xlarge'
     _test_mnist_distributed(sagemaker_session, ecr_image, instance_type, dist_gpu_backend)
 
