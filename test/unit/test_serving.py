@@ -11,7 +11,7 @@ from torch.autograd import Variable
 from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_CONTENT_TYPE, \
     UnsupportedContentTypeError, UnsupportedAcceptTypeError
 
-from pytorch_container.serving import model_fn, input_fn, predict_fn, output_fn
+from sagemaker_pytorch_container.serving import model_fn, input_fn, predict_fn, output_fn
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

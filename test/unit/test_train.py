@@ -19,7 +19,7 @@ import torch
 import torch.nn as nn
 from mock import MagicMock
 from mock import patch
-from pytorch_container.training import train, MODEL_FILE_NAME, _default_save, _dns_lookup, MASTER_PORT
+from sagemaker_pytorch_container.training import train, MODEL_FILE_NAME, _default_save, _dns_lookup, MASTER_PORT
 
 
 @pytest.fixture(name='training_env')
