@@ -7,7 +7,7 @@ RUN test $py_version || exit 1
 
 # Install python and nginx
 RUN apt-get update && \
-    apt-get -y install build-essential git wget curl nginx && \
+    apt-get -y install build-essential git wget curl nginx jq && \
     if [ $py_version -eq 2 ]; \
        then apt-get -y install python-dev; \
        else apt-get -y install python3-dev && ln -s /usr/bin/python3 /usr/bin/python; fi
@@ -41,3 +41,8 @@ RUN pip install torchvision
 # run build-base-image-gpu.sh script instead of building dockerfile directly.
 COPY lib/sagemaker-container-support/dist/sagemaker_container_support-1.0-py2.py3-none-any.whl /sagemaker_container_support-1.0-py2.py3-none-any.whl
 RUN pip install /sagemaker_container_support-1.0-py2.py3-none-any.whl && rm /sagemaker_container_support-1.0-py2.py3-none-any.whl
+
+# Copy workaround script for incorrect hostname
+COPY lib/changehostname.c /
+COPY lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
+RUN chmod +x /usr/local/bin/start_with_right_hostname.sh

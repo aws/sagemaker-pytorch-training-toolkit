@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import json
 import logging
 import shutil
@@ -571,6 +572,10 @@ def copy_resource(resource_path, opt_ml_path, relative_src_path, relative_dst_pa
 
 def file_exists(resource_folder, file_name, host='algo-1'):
     return os.path.exists(os.path.join(resource_folder, host, file_name))
+
+
+def file_contains(resource_folder, file_name, string, host='algo-1'):
+    return string in open(os.path.join(resource_folder, host, file_name)).read()
 
 
 def load_model(resource_folder, file_name, host='algo-1', serializer=None):

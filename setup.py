@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import os
 from glob import glob
 from os.path import basename
