@@ -29,12 +29,10 @@ def test_dist_operations_gpu(sagemaker_session, instance_type, ecr_image, dist_g
     _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_gpu_backend)
 
 
-# TODO: when running in EASE all containers have hostname 'aws',
-#       until this fix we can use NCCL only in single host multi-gpu use case
 @pytest.mark.skip_cpu
-def test_dist_operations_nccl(sagemaker_session, instance_type, ecr_image):
-    instance_type = instance_type or 'ml.p2.8xlarge'
-    _test_dist_operations(sagemaker_session, ecr_image, instance_type, 'nccl', 1)
+def test_dist_operations_multi_gpu(sagemaker_session, ecr_image, dist_gpu_backend):
+    instance_type = 'ml.p2.8xlarge'
+    _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_gpu_backend, 1)
 
 
 def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=3):
