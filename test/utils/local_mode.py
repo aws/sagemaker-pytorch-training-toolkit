@@ -574,6 +574,10 @@ def file_exists(resource_folder, file_name, host='algo-1'):
     return os.path.exists(os.path.join(resource_folder, host, file_name))
 
 
+def file_contains(resource_folder, file_name, string, host='algo-1'):
+    return string in open(os.path.join(resource_folder, host, file_name)).read()
+
+
 def load_model(resource_folder, file_name, host='algo-1', serializer=None):
     serializer = serializer if serializer else json
     with open(os.path.join(resource_folder, host, file_name), 'r') as f:
