@@ -12,8 +12,8 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 from container_support import ContainerSupport
-import pytorch_container.serving as serving
-import pytorch_container.training as training
+import sagemaker_pytorch_container.serving as serving
+import sagemaker_pytorch_container.training as training
 
 cs = ContainerSupport()
 cs.register_engine(training.engine)
