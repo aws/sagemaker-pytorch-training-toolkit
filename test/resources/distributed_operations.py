@@ -11,8 +11,11 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+import argparse
 import logging
 import os
+import sagemaker_containers
+import sys
 import torch
 import torch.distributed as dist
 from torch.multiprocessing import Process
@@ -21,6 +24,7 @@ import torch.utils.data.distributed
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 def _get_tensor(rank, rows, columns):
@@ -166,21 +170,42 @@ def _barrier(rank):
     logger.debug('Rank: {}, Passing the barrier'.format(rank))
 
 
-def train(master_addr, master_port, current_host, host_rank, num_gpus, hosts, num_cpus, hyperparameters):
-    backend = hyperparameters.get('backend')
-    rows = hyperparameters.get('rows', 1)
-    columns = hyperparameters.get('columns', 1)
-    number_of_processes = num_gpus if num_gpus > 0 else num_cpus
-    world_size = number_of_processes * len(hosts)
+def main():
+    print('Starting')
+    parser = argparse.ArgumentParser()
+    # Configurable hyperparameters
+    parser.add_argument('--rows', type=int, default=1,
+                        help='Number of rows in the tensor.')
+    parser.add_argument('--columns', type=int, default=1,
+                        help='Number of columns in the tensor.')
+    parser.add_argument('--backend', type=str, default=None,
+                        help='backend for distributed operations.')
+
+    # Container environment
+    env = sagemaker_containers.training_env()
+    parser.add_argument('--hosts', type=list, default=env.hosts)
+    parser.add_argument('--current-host', type=str, default=env.current_host)
+    parser.add_argument('--model-dir', type=str, default=env.model_dir)
+    parser.add_argument('--num-gpus', type=int, default=env.num_gpus)
+    parser.add_argument('--num-cpus', type=int, default=env.num_cpus)
+
+    args = parser.parse_args()
+
+    number_of_processes = args.num_gpus if args.num_gpus > 0 else args.num_cpus
+    world_size = number_of_processes * len(args.hosts)
     logger.info('Running \'{}\' backend on {} nodes and {} processes. World size is {}.'.format(
-        backend, len(hosts), number_of_processes, world_size
+        args.backend, len(args.hosts), number_of_processes, world_size
     ))
+    sorted_hosts = sorted(args.hosts)
+    host_rank = sorted_hosts.index(args.current_host)
+    master_addr = sorted_hosts[0]
+    master_port = '55555'
     processes = []
     for rank in range(number_of_processes):
         process_rank = host_rank * number_of_processes + rank
         p = Process(
             target=init_processes,
-            args=(backend, master_addr, master_port, process_rank, world_size, rows, columns, current_host)
+            args=(args.backend, master_addr, master_port, process_rank, world_size, args.rows, args.columns, args.current_host)
         )
         p.start()
         processes.append(p)
@@ -188,7 +213,7 @@ def train(master_addr, master_port, current_host, host_rank, num_gpus, hosts, nu
     for p in processes:
         p.join()
 
-    return 'success'
+    save('success', args.model_dir)
 
 
 def init_processes(backend, master_addr, master_port, rank, world_size, rows, columns, host):
@@ -229,9 +254,13 @@ def run(backend, rank, rows, columns):
         _all_gather(rank, rows, columns)
 
 
-def save(model, model_dir):
-    filename = os.path.join(model_dir, model)
+def save(result, model_dir):
+    filename = os.path.join(model_dir, result)
     if not os.path.exists(filename):
         logger.info("Saving success result")
         with open(filename, 'w') as f:
-            f.write(model)
+            f.write(result)
+
+
+if __name__ == '__main__':
+    main()
