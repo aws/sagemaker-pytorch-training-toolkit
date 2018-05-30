@@ -34,9 +34,9 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
-    install_requires=['numpy', 'sagemaker-containers', 'six', 'torch'],
+    install_requires=['numpy', 'sagemaker-containers', 'torch', 'retrying'],
     extras_require={
         'test': ['tox', 'flake8', 'coverage', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock', 'Flask', 'boto3>=1.4.8',
-                 'docker-compose', 'nvidia-docker-compose', 'sagemaker', 'PyYAML', 'torchvision']
+                 'docker-compose', 'nvidia-docker-compose', 'sagemaker', 'PyYAML', 'torchvisio', 'six']
     },
 )
