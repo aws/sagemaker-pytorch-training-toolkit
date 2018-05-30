@@ -205,7 +205,14 @@ def main():
         process_rank = host_rank * number_of_processes + rank
         p = Process(
             target=init_processes,
-            args=(args.backend, master_addr, master_port, process_rank, world_size, args.rows, args.columns, args.current_host)
+            args=(args.backend,
+                  master_addr,
+                  master_port,
+                  process_rank,
+                  world_size,
+                  args.rows,
+                  args.columns,
+                  args.current_host)
         )
         p.start()
         processes.append(p)
