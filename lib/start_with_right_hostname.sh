@@ -9,7 +9,7 @@ then
     gcc -o changehostname.o -c -fPIC -Wall changehostname.c
     gcc -o libchangehostname.so -shared -export-dynamic changehostname.o -ldl
 
-    LD_PRELOAD=/libchangehostname.so python -m pytorch_container.start $@
+    LD_PRELOAD=/libchangehostname.so python -m sagemaker_pytorch_container.start $@
 else
-    python -m pytorch_container.start $@
+    python -m sagemaker_pytorch_container.start $@
 fi
