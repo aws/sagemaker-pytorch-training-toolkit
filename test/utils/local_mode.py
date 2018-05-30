@@ -13,7 +13,6 @@ import os
 import yaml
 
 from botocore.exceptions import ClientError
-from os.path import join
 from sagemaker import fw_utils
 
 CYAN_COLOR = '\033[36m'

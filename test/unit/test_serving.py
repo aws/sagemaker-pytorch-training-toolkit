@@ -10,8 +10,12 @@ from torch.autograd import Variable
 
 from sagemaker_containers.beta.framework import (content_types, encoders)
 
-from sagemaker_pytorch_container.serving import default_model_fn, default_input_fn
+from sagemaker_pytorch_container.serving import main, default_model_fn, default_input_fn
 from sagemaker_pytorch_container.serving import default_predict_fn, default_output_fn
+
+from mock import MagicMock
+from mock import Mock
+from mock import patch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -168,3 +172,18 @@ def test_default_output_fn_gpu():
 
     assert '1,2,3\n4,5,6\n' in output.get_data(as_text=True)
     assert content_types.CSV in output.content_type
+
+
+def test_main():
+    user_module = MagicMock()
+    user_module.model_fn = Mock(return_value=DummyModel())
+    with patch('sagemaker_containers.beta.framework.env.ServingEnv'), \
+            patch('sagemaker_containers.beta.framework.modules.import_module_from_s3') as mock_import_module, \
+            patch('sagemaker_containers.beta.framework.worker.Worker') as mock_worker:
+        mock_import_module.return_value = user_module
+        app = MagicMock()
+        mock_worker.return_value = app
+        environ = MagicMock()
+        start_response = MagicMock()
+        main(environ, start_response)
+        app.assert_called_with(environ, start_response)

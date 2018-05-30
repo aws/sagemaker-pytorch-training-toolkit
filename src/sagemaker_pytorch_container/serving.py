@@ -22,8 +22,10 @@ logger = logging.getLogger(__name__)
 def default_model_fn(model_dir):
     """Loads a model. For PyTorch, a default function to load a model cannot be provided.
     Users should provide customized model_fn() in script.
+
     Args:
         model_dir: a directory where model is saved.
+
     Returns: A PyTorch model.
     """
     return transformer.default_model_fn(model_dir)
@@ -31,9 +33,11 @@ def default_model_fn(model_dir):
 
 def default_input_fn(input_data, content_type):
     """A default input_fn that can handle JSON, CSV and NPZ formats.
+
     Args:
         input_data: the request payload serialized in the content_type format
         content_type: the request content_type
+
     Returns: input_data deserialized into torch.FloatTensor or torch.cuda.FloatTensor depending if cuda is available.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -45,6 +49,7 @@ def default_input_fn(input_data, content_type):
 def default_predict_fn(data, model):
     """A default predict_fn for PyTorch. Calls a model on data deserialized in input_fn.
     Runs prediction on GPU if cuda is available.
+
     Args:
         data: input data (torch.FloatTensor) for prediction deserialized by input_fn
         model: PyTvorch model loaded in memory by model_fn
@@ -67,8 +72,7 @@ def default_output_fn(prediction, accept):
         prediction: a prediction result from predict_fn
         accept: type which the output data needs to be serialized
 
-    Returns
-        output data serialized
+    Returns: output data serialized
     """
     if type(prediction) == torch.Tensor:
         prediction = prediction.detach().cpu().numpy()

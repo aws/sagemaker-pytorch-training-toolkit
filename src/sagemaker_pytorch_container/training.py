@@ -29,8 +29,9 @@ def train(training_environment):
     Training is invoked by calling a "train" function in the user supplied module.
     if the environment contains multiple hosts, then a distributed learning
     task is started.
+
     Args:
-        training_environment : training environment object containing environment variables,
+        training_environment: training environment object containing environment variables,
                                training arguments and hyperparameters
     """
     # Block until all host DNS lookups succeed. Relies on retrying dns_lookup.
@@ -56,6 +57,11 @@ def _dns_lookup(host):
 
 
 def _set_distributed_environment(hosts):
+    """
+    Sets environment variable for distributed training.
+    Args:
+        hosts: list of hosts that are used for training.
+    """
     sorted_hosts = sorted(hosts)
     os.environ['MASTER_ADDR'] = sorted_hosts[0]
     os.environ['MASTER_PORT'] = MASTER_PORT
@@ -64,8 +70,9 @@ def _set_distributed_environment(hosts):
 def _set_nccl_environment(network_interface_name):
     """ Sets NCCL environment variables for the container:
     https://docs.nvidia.com/deeplearning/sdk/nccl-developer-guide/index.html#ncclknobs
-        Args:
-            network_interface_name : The name of the network interface to use for distributed training.
+
+    Args:
+        network_interface_name: The name of the network interface to use for distributed training.
     """
     # Set the network interface for inter node communication
     os.environ['NCCL_SOCKET_IFNAME'] = network_interface_name
