@@ -1,4 +1,5 @@
-FROM pytorch-base:0.4.0-gpu-py2
+ARG py_version
+FROM pytorch-base:0.4.0-gpu-py$py_version
 
 # Copy workaround script for incorrect hostname
 COPY lib/changehostname.c /
