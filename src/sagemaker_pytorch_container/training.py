@@ -62,8 +62,9 @@ def _set_distributed_environment(hosts):
     Args:
         hosts: list of hosts that are used for training.
     """
-    sorted_hosts = sorted(hosts)
-    os.environ['MASTER_ADDR'] = sorted_hosts[0]
+    # According to https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
+    # hosts are sorted lexicographically.
+    os.environ['MASTER_ADDR'] = hosts[0]
     os.environ['MASTER_PORT'] = MASTER_PORT
 
 
