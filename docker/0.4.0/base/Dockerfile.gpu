@@ -24,6 +24,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 # TODO(nadiaya): Build from sources instead remove unnecessary CUDA archs and potentially to have 'mpi' support.
 # Install PyTorch https://github.com/pytorch/pytorch#installation
 RUN if [ $py_version -eq 2 ]; \
-    then pip install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp27-cp27mu-linux_x86_64.whl; \
-    else pip install http://download.pytorch.org/whl/cu90/torch-0.4.0-cp35-cp35m-linux_x86_64.whl; fi
+    then pip install --no-cache http://download.pytorch.org/whl/cu90/torch-0.4.0-cp27-cp27mu-linux_x86_64.whl; \
+    else pip install --no-cache http://download.pytorch.org/whl/cu90/torch-0.4.0-cp35-cp35m-linux_x86_64.whl; fi
 RUN pip install --no-cache torchvision retrying
