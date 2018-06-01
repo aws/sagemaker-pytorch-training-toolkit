@@ -174,16 +174,18 @@ def test_default_output_fn_gpu():
     assert content_types.CSV in output.content_type
 
 
-def test_main():
+@patch('sagemaker_containers.beta.framework.modules.import_module_from_s3')
+@patch('sagemaker_containers.beta.framework.worker.Worker')
+@patch('sagemaker_containers.beta.framework.transformer.Transformer.initialize')
+@patch('sagemaker_containers.beta.framework.env.ServingEnv', MagicMock())
+def test_hosting_start(mock_import_module, mock_worker, mock_transformer_init):
     user_module = MagicMock()
     user_module.model_fn = Mock(return_value=DummyModel())
-    with patch('sagemaker_containers.beta.framework.env.ServingEnv'), \
-            patch('sagemaker_containers.beta.framework.modules.import_module_from_s3') as mock_import_module, \
-            patch('sagemaker_containers.beta.framework.worker.Worker') as mock_worker:
-        mock_import_module.return_value = user_module
-        app = MagicMock()
-        mock_worker.return_value = app
-        environ = MagicMock()
-        start_response = MagicMock()
-        main(environ, start_response)
-        app.assert_called_with(environ, start_response)
+    mock_import_module.return_value = user_module
+    app = MagicMock()
+    mock_worker.return_value = app
+    environ = MagicMock()
+    start_response = MagicMock()
+    main(environ, start_response)
+    mock_transformer_init.assert_called()
+    app.assert_called_with(environ, start_response)

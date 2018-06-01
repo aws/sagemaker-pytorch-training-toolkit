@@ -195,9 +195,8 @@ def main():
     logger.info('Running \'{}\' backend on {} nodes and {} processes. World size is {}.'.format(
         args.backend, len(args.hosts), number_of_processes, world_size
     ))
-    sorted_hosts = sorted(args.hosts)
-    host_rank = sorted_hosts.index(args.current_host)
-    master_addr = sorted_hosts[0]
+    host_rank = args.hosts.index(args.current_host)
+    master_addr = args.hosts[0]
     master_port = '55555'
     processes = []
     for rank in range(number_of_processes):

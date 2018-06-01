@@ -51,7 +51,7 @@ def default_predict_fn(data, model):
     Runs prediction on GPU if cuda is available.
 
     Args:
-        data: input data (torch.FloatTensor) for prediction deserialized by input_fn
+        data: input data (torch.Tensor) for prediction deserialized by input_fn
         model: PyTvorch model loaded in memory by model_fn
 
     Returns: a prediction

@@ -14,7 +14,9 @@ from __future__ import absolute_import
 import os
 import logging
 from retrying import retry
+import six
 import socket
+import sys
 import sagemaker_containers.beta.framework as framework
 
 MASTER_PORT = '7777'
@@ -52,7 +54,8 @@ def train(training_environment):
         if message.find('terminate called after throwing an instance of \'gloo::EnforceNotMet\'') > -1:
             logger.warn('Known exception: {}'.format(message))
         else:
-            raise err
+            info = sys.exc_info()
+            six.reraise(info[0], err, info[2])
 
 
 @retry(stop_max_delay=1000 * 60 * 15,

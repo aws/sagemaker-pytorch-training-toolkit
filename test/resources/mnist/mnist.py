@@ -93,8 +93,7 @@ def train(args):
         # Initialize the distributed environment.
         world_size = len(args.hosts)
         os.environ['WORLD_SIZE'] = str(world_size)
-        sorted_hosts = sorted(args.hosts)
-        host_rank = sorted_hosts.index(args.current_host)
+        host_rank = args.hosts.index(args.current_host)
         dist.init_process_group(backend=args.backend, rank=host_rank, world_size=world_size)
         logger.info('Initialized the distributed environment: \'{}\' backend on {} nodes. '.format(
             args.backend, dist.get_world_size()) + 'Current host rank is {}. Number of gpus: {}'.format(
