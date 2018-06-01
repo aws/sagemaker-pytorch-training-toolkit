@@ -35,7 +35,7 @@ def train(training_environment):
                                training arguments and hyperparameters
     """
     # Block until all host DNS lookups succeed. Relies on retrying dns_lookup.
-    logger.info("Block until all host DNS lookups succeed.")
+    logger.info('Block until all host DNS lookups succeed.')
     for host in training_environment.hosts:
         _dns_lookup(host)
 
@@ -44,8 +44,15 @@ def train(training_environment):
     _set_distributed_environment(training_environment.hosts)
 
     logger.info('Invoking user training script.')
-    framework.modules.run_module_from_s3(training_environment.module_dir, training_environment.to_cmd_args(),
-                                         training_environment.to_env_vars(), training_environment.module_name)
+    try:
+        framework.modules.run_module_from_s3(training_environment.module_dir, training_environment.to_cmd_args(),
+                                             training_environment.to_env_vars(), training_environment.module_name)
+    except framework.errors.ExecuteUserScriptError as err:
+        message = str(err)
+        if message.find('terminate called after throwing an instance of \'gloo::EnforceNotMet\'') > -1:
+            logger.warn('Known exception: {}'.format(message))
+        else:
+            raise err
 
 
 @retry(stop_max_delay=1000 * 60 * 15,
