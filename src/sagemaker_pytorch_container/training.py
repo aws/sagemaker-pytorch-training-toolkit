@@ -11,85 +11,79 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
-import torch
 import os
 import logging
+from retrying import retry
+import six
 import socket
-import container_support as cs
-from container_support.app import TrainingEngine
+import sys
+import sagemaker_containers.beta.framework as framework
 
-MODEL_FILE_NAME = 'model.pth'
 MASTER_PORT = '7777'
 
-engine = TrainingEngine()
 logger = logging.getLogger(__name__)
 
 
-@engine.train()
-def train(user_module, training_environment):
+def train(training_environment):
     """ Runs PyTorch training on a user supplied module in either a local or distributed
     SageMaker environment.
     The user supplied module and its dependencies are downloaded from S3.
     Training is invoked by calling a "train" function in the user supplied module.
     if the environment contains multiple hosts, then a distributed learning
     task is started.
+
     Args:
-        user_module : a user supplied module.
-        training_environment : training environment object containing environment variables,
+        training_environment: training environment object containing environment variables,
                                training arguments and hyperparameters
     """
     # Block until all host DNS lookups succeed. Relies on retrying dns_lookup.
-    logger.info("Block until all host DNS lookups succeed.")
+    logger.info('Block until all host DNS lookups succeed.')
     for host in training_environment.hosts:
         _dns_lookup(host)
 
     _set_nccl_environment(training_environment.network_interface_name)
 
-    sorted_hosts = sorted(training_environment.hosts)
-    host_rank = sorted_hosts.index(training_environment.current_host)
-    master_addr = sorted_hosts[0]
+    _set_distributed_environment(training_environment.hosts)
 
-    # TODO (mvsusp): needs to be moved to container support package
-    training_environment.training_parameters['host_rank'] = host_rank
-    training_environment.training_parameters['master_addr'] = master_addr
-    training_environment.training_parameters['master_port'] = MASTER_PORT
-
-    model = user_module.train(**training_environment.training_parameters)
-
-    if model:
-        if hasattr(user_module, 'save'):
-            logger.info("Using save function provided by the user.")
-            user_module.save(model, training_environment.model_dir)
-        elif training_environment.current_host == master_addr:
-            _default_save(model, training_environment.model_dir)
+    logger.info('Invoking user training script.')
+    try:
+        framework.modules.run_module_from_s3(training_environment.module_dir, training_environment.to_cmd_args(),
+                                             training_environment.to_env_vars(), training_environment.module_name)
+    except framework.errors.ExecuteUserScriptError as err:
+        message = str(err)
+        if message.find('terminate called after throwing an instance of \'gloo::EnforceNotMet\'') > -1:
+            logger.warn('Known exception: {}'.format(message))
+        else:
+            info = sys.exc_info()
+            six.reraise(info[0], err, info[2])
 
 
-def _default_save(model, model_dir):
-    """Default logic to save a model to self.model_dir folder (/opt/ml/model).
-    This function is called when a customer script does not provide a save() function.
-        Args:
-            model : module to save.
-            model_dir : directory where module should be saved.
-    """
-    logger.info("Saving the model using default save function.")
-    path = os.path.join(model_dir, MODEL_FILE_NAME)
-    # recommended way from http://pytorch.org/docs/master/notes/serialization.html
-    torch.save(model.state_dict(), path)
-
-
-@cs.retry(stop_max_delay=1000 * 60 * 15,
-          wait_exponential_multiplier=100,
-          wait_exponential_max=30000)
+@retry(stop_max_delay=1000 * 60 * 15,
+       wait_exponential_multiplier=100,
+       wait_exponential_max=30000)
 def _dns_lookup(host):
     """ Retrying dns lookup on host """
     return socket.gethostbyname(host)
 
 
+def _set_distributed_environment(hosts):
+    """
+    Sets environment variable for distributed training.
+    Args:
+        hosts: list of hosts that are used for training.
+    """
+    # According to https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
+    # hosts are sorted lexicographically.
+    os.environ['MASTER_ADDR'] = hosts[0]
+    os.environ['MASTER_PORT'] = MASTER_PORT
+
+
 def _set_nccl_environment(network_interface_name):
     """ Sets NCCL environment variables for the container:
     https://docs.nvidia.com/deeplearning/sdk/nccl-developer-guide/index.html#ncclknobs
-        Args:
-            network_interface_name : The name of the network interface to use for distributed training.
+
+    Args:
+        network_interface_name: The name of the network interface to use for distributed training.
     """
     # Set the network interface for inter node communication
     os.environ['NCCL_SOCKET_IFNAME'] = network_interface_name
@@ -97,3 +91,7 @@ def _set_nccl_environment(network_interface_name):
     os.environ['NCCL_IB_DISABLE'] = '1'
     # Set to INFO for more NCCL debugging information
     os.environ['NCCL_DEBUG'] = 'WARN'
+
+
+def main():
+    train(framework.training_env())

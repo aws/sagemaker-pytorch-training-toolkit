@@ -13,7 +13,6 @@ import os
 import yaml
 
 from botocore.exceptions import ClientError
-from os.path import join
 from sagemaker import fw_utils
 
 CYAN_COLOR = '\033[36m'
@@ -29,8 +28,9 @@ SAGEMAKER_REGION = 'us-west-2'
 
 DEFAULT_HYPERPARAMETERS = {
     'sagemaker_enable_cloudwatch_metrics': False,
-    'sagemaker_container_log_level': str(logging.INFO),
-    'sagemaker_region': SAGEMAKER_REGION
+    'sagemaker_container_log_level': logging.INFO,
+    'sagemaker_region': SAGEMAKER_REGION,
+    'sagemaker_job_name': 'test'
 }
 DEFAULT_HOSTING_ENV = [
     'SAGEMAKER_ENABLE_CLOUDWATCH_METRICS=false',
@@ -55,14 +55,14 @@ def build_base_image(framework_name, framework_version, py_version,
 
 def build_image(framework_name, framework_version, py_version, processor, tag, cwd='.'):
     check_call('python setup.py bdist_wheel')
-    check_call('python setup.py bdist_wheel', cwd='lib/sagemaker-container-support')
 
     image_uri = get_image_uri(framework_name, tag)
 
-    dockerfile_location = os.path.join('docker', framework_version, 'final', py_version,
+    dockerfile_location = os.path.join('docker', framework_version, 'final',
                                        'Dockerfile.{}'.format(processor))
 
-    subprocess.check_call(['docker', 'build', '-t', image_uri, '-f', dockerfile_location, cwd], cwd=cwd)
+    subprocess.check_call(['docker', 'build', '-t', image_uri, '-f', dockerfile_location, '--build-arg',
+                           'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
     print('created image {}'.format(image_uri))
     return image_uri
 
@@ -586,9 +586,3 @@ def load_model(resource_folder, file_name, host='algo-1', serializer=None):
 
 def get_model_dir(resource_folder, host='algo-1'):
     return os.path.join(resource_folder, host)
-
-
-def install_container_support():
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    sagemaker_container_dir = join(dir_path, '..', '..', 'sagemaker-container-support')
-    check_call('pip install --upgrade .', cwd=sagemaker_container_dir)
