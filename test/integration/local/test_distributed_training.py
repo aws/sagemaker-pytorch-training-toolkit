@@ -17,6 +17,11 @@ from test.integration import data_dir, dist_operations_path, mnist_script
 from test.utils import local_mode
 
 
+@pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo'])
+def fixture_dist_gpu_backend(request):
+    return request.param
+
+
 def test_dist_operations_path_cpu(docker_image, opt_ml, dist_cpu_backend):
     local_mode.train(dist_operations_path, data_dir, docker_image, opt_ml, cluster_size=3,
                      hyperparameters={'backend': dist_cpu_backend})
