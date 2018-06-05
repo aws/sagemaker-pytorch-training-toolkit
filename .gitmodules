@@ -1,4 +1,0 @@
-[submodule "lib/sagemaker-container-support"]
-	path = lib/sagemaker-container-support
-	url = git@github.com:aws/sagemaker-container-support.git
-    branch = mvs-poc

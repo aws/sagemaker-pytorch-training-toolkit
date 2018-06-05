@@ -10,120 +10,122 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from __future__ import absolute_import
 import os
 import pytest
+import six
 import shutil
 import tempfile
-import torch
 import torch.nn as nn
-from mock import MagicMock
+from mock import MagicMock, PropertyMock
 from mock import patch
-from pytorch_container.training import train, MODEL_FILE_NAME, _default_save, _dns_lookup, MASTER_PORT
+from sagemaker_pytorch_container.training import main, train, _dns_lookup, MASTER_PORT
+import sagemaker_containers.beta.framework as framework
 
 
-@pytest.fixture()
-def _training_env():
+@pytest.fixture(name='training_env')
+def fixture_training_env():
     env = MagicMock()
     env.current_host = 'algo-1'
     env.hosts = ['algo-1']
+    env.network_interface_name = 'eth0'
     tmp = tempfile.mkdtemp()
     os.makedirs(os.path.join(tmp, 'model'))
     env.model_dir = os.path.join(tmp, 'model')
+    env.module_name = 'user_script'
     yield env
     shutil.rmtree(tmp)
 
 
-@pytest.fixture()
-def _training_state():
+@pytest.fixture(name='training_state')
+def fixture_training_state():
     training_state = MagicMock()
     training_state.trained = False
     return training_state
 
 
-@pytest.fixture()
-def _user_module():
+@pytest.fixture(name='user_module')
+def fixture_user_module():
     return MagicMock(spec=['train'])
 
 
-@pytest.fixture()
-def _user_module_with_save():
+@pytest.fixture(name='user_module_with_save')
+def fixture_user_module_with_save():
     return MagicMock(spec=['train', 'save'])
 
 
-def test_train(_training_env, _user_module_with_save, _training_state):
-    def user_module_train():
-        _training_state.trained = True
-        _training_state.model = nn.Module()
-        return _training_state.model
+@patch('sagemaker_containers.beta.framework.modules.run_module_from_s3')
+@patch('socket.gethostbyname', MagicMock())
+def test_train(run_module_from_s3, training_env):
+    train(training_env)
 
-    _user_module_with_save.train = user_module_train
-
-    with patch('socket.gethostbyname'):
-        train(_user_module_with_save, _training_env)
-
-    assert _training_state.trained
-    _user_module_with_save.save.assert_called_with(_training_state.model, _training_env.model_dir)
+    run_module_from_s3.assert_called_with(training_env.module_dir, training_env.to_cmd_args(),
+                                          training_env.to_env_vars(), training_env.module_name)
 
 
-def test_train_with_default_save(_training_env, _user_module, _training_state):
-    def user_module_train():
-        _training_state.trained = True
-        _training_state.model = nn.Module()
-        return _training_state.model
+@patch('sagemaker_containers.beta.framework.modules.run_module_from_s3', MagicMock())
+@patch('socket.gethostbyname', MagicMock())
+def test_environment(training_env):
+    train(training_env)
 
-    _user_module.train = user_module_train
+    # distributed training specific environment
+    assert MASTER_PORT == os.environ['MASTER_PORT']
+    assert training_env.hosts[0] == os.environ['MASTER_ADDR']
 
-    with patch('socket.gethostbyname'):
-        train(_user_module, _training_env)
-
-    assert _training_state.trained
-    assert os.path.exists(os.path.join(_training_env.model_dir, MODEL_FILE_NAME))
-
-
-def test_default_save(_training_env):
-    model = nn.Module()
-    _default_save(model, _training_env.model_dir)
-    f = os.path.join(_training_env.model_dir, MODEL_FILE_NAME)
-    try:
-        the_model = nn.Module()
-        the_model.load_state_dict(torch.load(f))
-    except Exception as e:
-            pytest.fail('Failed loading saved model. Exception: \'{}\''.format(e))
+    # nccl specific environment
+    assert training_env.network_interface_name == os.environ['NCCL_SOCKET_IFNAME']
+    assert '1' == os.environ['NCCL_IB_DISABLE']
+    assert 'WARN' == os.environ['NCCL_DEBUG']
 
 
-def test_train_with_all_parameters(_training_env, _user_module, _training_state):
-    _training_env.training_parameters = {'first_param': 1, 'second_param': 2}
-
-    def user_module_train(host_rank, master_addr, master_port, first_param, second_param):
-        _training_state.training_parameters = host_rank, master_addr, master_port, first_param, second_param
-        return nn.Module()
-
-    _user_module.train = user_module_train
-
-    with patch('socket.gethostbyname'):
-        train(_user_module, _training_env)
-
-    assert _training_state.training_parameters == (0, 'algo-1', MASTER_PORT, 1, 2)
+@patch('sagemaker_pytorch_container.training.train')
+@patch('sagemaker_containers.beta.framework.training_env')
+def test_training_start(mock_training_env, mock_train, training_env):
+    mock_training_env.return_value = training_env
+    main()
+    mock_train.assert_called_with(training_env)
 
 
-def test_train_with_missing_parameters(_training_env, _user_module, _training_state):
+@patch('socket.gethostbyname', MagicMock())
+def test_train_with_missing_parameters(training_env, user_module):
     def user_module_train(missing_param):
         return nn.Module()
 
-    _user_module.train = user_module_train
+    user_module.train = user_module_train
 
-    with patch('socket.gethostbyname'), \
-            pytest.raises(TypeError):
-        train(_user_module, _training_env)
+    with pytest.raises(TypeError):
+        train(user_module, training_env)
 
 
+@patch('socket.gethostbyname', PropertyMock(return_value=True))
 def test_dns_lookup_success():
-    with patch('socket.gethostbyname') as mock_gethostbyname:
-        mock_gethostbyname.return_value = True
-        assert _dns_lookup('algo-1')
+    assert _dns_lookup('algo-1')
 
 
+@patch('socket.gethostbyname', PropertyMock(return_value=False))
 def test_dns_lookup_fail():
-    with patch('socket.gethostbyname') as mock_gethostbyname:
-        mock_gethostbyname.return_value = False
-        assert not _dns_lookup('algo-1')
+    assert not _dns_lookup('algo-1')
+
+
+@patch('sagemaker_containers.beta.framework.modules.run_module_from_s3')
+@patch('socket.gethostbyname', MagicMock())
+def test_gloo_exception_intercepted(run_module_from_s3, training_env):
+    output = 'terminate called after throwing an instance of \'gloo::EnforceNotMet\''
+    run_module_from_s3.side_effect = framework.errors.ExecuteUserScriptError(
+        cmd='Command "/usr/bin/python -m userscript"',
+        output=output.encode('latin1') if six.PY3 else output
+    )
+    train(training_env)
+    run_module_from_s3.assert_called()
+
+
+@patch('sagemaker_containers.beta.framework.modules.run_module_from_s3')
+@patch('socket.gethostbyname', MagicMock())
+def test_user_script_error_raised(run_module_from_s3, training_env):
+    output = 'Not \'gloo::EnforceNotMet\' exception.'
+    run_module_from_s3.side_effect = framework.errors.ExecuteUserScriptError(
+        cmd='Command "/usr/bin/python -m userscript"',
+        output=output.encode('latin1') if six.PY3 else output
+    )
+    with pytest.raises(framework.errors.ExecuteUserScriptError):
+        train(training_env)
