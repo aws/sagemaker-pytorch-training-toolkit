@@ -10,6 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from __future__ import absolute_import
 import json
 from six import StringIO, BytesIO
 import pytest
@@ -20,7 +21,7 @@ import torch.utils.data
 import torch.utils.data.distributed
 from torchvision import datasets, transforms
 import numpy as np
-from container_support.serving import JSON_CONTENT_TYPE, CSV_CONTENT_TYPE, NPY_CONTENT_TYPE
+from sagemaker_containers.beta.framework import content_types
 from test.integration import training_dir, mnist_script, mnist_1d_script, model_cpu_dir, model_gpu_dir, \
     model_cpu_1d_dir
 
@@ -49,46 +50,46 @@ def fixture_test_loader():
 
 def test_serve_cpu_json_npy(serve_cpu, test_loader):
     with serve_cpu():
-        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, JSON_CONTENT_TYPE)
-        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, CSV_CONTENT_TYPE)
-        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, NPY_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.JSON)
+        _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.CSV)
+        _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.NPY)
 
-        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, JSON_CONTENT_TYPE)
-        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, CSV_CONTENT_TYPE)
-        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, NPY_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.JSON)
+        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.CSV)
+        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.NPY)
 
 
 def test_serve_cpu_csv(serve_cpu, test_loader):
     with serve_cpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
-        _assert_prediction_csv(test_loader, JSON_CONTENT_TYPE)
-        _assert_prediction_csv(test_loader, CSV_CONTENT_TYPE)
-        _assert_prediction_csv(test_loader, NPY_CONTENT_TYPE)
+        _assert_prediction_csv(test_loader, content_types.JSON)
+        _assert_prediction_csv(test_loader, content_types.CSV)
+        _assert_prediction_csv(test_loader, content_types.NPY)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_serve_gpu_json_npy(serve_gpu, test_loader):
     with serve_gpu():
-        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, JSON_CONTENT_TYPE)
-        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, CSV_CONTENT_TYPE)
-        _assert_prediction_npy_json(test_loader, JSON_CONTENT_TYPE, NPY_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.JSON)
+        _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.CSV)
+        _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.NPY)
 
-        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, JSON_CONTENT_TYPE)
-        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, CSV_CONTENT_TYPE)
-        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, NPY_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.JSON)
+        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.CSV)
+        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.NPY)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_serve_gpu_csv(serve_gpu, test_loader):
     with serve_gpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
-        _assert_prediction_csv(test_loader, JSON_CONTENT_TYPE)
-        _assert_prediction_csv(test_loader, CSV_CONTENT_TYPE)
-        _assert_prediction_csv(test_loader, NPY_CONTENT_TYPE)
+        _assert_prediction_csv(test_loader, content_types.JSON)
+        _assert_prediction_csv(test_loader, content_types.CSV)
+        _assert_prediction_csv(test_loader, content_types.NPY)
 
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
 def test_serve_cpu_model_on_gpu(serve_gpu, test_loader):
     with serve_gpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
-        _assert_prediction_npy_json(test_loader, NPY_CONTENT_TYPE, JSON_CONTENT_TYPE)
+        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.JSON)
 
 
 def _assert_prediction_npy_json(test_loader, request_type, accept):
@@ -98,7 +99,7 @@ def _assert_prediction_npy_json(test_loader, request_type, accept):
 
 def _assert_prediction_csv(test_loader, accept):
     data = _get_mnist_batch(test_loader).view(test_loader.batch_size, -1)
-    output = _make_prediction(data, CSV_CONTENT_TYPE, accept)
+    output = _make_prediction(data, content_types.CSV, accept)
     assert np.asarray(output).shape == (test_loader.batch_size, 10)
 
 
@@ -123,26 +124,26 @@ def _make_prediction(data, request_type, accept):
 
 
 def _serialize_input(data_to_serialize, content_type):
-    if content_type == JSON_CONTENT_TYPE:
+    if content_type == content_types.JSON:
         return json.dumps(data_to_serialize.tolist())
 
-    if content_type == CSV_CONTENT_TYPE:
+    if content_type == content_types.CSV:
         stream = StringIO()
         np.savetxt(stream, data_to_serialize, delimiter=',', fmt='%s')
         return stream.getvalue()
 
-    if content_type == NPY_CONTENT_TYPE:
+    if content_type == content_types.NPY:
         stream = BytesIO()
         np.save(stream, data_to_serialize)
         return stream.getvalue()
 
 
 def _deserialize_output(serialized_data, content_type):
-    if content_type == JSON_CONTENT_TYPE:
+    if content_type == content_types.JSON:
         return np.array(json.loads(serialized_data.decode()))
 
-    if content_type == CSV_CONTENT_TYPE:
+    if content_type == content_types.CSV:
         return np.genfromtxt(StringIO(serialized_data.decode()), delimiter=',')
 
-    if content_type == NPY_CONTENT_TYPE:
+    if content_type == content_types.NPY:
         return np.load(BytesIO(serialized_data))

@@ -10,6 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from __future__ import absolute_import
 import boto3
 import os
 import logging
@@ -169,6 +170,6 @@ def fixture_dist_cpu_backend(request):
     return request.param
 
 
-@pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo'])
+@pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo', 'nccl'])
 def fixture_dist_gpu_backend(request):
     return request.param
