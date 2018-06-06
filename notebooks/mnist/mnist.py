@@ -1,5 +1,8 @@
+import argparse
 import logging
 import os
+import sagemaker_containers
+import sys
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -11,6 +14,7 @@ from torchvision import datasets, transforms
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 # Based on https://github.com/pytorch/examples/blob/master/mnist/main.py
@@ -33,31 +37,6 @@ class Net(nn.Module):
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
-
-
-def _load_hyperparameters(hyperparameters):
-    logger.info("Load hyperparameters")
-    # backend for distributed training (default: None')
-    backend = hyperparameters.get('backend', None)
-    # batch size for training (default: 64)
-    batch_size = hyperparameters.get('batch_size', 60)
-    # batch size for testing (default: 1000)
-    test_batch_size = hyperparameters.get('test_batch_size', 1000)
-    # number of epochs to train (default: 10)
-    epochs = hyperparameters.get('epochs', 2)
-    # learning rate (default: 0.01)
-    lr = hyperparameters.get('lr', 0.01)
-    # SGD momentum (default: 0.5)
-    momentum = hyperparameters.get('momentum', 0.5)
-    # random seed (default: 1)
-    seed = hyperparameters.get('seed', 1)
-    # how many batches to wait before logging training status
-    log_interval = hyperparameters.get('log_interval', 100)
-    logger.info(
-        'backend: {}, batch_size: {}, test_batch_size: {}, '.format(backend, batch_size, test_batch_size) +
-        'epochs: {}, lr: {}, momentum: {}, seed: {}, log_interval: {}'.format(epochs, lr, momentum, seed, log_interval)
-    )
-    return backend, batch_size, test_batch_size, epochs, lr, momentum, seed, log_interval
 
 
 def _get_train_data_loader(batch_size, training_dir, is_distributed, **kwargs):
@@ -89,35 +68,31 @@ def _average_gradients(model):
         param.grad.data /= size
 
 
-def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_port, hyperparameters):
-    training_dir = channel_input_dirs['training']
-    backend, batch_size, test_batch_size, epochs, lr, momentum, \
-        seed, log_interval = _load_hyperparameters(hyperparameters)
-    is_distributed = len(hosts) > 1 and backend is not None
+def train(args):
+    is_distributed = len(args.hosts) > 1 and args.backend is not None
     logger.debug("Distributed training - {}".format(is_distributed))
-    use_cuda = num_gpus > 0
-    logger.debug("Number of gpus available - {}".format(num_gpus))
+    use_cuda = args.num_gpus > 0
+    logger.debug("Number of gpus available - {}".format(args.num_gpus))
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     device = torch.device("cuda" if use_cuda else "cpu")
 
     if is_distributed:
         # Initialize the distributed environment.
-        world_size = len(hosts)
+        world_size = len(args.hosts)
         os.environ['WORLD_SIZE'] = str(world_size)
-        os.environ['MASTER_ADDR'] = master_addr
-        os.environ['MASTER_PORT'] = master_port
-        dist.init_process_group(backend=backend, rank=host_rank, world_size=world_size)
+        host_rank = args.hosts.index(args.current_host)
+        dist.init_process_group(backend=args.backend, rank=host_rank, world_size=world_size)
         logger.info('Initialized the distributed environment: \'{}\' backend on {} nodes. '.format(
-            backend, dist.get_world_size()) + 'Current host rank is {}. Using cuda: {}. Number of gpus: {}'.format(
-            dist.get_rank(), torch.cuda.is_available(), num_gpus))
+            args.backend, dist.get_world_size()) + 'Current host rank is {}. Number of gpus: {}'.format(
+            dist.get_rank(), args.num_gpus))
 
     # set the seed for generating random numbers
-    torch.manual_seed(seed)
+    torch.manual_seed(args.seed)
     if use_cuda:
-        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed(args.seed)
 
-    train_loader = _get_train_data_loader(batch_size, training_dir, is_distributed, **kwargs)
-    test_loader = _get_test_data_loader(test_batch_size, training_dir, **kwargs)
+    train_loader = _get_train_data_loader(args.batch_size, args.data_dir, is_distributed, **kwargs)
+    test_loader = _get_test_data_loader(args.test_batch_size, args.data_dir, **kwargs)
 
     logger.debug("Processes {}/{} ({:.0f}%) of train data".format(
         len(train_loader.sampler), len(train_loader.dataset),
@@ -132,20 +107,14 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
     model = Net().to(device)
     if is_distributed and use_cuda:
         # multi-machine multi-gpu case
-        logger.debug("Multi-machine multi-gpu: using DistributedDataParallel.")
-        model = torch.nn.parallel.DistributedDataParallel(model.cuda())
-    elif use_cuda:
-        # single-machine multi-gpu case
-        logger.debug("Single-machine multi-gpu: using DataParallel().cuda().")
-        model = torch.nn.DataParallel(model).to(device)
+        model = torch.nn.parallel.DistributedDataParallel(model)
     else:
-        # single-machine or multi-machine cpu case
-        logger.debug("Single-machine/multi-machine cpu: using DataParallel.")
+        # single-machine multi-gpu case or single-machine or multi-machine cpu case
         model = torch.nn.DataParallel(model)
 
-    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum)
+    optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
 
-    for epoch in range(1, epochs + 1):
+    for epoch in range(1, args.epochs + 1):
         model.train()
         for batch_idx, (data, target) in enumerate(train_loader, 1):
             data, target = data.to(device), target.to(device)
@@ -157,12 +126,12 @@ def train(channel_input_dirs, num_gpus, hosts, host_rank, master_addr, master_po
                 # average gradients manually for multi-machine cpu case only
                 _average_gradients(model)
             optimizer.step()
-            if batch_idx % log_interval == 0:
+            if batch_idx % args.log_interval == 0:
                 logger.debug('Train Epoch: {} [{}/{} ({:.0f}%)] Loss: {:.6f}'.format(
                     epoch, batch_idx * len(data), len(train_loader.sampler),
                     100. * batch_idx / len(train_loader), loss.item()))
         test(model, test_loader, device)
-    return model.cpu()
+    save_model(model, args.model_dir)
 
 
 def test(model, test_loader, device):
@@ -185,7 +154,47 @@ def test(model, test_loader, device):
 
 def model_fn(model_dir):
     logger.info('model_fn')
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = torch.nn.DataParallel(Net())
     with open(os.path.join(model_dir, 'model.pth'), 'rb') as f:
         model.load_state_dict(torch.load(f))
-    return model
+    return model.to(device)
+
+
+def save_model(model, model_dir):
+    logger.info("Saving the model.")
+    path = os.path.join(model_dir, 'model.pth')
+    # recommended way from http://pytorch.org/docs/master/notes/serialization.html
+    torch.save(model.cpu().state_dict(), path)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+
+    # Data and model checkpoints directories
+    parser.add_argument('--batch-size', type=int, default=64, metavar='N',
+                        help='input batch size for training (default: 64)')
+    parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
+                        help='input batch size for testing (default: 1000)')
+    parser.add_argument('--epochs', type=int, default=10, metavar='N',
+                        help='number of epochs to train (default: 10)')
+    parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
+                        help='learning rate (default: 0.01)')
+    parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
+                        help='SGD momentum (default: 0.5)')
+    parser.add_argument('--seed', type=int, default=1, metavar='S',
+                        help='random seed (default: 1)')
+    parser.add_argument('--log-interval', type=int, default=100, metavar='N',
+                        help='how many batches to wait before logging training status')
+    parser.add_argument('--backend', type=str, default=None,
+                        help='backend for distributed training (tcp, gloo on cpu and gloo, nccl on gpu)')
+
+    # Container environment
+    env = sagemaker_containers.training_env()
+    parser.add_argument('--hosts', type=list, default=env.hosts)
+    parser.add_argument('--current-host', type=str, default=env.current_host)
+    parser.add_argument('--model-dir', type=str, default=env.model_dir)
+    parser.add_argument('--data-dir', type=str, default=env.channel_input_dirs['training'])
+    parser.add_argument('--num-gpus', type=int, default=env.num_gpus)
+
+    train(parser.parse_args())
