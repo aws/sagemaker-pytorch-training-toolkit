@@ -182,7 +182,7 @@ def chain_docker_cmds(cmd1, cmd2):
 
 
 class Container(object):
-    def __init__(self, tmpdir, command, startup_delay=5):
+    def __init__(self, tmpdir, command, startup_delay=10):
         self.command = command
         self.compose_file = os.path.join(tmpdir, DOCKER_COMPOSE_FILENAME)
         self.startup_delay = startup_delay
