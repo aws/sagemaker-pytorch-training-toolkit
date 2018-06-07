@@ -25,6 +25,9 @@ def model_fn(model_dir):
                      dropout=model_info['dropout'], tie_weights=model_info['tie_weights'])
     with open(os.path.join(model_dir, 'model.pth'), 'rb') as f:
         model.load_state_dict(torch.load(f))
+        # after load the rnn params are not a continuous chunk of memory
+        # this makes them a continuous chunk, and will speed up forward pass
+        model.rnn.flatten_parameters()
     model.to(device).eval()
     logger.info('Loading the data.')
     corpus = data.Corpus(model_dir)
