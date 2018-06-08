@@ -43,8 +43,8 @@ class Net(nn.Module):
         return x
 
 
-def train(args):
-    is_distributed = len(args.hosts) > 1 and args.backend is not None
+def _train(args):
+    is_distributed = len(args.hosts) > 1 and args.dist_backend is not None
     logger.debug("Distributed training - {}".format(is_distributed))
 
     if is_distributed:
@@ -52,10 +52,10 @@ def train(args):
         world_size = len(args.hosts)
         os.environ['WORLD_SIZE'] = str(world_size)
         host_rank = args.hosts.index(args.current_host)
-        dist.init_process_group(backend=args.backend, rank=host_rank, world_size=world_size)
+        dist.init_process_group(backend=args.dist_backend, rank=host_rank, world_size=world_size)
         logger.info(
             'Initialized the distributed environment: \'{}\' backend on {} nodes. '.format(
-                args.backend,
+                args.dist_backend,
                 dist.get_world_size()) + 'Current host rank is {}. Using cuda: {}. Number of gpus: {}'.format(
                 dist.get_rank(), torch.cuda.is_available(), args.num_gpus))
 
@@ -112,7 +112,14 @@ def train(args):
                       (epoch + 1, i + 1, running_loss / 2000))
                 running_loss = 0.0
     print('Finished Training')
-    return model
+    return _save_model(model, args.model_dir)
+
+
+def _save_model(model, model_dir):
+    logger.info("Saving the model.")
+    path = os.path.join(model_dir, 'model.pth')
+    # recommended way from http://pytorch.org/docs/master/notes/serialization.html
+    torch.save(model.cpu().state_dict(), path)
 
 
 def model_fn(model_dir):
@@ -149,4 +156,4 @@ if __name__ == '__main__':
     parser.add_argument('--data-dir', type=str, default=env.channel_input_dirs.get('training'))
     parser.add_argument('--num-gpus', type=int, default=env.num_gpus)
 
-    train(parser.parse_args())
+    _train(parser.parse_args())
