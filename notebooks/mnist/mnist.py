@@ -1,7 +1,7 @@
 import argparse
+import json
 import logging
 import os
-import sagemaker_containers
 import sys
 import torch
 import torch.distributed as dist
@@ -190,11 +190,10 @@ if __name__ == '__main__':
                         help='backend for distributed training (tcp, gloo on cpu and gloo, nccl on gpu)')
 
     # Container environment
-    env = sagemaker_containers.training_env()
-    parser.add_argument('--hosts', type=list, default=env.hosts)
-    parser.add_argument('--current-host', type=str, default=env.current_host)
-    parser.add_argument('--model-dir', type=str, default=env.model_dir)
-    parser.add_argument('--data-dir', type=str, default=env.channel_input_dirs['training'])
-    parser.add_argument('--num-gpus', type=int, default=env.num_gpus)
+    parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
+    parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
+    parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
+    parser.add_argument('--data-dir', type=str, default=os.environ['SM_CHANNEL_TRAINING'])
+    parser.add_argument('--num-gpus', type=int, default=os.environ['SM_NUM_GPUS'])
 
     train(parser.parse_args())
