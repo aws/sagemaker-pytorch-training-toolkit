@@ -3,14 +3,19 @@
 SageMaker PyTorch Container
 ===========================
 
-SageMaker PyTorch Containers is an open source library for making the
+SageMaker PyTorch Container is an open source library for making the
 PyTorch framework run on Amazon SageMaker.
 
 This repository also contains Dockerfiles which install this library, PyTorch, and dependencies
 for building SageMaker PyTorch images.
 
-For information on running PyTorch jobs on SageMaker: `Python
-SDK <https://github.com/aws/sagemaker-python-sdk/tree/master/src/sagemaker/pytorch>`__.
+The SageMaker team uses this repository to build its official PyTorch image. To use this image on SageMaker,
+see `Python SDK <https://github.com/aws/sagemaker-python-sdk>`__.
+For end users, this repository is typically of interest if you need implementation details for
+the official image, or if you want to use it to build your own customized PyTorch image.
+
+For information on running PyTorch jobs on SageMaker: `SageMaker PyTorch Estimators and Models
+<https://github.com/aws/sagemaker-python-sdk/tree/master/src/sagemaker/pytorch>`__.
 
 For notebook examples: `SageMaker Notebook
 Examples <https://github.com/awslabs/amazon-sagemaker-examples>`__.
@@ -41,7 +46,7 @@ For Testing on GPU
 Recommended
 ^^^^^^^^^^^
 
--  A python environment management tool. (e.g.
+-  A Python environment management tool (e.g.
    `PyEnv <https://github.com/pyenv/pyenv>`__,
    `VirtualEnv <https://virtualenv.pypa.io/en/stable/>`__)
 
@@ -165,7 +170,7 @@ If you want to run unit tests, then use:
 
     pytest test/unit
 
-    # or you can use tox
+    # or you can use tox to run unit tests as well as flake8 and code coverage
 
     tox
 
@@ -213,10 +218,10 @@ SageMaker Integration Tests
 SageMaker integration tests require your Docker image to be within an `Amazon ECR repository <https://docs
 .aws.amazon.com/AmazonECS/latest/developerguide/ECS_Console_Repositories.html>`__.
 
-The Docker-base-name is your `ECR repository namespace <https://docs.aws.amazon
+The Docker base name is your `ECR repository namespace <https://docs.aws.amazon
 .com/AmazonECR/latest/userguide/Repositories.html>`__.
 
-The instance-type is your specified `Amazon SageMaker Instance Type
+The instance type is your specified `Amazon SageMaker Instance Type
 <https://aws.amazon.com/sagemaker/pricing/instance-types/>`__ that the SageMaker integration test will run on.
 
 Before running SageMaker integration tests:
