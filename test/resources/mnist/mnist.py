@@ -23,7 +23,8 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
-from torchvision import datasets, transforms
+
+from utils.dataloaders import get_train_data_loader, get_test_data_loader
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -50,27 +51,6 @@ class Net(nn.Module):
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
-
-
-def _get_train_data_loader(batch_size, training_dir, is_distributed, **kwargs):
-    logger.info("Get train data loader")
-    dataset = datasets.MNIST(training_dir, train=True, transform=transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ]))
-    train_sampler = torch.utils.data.distributed.DistributedSampler(dataset) if is_distributed else None
-    return torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=train_sampler is None,
-                                       sampler=train_sampler, **kwargs)
-
-
-def _get_test_data_loader(test_batch_size, training_dir, **kwargs):
-    logger.info("Get test data loader")
-    return torch.utils.data.DataLoader(
-        datasets.MNIST(training_dir, train=False, transform=transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize((0.1307,), (0.3081,))
-        ])),
-        batch_size=test_batch_size, shuffle=True, **kwargs)
 
 
 def _average_gradients(model):
@@ -104,8 +84,8 @@ def train(args):
     if use_cuda:
         torch.cuda.manual_seed(args.seed)
 
-    train_loader = _get_train_data_loader(args.batch_size, args.data_dir, is_distributed, **kwargs)
-    test_loader = _get_test_data_loader(args.test_batch_size, args.data_dir, **kwargs)
+    train_loader = get_train_data_loader(args.batch_size, args.data_dir, is_distributed, **kwargs)
+    test_loader = get_test_data_loader(args.test_batch_size, args.data_dir, **kwargs)
 
     # TODO: assert the logs when we move to the SDK local mode
     logger.debug("Processes {}/{} ({:.0f}%) of train data".format(
