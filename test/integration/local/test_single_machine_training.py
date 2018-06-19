@@ -12,11 +12,11 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 from test.utils import local_mode
-from test.integration import data_dir, mnist_script
+from test.integration import data_dir, mnist_script, mnist_path
 
 
 def test_mnist_cpu(docker_image, opt_ml, use_gpu):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, use_gpu=use_gpu)
+    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, use_gpu=use_gpu, source_dir=mnist_path)
 
     assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
