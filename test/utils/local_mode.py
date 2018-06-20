@@ -25,7 +25,7 @@ import os
 import yaml
 
 from botocore.exceptions import ClientError
-from sagemaker import fw_utils
+from sagemaker import fw_utils, utils
 
 CYAN_COLOR = '\033[36m'
 END_COLOR = '\033[0m'
@@ -253,9 +253,10 @@ def create_training(data_dir, customer_script, optml, image, additional_volumes,
     hyperparameters = read_hyperparameters(additional_hps)
 
     if customer_script:
+        timestamp = utils.sagemaker_timestamp()
         s3_script_path = fw_utils.tar_and_upload_dir(session=session,
                                                      bucket=default_bucket(session),
-                                                     s3_key_prefix='test',
+                                                     s3_key_prefix='test-{}'.format(timestamp),
                                                      script=customer_script,
                                                      directory=source_dir)[0]
         hyperparameters.update({
@@ -335,9 +336,10 @@ def create_docker_services(command, tmpdir, hosts, image, additional_volumes, ad
         environment.extend(DEFAULT_HOSTING_ENV)
 
         if customer_script:
+            timestamp = utils.sagemaker_timestamp()
             s3_script_path = fw_utils.tar_and_upload_dir(session=session,
                                                          bucket=default_bucket(session),
-                                                         s3_key_prefix='test',
+                                                         s3_key_prefix='test-{}'.format(timestamp),
                                                          script=customer_script,
                                                          directory=source_dir)[0]
 
