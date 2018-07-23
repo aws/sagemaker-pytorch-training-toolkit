@@ -45,7 +45,7 @@ def _test_mnist_distributed(sagemaker_session, ecr_image, instance_type, dist_ba
         predictor = pytorch.deploy(initial_instance_count=1, instance_type=instance_type)
 
         batch_size = 100
-        data = np.random.rand(batch_size, 1, 28, 28)
+        data = np.random.rand(batch_size, 1, 28, 28).astype(np.float32)
         output = predictor.predict(data)
 
-        assert np.asarray(output).shape == (batch_size, 10)
+        assert output.shape == (batch_size, 10)
