@@ -186,7 +186,7 @@ def test_default_output_fn_gpu():
     assert content_types.CSV in output.content_type
 
 
-@patch('sagemaker_containers.beta.framework.modules.import_module_from_s3')
+@patch('sagemaker_containers.beta.framework.modules.import_module')
 @patch('sagemaker_containers.beta.framework.worker.Worker')
 @patch('sagemaker_containers.beta.framework.transformer.Transformer.initialize')
 @patch('sagemaker_containers.beta.framework.env.ServingEnv', MagicMock())

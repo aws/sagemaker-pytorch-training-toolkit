@@ -54,16 +54,16 @@ def fixture_user_module_with_save():
     return MagicMock(spec=['train', 'save'])
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module_from_s3')
+@patch('sagemaker_containers.beta.framework.modules.run_module')
 @patch('socket.gethostbyname', MagicMock())
-def test_train(run_module_from_s3, training_env):
+def test_train(run_module, training_env):
     train(training_env)
 
-    run_module_from_s3.assert_called_with(training_env.module_dir, training_env.to_cmd_args(),
+    run_module.assert_called_with(training_env.module_dir, training_env.to_cmd_args(),
                                           training_env.to_env_vars(), training_env.module_name)
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module_from_s3', MagicMock())
+@patch('sagemaker_containers.beta.framework.modules.run_module', MagicMock())
 @patch('socket.gethostbyname', MagicMock())
 def test_environment(training_env):
     train(training_env)
@@ -107,23 +107,23 @@ def test_dns_lookup_fail():
     assert not _dns_lookup('algo-1')
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module_from_s3')
+@patch('sagemaker_containers.beta.framework.modules.run_module')
 @patch('socket.gethostbyname', MagicMock())
-def test_gloo_exception_intercepted(run_module_from_s3, training_env):
+def test_gloo_exception_intercepted(run_module, training_env):
     output = 'terminate called after throwing an instance of \'gloo::EnforceNotMet\''
-    run_module_from_s3.side_effect = framework.errors.ExecuteUserScriptError(
+    run_module.side_effect = framework.errors.ExecuteUserScriptError(
         cmd='Command "/usr/bin/python -m userscript"',
         output=output.encode('latin1') if six.PY3 else output
     )
     train(training_env)
-    run_module_from_s3.assert_called()
+    run_module.assert_called()
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module_from_s3')
+@patch('sagemaker_containers.beta.framework.modules.run_module')
 @patch('socket.gethostbyname', MagicMock())
-def test_user_script_error_raised(run_module_from_s3, training_env):
+def test_user_script_error_raised(run_module, training_env):
     output = 'Not \'gloo::EnforceNotMet\' exception.'
-    run_module_from_s3.side_effect = framework.errors.ExecuteUserScriptError(
+    run_module.side_effect = framework.errors.ExecuteUserScriptError(
         cmd='Command "/usr/bin/python -m userscript"',
         output=output.encode('latin1') if six.PY3 else output
     )
