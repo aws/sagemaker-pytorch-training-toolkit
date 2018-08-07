@@ -92,7 +92,7 @@ def _user_module_transformer(user_module):
 
 def main(environ, start_response):
     serving_env = env.ServingEnv()
-    user_module = modules.import_module_from_s3(serving_env.module_dir, serving_env.module_name)
+    user_module = modules.import_module(serving_env.module_dir, serving_env.module_name)
 
     user_module_transformer = _user_module_transformer(user_module)
 
