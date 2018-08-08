@@ -23,7 +23,7 @@ from torchvision import datasets, transforms
 import numpy as np
 from sagemaker_containers.beta.framework import content_types
 from test.integration import training_dir, mnist_script, mnist_1d_script, model_cpu_dir, model_gpu_dir, \
-    model_cpu_1d_dir
+    model_cpu_1d_dir, call_model_fn_once_script
 
 
 @pytest.fixture(name='serve_cpu')
@@ -90,6 +90,14 @@ def test_serve_gpu_csv(serve_gpu, test_loader):
 def test_serve_cpu_model_on_gpu(serve_gpu, test_loader):
     with serve_gpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
         _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.JSON)
+
+
+def test_serving_calls_model_fn_once(serve_cpu, tmpdir):
+    with serve_cpu(model_dir=str(tmpdir), script=call_model_fn_once_script):
+        assert b'output' == requests.post(local_mode.REQUEST_URL, data=b'input').content
+
+        # each will return 500 error if model_fn called during request handling
+        assert b'output' == requests.post(local_mode.REQUEST_URL, data=b'input').content
 
 
 def _assert_prediction_npy_json(test_loader, request_type, accept):
