@@ -11,34 +11,42 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+
 import json
-from six import StringIO, BytesIO
+
+import numpy as np
 import pytest
 import requests
-from test.utils import local_mode
 import torch
 import torch.utils.data
 import torch.utils.data.distributed
-from torchvision import datasets, transforms
-import numpy as np
 from sagemaker_containers.beta.framework import content_types
-from test.integration import training_dir, mnist_script, mnist_1d_script, model_cpu_dir, model_gpu_dir, \
-    model_cpu_1d_dir
+from six import StringIO, BytesIO
+from torchvision import datasets, transforms
+
+from test.integration import training_dir, mnist_script, mnist_1d_script, model_cpu_dir, \
+    model_gpu_dir, \
+    model_cpu_1d_dir, call_model_fn_once_script
+from test.utils import local_mode
 
 
 @pytest.fixture(name='serve_cpu')
 def fixture_serve_cpu(docker_image, opt_ml):
     def serve(model_dir=model_cpu_dir, script=mnist_script):
-        return local_mode.serve(customer_script=script, model_dir=model_dir, image_name=docker_image,
+        return local_mode.serve(customer_script=script, model_dir=model_dir,
+                                image_name=docker_image,
                                 opt_ml=opt_ml)
+
     return serve
 
 
 @pytest.fixture(name='serve_gpu')
 def fixture_serve_gpu(docker_image, opt_ml):
     def serve(model_dir=model_gpu_dir, script=mnist_script):
-        return local_mode.serve(customer_script=script, model_dir=model_dir, image_name=docker_image,
+        return local_mode.serve(customer_script=script, model_dir=model_dir,
+                                image_name=docker_image,
                                 use_gpu=True, opt_ml=opt_ml)
+
     return serve
 
 
@@ -92,6 +100,16 @@ def test_serve_cpu_model_on_gpu(serve_gpu, test_loader):
         _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.JSON)
 
 
+def test_serving_calls_model_fn_once(docker_image, opt_ml, tmpdir):
+    with local_mode.serve(customer_script=call_model_fn_once_script, model_dir=None,
+                          image_name=docker_image,
+                          opt_ml=opt_ml, additional_env_vars=['SAGEMAKER_MODEL_SERVER_WORKERS=2']):
+        # call enough times to ensure multiple requests to a worker
+        for i in range(3):
+            # will return 500 error if model_fn called during request handling
+            assert b'output' == requests.post(local_mode.REQUEST_URL, data=b'input').content
+
+
 def _assert_prediction_npy_json(test_loader, request_type, accept):
     output = _make_prediction(_get_mnist_batch(test_loader).numpy(), request_type, accept)
     assert np.asarray(output).shape == (test_loader.batch_size, 10)
@@ -118,8 +136,10 @@ def _get_mnist_batch(test_loader):
 
 
 def _make_prediction(data, request_type, accept):
-    serialized_output = requests.post(local_mode.REQUEST_URL, data=_serialize_input(data, request_type),
-                                      headers={'Content-type': request_type, 'Accept': accept}).content
+    serialized_output = requests.post(local_mode.REQUEST_URL,
+                                      data=_serialize_input(data, request_type),
+                                      headers={'Content-type': request_type,
+                                               'Accept': accept}).content
     return _deserialize_output(serialized_output, accept)
 
 

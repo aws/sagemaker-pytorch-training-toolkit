@@ -11,23 +11,22 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
-import pytest
-import json
+
 import csv
+import json
+
 import numpy as np
-from six import StringIO, BytesIO
+import pytest
 import torch
 import torch.nn as nn
-from torch.autograd import Variable
-
+from mock import MagicMock
+from mock import patch
 from sagemaker_containers.beta.framework import (content_types, encoders)
+from six import StringIO, BytesIO
+from torch.autograd import Variable
 
 from sagemaker_pytorch_container.serving import main, default_model_fn, default_input_fn
 from sagemaker_pytorch_container.serving import default_predict_fn, default_output_fn
-
-from mock import MagicMock
-from mock import Mock
-from mock import patch
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -186,18 +185,13 @@ def test_default_output_fn_gpu():
     assert content_types.CSV in output.content_type
 
 
-@patch('sagemaker_containers.beta.framework.modules.import_module_from_s3')
+@patch('sagemaker_containers.beta.framework.modules.import_module')
 @patch('sagemaker_containers.beta.framework.worker.Worker')
 @patch('sagemaker_containers.beta.framework.transformer.Transformer.initialize')
 @patch('sagemaker_containers.beta.framework.env.ServingEnv', MagicMock())
 def test_hosting_start(mock_import_module, mock_worker, mock_transformer_init):
-    user_module = MagicMock()
-    user_module.model_fn = Mock(return_value=DummyModel())
-    mock_import_module.return_value = user_module
-    app = MagicMock()
-    mock_worker.return_value = app
     environ = MagicMock()
     start_response = MagicMock()
     main(environ, start_response)
     mock_transformer_init.assert_called()
-    app.assert_called_with(environ, start_response)
+    mock_worker.return_value.assert_called_with(environ, start_response)
