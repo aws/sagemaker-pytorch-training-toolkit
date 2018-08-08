@@ -15,6 +15,7 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def skip_by_device_type(request, tag):
-    if (request.node.get_marker('skip_gpu') and 'gpu' in tag) or (request.node.get_marker('skip_cpu') and 'cpu' in tag):
-        pytest.skip('Skipping because tag is: {}'.format(tag))
+def skip_by_device_type(request, processor):
+    if (request.node.get_marker('skip_gpu') and processor == 'gpu') or \
+            (request.node.get_marker('skip_cpu') and processor == 'cpu'):
+        pytest.skip('Skipping because running \'{}\' image'.format(processor))
