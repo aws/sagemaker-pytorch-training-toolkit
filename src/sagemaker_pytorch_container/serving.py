@@ -11,10 +11,12 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
-import logging
-import torch
 
-from sagemaker_containers.beta.framework import (content_types, encoders, env, modules, transformer, worker)
+import logging
+
+import torch
+from sagemaker_containers.beta.framework import (content_types, encoders, env, modules, transformer,
+                                                 worker)
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +44,8 @@ def default_input_fn(input_data, content_type):
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     np_array = encoders.decode(input_data, content_type)
-    tensor = torch.FloatTensor(np_array) if content_type in content_types.UTF8_TYPES else torch.from_numpy(np_array)
+    tensor = torch.FloatTensor(
+        np_array) if content_type in content_types.UTF8_TYPES else torch.from_numpy(np_array)
     return tensor.to(device)
 
 
@@ -90,14 +93,20 @@ def _user_module_transformer(user_module):
                                    output_fn=output_fn)
 
 
+app = None
+
+
 def main(environ, start_response):
-    serving_env = env.ServingEnv()
-    user_module = modules.import_module(serving_env.module_dir, serving_env.module_name)
+    global app
+    if app is None:
+        serving_env = env.ServingEnv()
+        user_module = modules.import_module(serving_env.module_dir, serving_env.module_name)
 
-    user_module_transformer = _user_module_transformer(user_module)
+        user_module_transformer = _user_module_transformer(user_module)
 
-    user_module_transformer.initialize()
+        user_module_transformer.initialize()
 
-    app = worker.Worker(transform_fn=user_module_transformer.transform,
-                        module_name=serving_env.module_name)
+        app = worker.Worker(transform_fn=user_module_transformer.transform,
+                            module_name=serving_env.module_name)
+
     return app(environ, start_response)

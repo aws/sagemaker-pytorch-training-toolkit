@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+
 import os
 
 resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'resources'))
@@ -25,3 +26,4 @@ model_cpu_dir = os.path.join(mnist_path, 'model_cpu')
 model_cpu_1d_dir = os.path.join(model_cpu_dir, '1d')
 model_gpu_dir = os.path.join(mnist_path, 'model_gpu')
 model_gpu_1d_dir = os.path.join(model_gpu_dir, '1d')
+call_model_fn_once_script = os.path.join(resources_path, 'call_model_fn_once.py')
