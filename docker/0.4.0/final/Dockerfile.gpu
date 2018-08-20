@@ -7,8 +7,7 @@ COPY lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.s
 RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
 
 COPY dist/sagemaker_pytorch_container-1.0-py2.py3-none-any.whl /sagemaker_pytorch_container-1.0-py2.py3-none-any.whl
-RUN pip install --no-cache sagemaker-containers==2.1.0 && \
-    pip install --no-cache /sagemaker_pytorch_container-1.0-py2.py3-none-any.whl && \
+RUN pip install --no-cache /sagemaker_pytorch_container-1.0-py2.py3-none-any.whl && \
     rm /sagemaker_pytorch_container-1.0-py2.py3-none-any.whl
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_pytorch_container.training:main
