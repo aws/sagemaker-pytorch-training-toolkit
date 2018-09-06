@@ -16,7 +16,7 @@ RUN apt-get update && \
         python-dev \
         python3-dev \
         wget && \
-    if [ $py_version -eq 3 ]; then ln -s /usr/bin/python3 /usr/bin/python; fi
+    if [ $py_version -eq 3 ]; then rm /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python; fi
 
 # Install pip
 RUN cd /tmp && \
