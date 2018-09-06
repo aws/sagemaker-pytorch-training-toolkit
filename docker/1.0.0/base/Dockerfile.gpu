@@ -7,15 +7,15 @@ RUN test $py_version || exit 1
 
 # Install python and nginx
 RUN apt-get update && \
-    apt-get -y install && \
-        build-essential && \
-        curl && \
-        git && \
-        nginx && \
-        jq && \
+    apt-get -y install \
+        build-essential \
+        curl \
+        git \
+        jq \
+        nginx \
+        python-dev \
+        python3-dev \
         wget && \
-        python-dev && \
-        python3-dev && \
     if [ $py_version -eq 3 ]; then ln -s /usr/bin/python3 /usr/bin/python; fi
 
 # Install pip
