@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 
 ARG py_version
 
@@ -27,10 +27,8 @@ RUN cd /tmp && \
 # Force stdin, stdout and stderr to be totally unbuffered. Good for logging
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-# Install dependencies from pip
-# TODO(nadiaya): getting PyTorch with CUDA support to get 'gloo' backend. Build from sources instead.
+# TODO(nadiaya): Build from sources instead remove unnecessary CUDA archs and potentially to have 'mpi' support.
 # Install PyTorch https://github.com/pytorch/pytorch#installation
-#RUN pip install --no-cache --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html && \
-RUN pip install --no-cache --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cu80/torch_nightly.html && \
+RUN pip install --no-cach --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cu90/torch_nightly.html && \
     pip install --no-cache --upgrade-strategy only-if-needed numpy Pillow six retrying && \
     pip install --no-cache --no-deps torchvision

@@ -7,16 +7,10 @@ RUN test $py_version || exit 1
 
 # Install python and nginx
 RUN apt-get update && \
-    apt-get -y install \
-        build-essential \
-        curl \
-        git \
-        jq \
-        nginx \
-        python-dev \
-        python3-dev \
-        wget && \
-    if [ $py_version -eq 3 ]; then rm /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python; fi
+    apt-get -y install build-essential git wget curl nginx jq && \
+    if [ $py_version -eq 2 ]; \
+        then apt-get -y install python-dev; \
+        else apt-get -y install python3-dev && ln -s /usr/bin/python3 /usr/bin/python; fi
 
 # Install pip
 RUN cd /tmp && \
@@ -29,6 +23,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 # TODO(nadiaya): Build from sources instead remove unnecessary CUDA archs and potentially to have 'mpi' support.
 # Install PyTorch https://github.com/pytorch/pytorch#installation
-RUN pip install --no-cach --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cu90/torch_nightly.html && \
-    pip install --no-cache --upgrade-strategy only-if-needed numpy Pillow six retrying && \
+RUN pip install --no-cach --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cu90/torch_nightly.html
+
+RUN pip install --no-cache --upgrade-strategy only-if-needed numpy Pillow six retrying && \
     pip install --no-cache --no-deps torchvision
