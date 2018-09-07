@@ -30,6 +30,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 # Install dependencies from pip
 # TODO(nadiaya): getting PyTorch with CUDA support to get 'gloo' backend. Build from sources instead.
 # Install PyTorch https://github.com/pytorch/pytorch#installation
-RUN pip install --no-cache --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html && \
+#RUN pip install --no-cache --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html && \
+RUN pip install --no-cache --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cu90/torch_nightly.html && \
     pip install --no-cache --upgrade-strategy only-if-needed numpy Pillow six retrying && \
     pip install --no-cache --no-deps torchvision
