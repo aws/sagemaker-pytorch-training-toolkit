@@ -31,7 +31,7 @@ def test_dist_operations_gpu(sagemaker_session, instance_type, ecr_image, dist_g
 
 @pytest.mark.skip_cpu
 def test_dist_operations_multi_gpu(sagemaker_session, ecr_image, dist_gpu_backend):
-    instance_type = 'ml.p2.8xlarge'
+    instance_type = 'ml.p3.8xlarge'
     _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_gpu_backend, 1)
 
 
