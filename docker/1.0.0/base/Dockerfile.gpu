@@ -28,7 +28,7 @@ RUN cd /tmp && \
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 # TODO(nadiaya): Build from sources instead remove unnecessary CUDA archs and potentially to have 'mpi' support.
-# Install PyTorch https://github.com/pytorch/pytorch#installation
+# FIXME: temporarily installing torch_nightly (update to official PT1 when it released)
 RUN pip install --no-cach --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cu90/torch_nightly.html && \
     pip install --no-cache --upgrade-strategy only-if-needed numpy Pillow six retrying && \
     pip install --no-cache --no-deps torchvision
