@@ -59,8 +59,6 @@ def test_cpu_nccl(docker_image, opt_ml):
     assert not local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
     assert not local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
     assert local_mode.file_exists(opt_ml, 'output/failure'), 'Failure not happened'
-    assert local_mode.file_contains(opt_ml, 'output/failure',
-                                    'CUDA driver version is insufficient for CUDA runtime version')
 
 
 def test_mnist_cpu(docker_image, opt_ml, dist_cpu_backend):
