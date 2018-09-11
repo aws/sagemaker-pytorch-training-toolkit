@@ -1,0 +1,34 @@
+FROM ubuntu:16.04
+
+ARG py_version
+
+# Validate that arguments are specified
+RUN test $py_version || exit 1
+
+# Install python and nginx
+RUN apt-get update && \
+    apt-get -y install \
+        build-essential \
+        curl \
+        git \
+        jq \
+        nginx \
+        python-dev \
+        python3-dev \
+        wget && \
+    if [ $py_version -eq 3 ]; then rm /usr/bin/python && ln -s /usr/bin/python3 /usr/bin/python; fi
+
+# Install pip
+RUN cd /tmp && \
+    curl -O https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py && rm get-pip.py
+
+# Python won’t try to write .pyc or .pyo files on the import of source modules
+# Force stdin, stdout and stderr to be totally unbuffered. Good for logging
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+
+# Install dependencies from pip
+# FIXME: temporarily installing torch_nightly (update to official PT1 when it released)
+RUN pip install --no-cache --upgrade-strategy only-if-needed torch_nightly -f https://download.pytorch.org/whl/nightly/cpu/torch_nightly.html && \
+    pip install --no-cache --upgrade-strategy only-if-needed numpy Pillow six retrying && \
+    pip install --no-cache --no-deps torchvision
