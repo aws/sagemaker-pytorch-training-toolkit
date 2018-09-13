@@ -165,8 +165,7 @@ def fixture_ecr_image(docker_registry, docker_base_name, tag):
     return '{}/{}:{}'.format(docker_registry, docker_base_name, tag)
 
 
-# FIXME: add back 'gloo' backend when it's included in official cpu-binary
-@pytest.fixture(scope='session', name='dist_cpu_backend', params=['tcp'])
+@pytest.fixture(scope='session', name='dist_cpu_backend', params=['gloo'])
 def fixture_dist_cpu_backend(request):
     return request.param
 

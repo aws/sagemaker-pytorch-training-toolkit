@@ -224,6 +224,7 @@ def main():
 def init_processes(backend, master_addr, master_port, rank, world_size, rows, columns, host):
     # Initialize the distributed environment.
     os.environ['WORLD_SIZE'] = str(world_size)
+    os.environ['RANK'] = str(rank)
     os.environ['MASTER_ADDR'] = master_addr
     os.environ['MASTER_PORT'] = master_port
 
@@ -234,8 +235,8 @@ def init_processes(backend, master_addr, master_port, rank, world_size, rows, co
 
 def run(backend, rank, rows, columns):
     # http://pytorch.org/docs/master/distributed.html
-    if backend == 'tcp':
-        print('Run operations supported by \'tcp\' backend.')
+    if backend == 'gloo':
+        print('Run operations supported by \'gloo\' backend.')
         _broadcast(rank, rows, columns)
         _all_reduce(rank, rows, columns)
         _barrier(rank)
@@ -244,11 +245,6 @@ def run(backend, rank, rows, columns):
         _all_gather(rank, rows, columns)
         _gather(rank, rows, columns)
         _scatter(rank, rows, columns)
-    elif backend == 'gloo':
-        print('Run operations supported by \'gloo\' backend.')
-        _broadcast(rank, rows, columns)
-        _all_reduce(rank, rows, columns)
-        _barrier(rank)
     elif backend == 'nccl':
         print('Run operations supported by \'nccl\' backend.')
         # Note: nccl does not support gather or scatter as well:
