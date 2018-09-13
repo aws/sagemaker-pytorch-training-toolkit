@@ -13,7 +13,7 @@ def read(fname):
 
 setup(
     name='sagemaker_pytorch_container',
-    version='1.0',
+    version='0.4.0.1.0.0',
     description='Open source library for creating PyTorch containers to run on Amazon SageMaker.',
 
     packages=find_packages(where='src', exclude=('test',)),
