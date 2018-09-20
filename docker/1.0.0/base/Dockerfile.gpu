@@ -29,8 +29,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
 # TODO(nadiaya): Build from sources instead remove unnecessary CUDA archs and potentially to have 'mpi' support.
 # FIXME: temporarily installing torch_nightly (update to official PT1 when it released)
-RUN if [ $py_version -eq 2 ]; \
-    then pip install --no-cache --upgrade-strategy only-if-needed https://download.pytorch.org/whl/nightly/cu92/torch_nightly-2018.9.12-cp27-cp27mu-linux_x86_64.whl; \
-    else pip install --no-cache --upgrade-strategy only-if-needed https://download.pytorch.org/whl/nightly/cu92/torch_nightly-2018.9.12-cp35-cp35m-linux_x86_64.whl; fi
+RUN pip install torch_nightly -f https://download.pytorch.org/whl/nightly/cu92/torch_nightly.html
 RUN pip install --no-cache --upgrade-strategy only-if-needed numpy Pillow six retrying && \
     pip install --no-cache --no-deps torchvision
