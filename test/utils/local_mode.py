@@ -224,7 +224,7 @@ def shutdown(compose_file):
 
 
 def create_docker_command(tmpdir, use_gpu=False, detached=False):
-    compose_cmd = 'nvidia-docker-compose' if use_gpu else 'docker-compose'
+    compose_cmd = 'docker-compose'
 
     command = [
         compose_cmd,
