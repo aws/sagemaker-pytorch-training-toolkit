@@ -30,22 +30,13 @@ from test.integration import training_dir, mnist_script, mnist_1d_script, model_
 from test.utils import local_mode
 
 
-@pytest.fixture(name='serve_cpu')
-def fixture_serve_cpu(docker_image, opt_ml):
-    def serve(model_dir=model_cpu_dir, script=mnist_script):
+@pytest.fixture(name='serve')
+def fixture_serve(docker_image, opt_ml, use_gpu):
+    model_dir = model_gpu_dir if use_gpu else model_cpu_dir
+    
+    def serve(model_dir=model_dir, script=mnist_script):
         return local_mode.serve(customer_script=script, model_dir=model_dir,
-                                image_name=docker_image,
-                                opt_ml=opt_ml)
-
-    return serve
-
-
-@pytest.fixture(name='serve_gpu')
-def fixture_serve_gpu(docker_image, opt_ml):
-    def serve(model_dir=model_gpu_dir, script=mnist_script):
-        return local_mode.serve(customer_script=script, model_dir=model_dir,
-                                image_name=docker_image,
-                                use_gpu=True, opt_ml=opt_ml)
+                                image_name=docker_image, opt_ml=opt_ml)
 
     return serve
 
@@ -56,8 +47,8 @@ def fixture_test_loader():
     return _get_test_data_loader(batch_size=300)
 
 
-def test_serve_cpu_json_npy(serve_cpu, test_loader):
-    with serve_cpu():
+def test_serve_json_npy(serve, test_loader):
+    with serve():
         _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.JSON)
         _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.CSV)
         _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.NPY)
@@ -67,40 +58,20 @@ def test_serve_cpu_json_npy(serve_cpu, test_loader):
         _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.NPY)
 
 
-def test_serve_cpu_csv(serve_cpu, test_loader):
-    with serve_cpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
+def test_serve_csv(serve, test_loader):
+    with serve(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
         _assert_prediction_csv(test_loader, content_types.JSON)
         _assert_prediction_csv(test_loader, content_types.CSV)
         _assert_prediction_csv(test_loader, content_types.NPY)
 
 
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_serve_gpu_json_npy(serve_gpu, test_loader):
-    with serve_gpu():
-        _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.JSON)
-        _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.CSV)
-        _assert_prediction_npy_json(test_loader, content_types.JSON, content_types.NPY)
-
-        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.JSON)
-        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.CSV)
-        _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.NPY)
-
-
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_serve_gpu_csv(serve_gpu, test_loader):
-    with serve_gpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
-        _assert_prediction_csv(test_loader, content_types.JSON)
-        _assert_prediction_csv(test_loader, content_types.CSV)
-        _assert_prediction_csv(test_loader, content_types.NPY)
-
-
-@pytest.mark.skipif(not torch.cuda.is_available(), reason="cuda is not available")
-def test_serve_cpu_model_on_gpu(serve_gpu, test_loader):
-    with serve_gpu(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
+@pytest.mark.skip_cpu
+def test_serve_model_on_gpu(serve, test_loader):
+    with serve(model_dir=model_cpu_1d_dir, script=mnist_1d_script):
         _assert_prediction_npy_json(test_loader, content_types.NPY, content_types.JSON)
 
 
-def test_serving_calls_model_fn_once(docker_image, opt_ml, tmpdir):
+def test_serving_calls_model_fn_once(docker_image, opt_ml):
     with local_mode.serve(customer_script=call_model_fn_once_script, model_dir=None,
                           image_name=docker_image,
                           opt_ml=opt_ml, additional_env_vars=['SAGEMAKER_MODEL_SERVER_WORKERS=2']):
