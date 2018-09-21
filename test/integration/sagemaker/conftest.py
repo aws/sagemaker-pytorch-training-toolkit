@@ -11,13 +11,12 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
-from test.utils import local_mode
-from test.integration import data_dir, mnist_script
+import pytest
 
 
-def test_mnist_cpu(docker_image, opt_ml, use_gpu):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, use_gpu=use_gpu)
-
-    assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+@pytest.fixture(autouse=True)
+def skip_by_device_type(request, instance_type):
+    is_gpu = instance_type[3] in ['g', 'p']
+    if (request.node.get_marker('skip_gpu') and is_gpu) or \
+            (request.node.get_marker('skip_cpu') and not is_gpu):
+        pytest.skip('Skipping because running on \'{}\' instance'.format(instance_type))
