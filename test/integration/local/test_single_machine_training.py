@@ -15,8 +15,9 @@ from test.utils import local_mode
 from test.integration import data_dir, mnist_script
 
 
-def test_mnist(docker_image, opt_ml):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml)
+def test_mnist(docker_image, opt_ml, processor):
+    local_mode.train(mnist_script, data_dir, docker_image, opt_ml,
+                     hyperparameters={'processor': processor})
 
     assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'

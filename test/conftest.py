@@ -1,13 +1,13 @@
 # Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License"). You
+# Licensed under the Apache License, Version 2.0 (the 'License'). You
 # may not use this file except in compliance with the License. A copy of
 # the License is located at
 #
 #     http://aws.amazon.com/apache2.0/
 #
-# or in the "license" file accompanying this file. This file is
-# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# or in the 'license' file accompanying this file. This file is
+# distributed on an 'AS IS' BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
@@ -36,11 +36,11 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def pytest_addoption(parser):
-    parser.addoption('--build-image', '-D', action="store_true")
-    parser.addoption('--build-base-image', '-B', action="store_true")
+    parser.addoption('--build-image', '-D', action='store_true')
+    parser.addoption('--build-base-image', '-B', action='store_true')
     parser.addoption('--aws-id')
-    parser.addoption('--instance-type')
-    parser.addoption('--install-container-support', '-C', action="store_true")
+    parser.addoption('--instance-type', default='local')
+    parser.addoption('--install-container-support', '-C', action='store_true')
     parser.addoption('--docker-base-name', default='pytorch')
     parser.addoption('--region', default='us-west-2')
     parser.addoption('--framework-version', default='0.4.0')
@@ -113,7 +113,8 @@ def fixture_install_container_support(request):
 
 
 @pytest.fixture(scope='session', name='build_base_image', autouse=True)
-def fixture_build_base_image(request, framework_version, py_version, processor, tag, docker_base_name):
+def fixture_build_base_image(request, framework_version, py_version,
+                             processor, tag, docker_base_name):
     build_base_image = request.config.getoption('--build-base-image')
     if build_base_image:
         return local_mode.build_base_image(framework_name=docker_base_name,
@@ -173,3 +174,11 @@ def fixture_dist_cpu_backend(request):
 @pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo', 'nccl'])
 def fixture_dist_gpu_backend(request):
     return request.param
+
+
+@pytest.fixture(autouse=True)
+def skip_by_device_type(request, processor, instance_type):
+    is_gpu = (processor == 'gpu') or (instance_type[3] in ['g', 'p'])
+    if (request.node.get_marker('skip_gpu') and is_gpu) or \
+            (request.node.get_marker('skip_cpu') and not is_gpu):
+        pytest.skip('Skipping because running on \'{}\' instance'.format(instance_type))
