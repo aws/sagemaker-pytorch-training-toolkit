@@ -133,20 +133,20 @@ def save_as_json(data, filename):
 
 
 def train(customer_script, data_dir, image_name, opt_ml, cluster_size=1, hyperparameters={}, additional_volumes=[],
-          additional_env_vars=[], use_gpu=False, entrypoint=None, source_dir=None):
+          additional_env_vars=[], entrypoint=None, source_dir=None):
     tmpdir = create_training(data_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
                              hyperparameters, cluster_size, entrypoint=entrypoint, source_dir=source_dir)
-    command = create_docker_command(tmpdir, use_gpu)
+    command = create_docker_command(tmpdir)
     start_docker(tmpdir, command)
     purge()
 
 
 def serve(customer_script, model_dir, image_name, opt_ml, cluster_size=1, additional_volumes=[],
-          additional_env_vars=[], use_gpu=False, entrypoint=None, source_dir=None):
+          additional_env_vars=[], entrypoint=None, source_dir=None):
 
     tmpdir = create_hosting_dir(model_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
                                 cluster_size, source_dir, entrypoint)
-    command = create_docker_command(tmpdir, use_gpu)
+    command = create_docker_command(tmpdir)
     return Container(tmpdir, command)
 
 
@@ -223,11 +223,9 @@ def shutdown(compose_file):
     subprocess.call(['docker-compose', '-f', compose_file, 'down'])
 
 
-def create_docker_command(tmpdir, use_gpu=False, detached=False):
-    compose_cmd = 'nvidia-docker-compose' if use_gpu else 'docker-compose'
-
+def create_docker_command(tmpdir, detached=False):
     command = [
-        compose_cmd,
+        'docker-compose',
         '-f',
         os.path.join(tmpdir, DOCKER_COMPOSE_FILENAME),
         'up',

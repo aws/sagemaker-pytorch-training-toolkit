@@ -44,8 +44,7 @@ def fixture_serve_cpu(docker_image, opt_ml):
 def fixture_serve_gpu(docker_image, opt_ml):
     def serve(model_dir=model_gpu_dir, script=mnist_script):
         return local_mode.serve(customer_script=script, model_dir=model_dir,
-                                image_name=docker_image,
-                                use_gpu=True, opt_ml=opt_ml)
+                                image_name=docker_image, opt_ml=opt_ml)
 
     return serve
 
