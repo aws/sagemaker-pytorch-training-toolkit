@@ -135,7 +135,7 @@ def save_as_json(data, filename):
 def train(customer_script, data_dir, image_name, opt_ml, cluster_size=1, hyperparameters={}, additional_volumes=[],
           additional_env_vars=[], use_gpu=False, entrypoint=None, source_dir=None):
     tmpdir = create_training(data_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
-                             hyperparameters, cluster_size, entrypoint=entrypoint, source_dir=source_dir)
+                             hyperparameters, cluster_size, entrypoint=entrypoint, source_dir=source_dir, use_gpu=use_gpu)
     command = create_docker_command(tmpdir, use_gpu)
     start_docker(tmpdir, command)
     purge()
@@ -145,13 +145,13 @@ def serve(customer_script, model_dir, image_name, opt_ml, cluster_size=1, additi
           additional_env_vars=[], use_gpu=False, entrypoint=None, source_dir=None):
 
     tmpdir = create_hosting_dir(model_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
-                                cluster_size, source_dir, entrypoint)
+                                cluster_size, source_dir, entrypoint, use_gpu)
     command = create_docker_command(tmpdir, use_gpu)
     return Container(tmpdir, command)
 
 
 def create_hosting_dir(model_dir, customer_script, optml, image, additional_volumes, additional_env_vars,
-                       cluster_size=1, source_dir=None, entrypoint=None):
+                       cluster_size=1, source_dir=None, entrypoint=None, use_gpu=False):
     tmpdir = os.path.abspath(optml)
     print('creating hosting dir in {}'.format(tmpdir))
 
@@ -165,7 +165,7 @@ def create_hosting_dir(model_dir, customer_script, optml, image, additional_volu
             shutil.copytree(model_dir, os.path.join(tmpdir, h, 'model'))
 
     write_docker_file('serve', tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                      source_dir, entrypoint)
+                      source_dir, entrypoint, use_gpu)
 
     print("hosting dir: \n{}".format(str(subprocess.check_output(['ls', '-lR', tmpdir]).decode('utf-8'))))
 
@@ -242,7 +242,7 @@ def create_docker_command(tmpdir, use_gpu=False, detached=False):
 
 
 def create_training(data_dir, customer_script, optml, image, additional_volumes, additional_env_vars,
-                    additional_hps={}, cluster_size=1, source_dir=None, entrypoint=None):
+                    additional_hps={}, cluster_size=1, source_dir=None, entrypoint=None, use_gpu=False):
     session = boto3.Session()
     tmpdir = os.path.abspath(optml)
 
@@ -275,7 +275,7 @@ def create_training(data_dir, customer_script, optml, image, additional_volumes,
         shutil.copytree(data_dir, os.path.join(tmpdir, host, 'input', 'data'))
 
     write_docker_file('train', tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                      source_dir, entrypoint)
+                      source_dir, entrypoint, use_gpu)
 
     print("training dir: \n{}".format(str(subprocess.check_output(['ls', '-lR', tmpdir]).decode('utf-8'))))
 
@@ -313,10 +313,10 @@ def create_input_data_config(data_path):
 
 
 def write_docker_file(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                      source_dir, entrypoint):
+                      source_dir, entrypoint, use_gpu):
     filename = os.path.join(tmpdir, DOCKER_COMPOSE_FILENAME)
     content = create_docker_compose(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
-                                    customer_script, source_dir, entrypoint)
+                                    customer_script, source_dir, entrypoint, use_gpu)
 
     print('docker compose file: \n{}'.format(content))
     with open(filename, 'w') as f:
@@ -324,7 +324,7 @@ def write_docker_file(command, tmpdir, hosts, image, additional_volumes, additio
 
 
 def create_docker_services(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                           source_dir, entrypoint):
+                           source_dir, entrypoint, use_gpu):
     environment = []
     session = boto3.Session()
 
@@ -354,12 +354,12 @@ def create_docker_services(command, tmpdir, hosts, image, additional_volumes, ad
 
     environment.extend(additional_env_vars)
 
-    return {h: create_docker_host(tmpdir, h, image, environment, optml_dirs, command, additional_volumes, entrypoint)
+    return {h: create_docker_host(tmpdir, h, image, environment, optml_dirs, command, additional_volumes, entrypoint, use_gpu)
             for h in
             hosts}
 
 
-def create_docker_host(tmpdir, host, image, environment, optml_subdirs, command, volumes, entrypoint=None):
+def create_docker_host(tmpdir, host, image, environment, optml_subdirs, command, volumes, entrypoint=None, use_gpu=False):
     optml_volumes = optml_volumes_list(tmpdir, host, optml_subdirs)
     optml_volumes = ['/private' + v if v.startswith('/var') else v for v in optml_volumes]
     optml_volumes.extend(volumes)
@@ -372,6 +372,8 @@ def create_docker_host(tmpdir, host, image, environment, optml_subdirs, command,
         'environment': environment,
         'command': command,
     }
+    if use_gpu:
+        host_config['runtime'] = 'nvidia'
 
     if entrypoint:
         host_config['entrypoint'] = entrypoint
@@ -437,12 +439,12 @@ def credentials_to_env(session):
 
 
 def create_docker_compose(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                          source_dir, entrypoint):
+                          source_dir, entrypoint, use_gpu):
     services = create_docker_services(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
-                                      customer_script, source_dir, entrypoint)
+                                      customer_script, source_dir, entrypoint, use_gpu)
     content = {
         # docker version on ACC hosts only supports compose 2.1 format
-        'version': '2.1',
+        'version': '2.3',
         'services': services
     }
 
