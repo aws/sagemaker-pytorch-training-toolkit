@@ -37,6 +37,6 @@ setup(
     install_requires=['numpy', 'sagemaker-containers==2.1.0', 'retrying', 'six'],
     extras_require={
         'test': ['tox', 'flake8', 'coverage', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock', 'Flask', 'boto3>=1.4.8',
-                 'docker-compose', 'nvidia-docker-compose', 'sagemaker', 'PyYAML', 'torchvision']
+                 'docker-compose', 'sagemaker', 'PyYAML', 'torchvision']
     },
 )
