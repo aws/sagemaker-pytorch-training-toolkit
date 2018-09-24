@@ -1,5 +1,5 @@
 ARG py_version
-FROM pytorch-base:1.0.0-cpu-py$py_version
+FROM pytorch-base:1.0.0.dev-cpu-py$py_version
 
 # Copy workaround script for incorrect hostname
 COPY lib/changehostname.c /
