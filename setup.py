@@ -5,10 +5,24 @@ from os.path import basename
 from os.path import splitext
 
 from setuptools import setup, find_packages
+import subprocess
 
 
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
+
+
+# check if system has CUDA enabled GPU
+p = subprocess.Popen(['command -v nvidia-smi'], stdout=subprocess.PIPE, shell=True)
+processor = 'cu92' if p.communicate()[0].decode('UTF-8') != '' else 'cpu'
+subprocess.check_call(
+    [
+        'pip install torch_nightly -f '
+        'https://download.pytorch.org/whl/nightly/{}/torch_nightly.html'.format(processor)
+    ],
+    shell=True
+)
+subprocess.check_call(['pip install --no-cache --no-deps torchvision'], shell=True)
 
 
 setup(
@@ -34,9 +48,9 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
-    install_requires=['numpy', 'sagemaker-containers==2.1.0', 'torch==0.4.0', 'retrying', 'six'],
+    install_requires=['numpy', 'sagemaker-containers==2.1.0', 'Pillow', 'retrying', 'six'],
     extras_require={
-        'test': ['tox', 'flake8', 'coverage', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock', 'Flask', 'boto3>=1.4.8',
-                 'docker-compose', 'sagemaker', 'PyYAML', 'torchvision']
+        'test': ['tox', 'flake8', 'coverage', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
+                 'Flask', 'boto3>=1.4.8', 'docker-compose', 'sagemaker', 'PyYAML']
     },
 )

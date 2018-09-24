@@ -43,7 +43,7 @@ def pytest_addoption(parser):
     parser.addoption('--install-container-support', '-C', action='store_true')
     parser.addoption('--docker-base-name', default='pytorch')
     parser.addoption('--region', default='us-west-2')
-    parser.addoption('--framework-version', default='0.4.0')
+    parser.addoption('--framework-version', default='1.0.0.dev')
     parser.addoption('--py-version', choices=['2', '3'], default=str(sys.version_info.major))
     parser.addoption('--processor', choices=['gpu', 'cpu'], default='cpu')
     # If not specified, will default to {framework-version}-{processor}-py{py-version}
@@ -165,7 +165,7 @@ def fixture_ecr_image(docker_registry, docker_base_name, tag):
     return '{}/{}:{}'.format(docker_registry, docker_base_name, tag)
 
 
-@pytest.fixture(scope='session', name='dist_cpu_backend', params=['tcp', 'gloo'])
+@pytest.fixture(scope='session', name='dist_cpu_backend', params=['gloo'])
 def fixture_dist_cpu_backend(request):
     return request.param
 
