@@ -84,7 +84,7 @@ def _average_gradients(model):
 def train(args):
     is_distributed = len(args.hosts) > 1 and args.backend is not None
     logger.debug("Distributed training - {}".format(is_distributed))
-    use_cuda = args.num_gpus > 0
+    use_cuda = (args.processor == 'gpu') or (args.num_gpus > 0)
     logger.debug("Number of gpus available - {}".format(args.num_gpus))
     kwargs = {'num_workers': 1, 'pin_memory': True} if use_cuda else {}
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -207,6 +207,8 @@ if __name__ == '__main__':
     parser.add_argument('--log-interval', type=int, default=100, metavar='N',
                         help='how many batches to wait before logging training status')
     parser.add_argument('--backend', type=str, default=None,
+                        help='backend for distributed training')
+    parser.add_argument('--processor', type=str, default='cpu',
                         help='backend for distributed training')
 
     # Container environment
