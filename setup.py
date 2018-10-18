@@ -35,7 +35,7 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
-    install_requires=['numpy', 'sagemaker-containers>=2.2.3', 'torch==0.4.0', 'retrying', 'six'],
+    install_requires=['numpy', 'sagemaker-containers>=2.2.4', 'torch==0.4.0', 'retrying', 'six'],
     extras_require={
         'test': ['tox', 'flake8', 'coverage', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
                  'Flask', 'boto3>=1.4.8', 'docker-compose', 'requests==2.18.4', 'sagemaker',
