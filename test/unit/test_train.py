@@ -11,16 +11,19 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+
 import os
-import pytest
-import six
 import shutil
 import tempfile
+
+import pytest
+import sagemaker_containers.beta.framework as framework
+import six
 import torch.nn as nn
 from mock import MagicMock, PropertyMock
 from mock import patch
+
 from sagemaker_pytorch_container.training import main, train, _dns_lookup, MASTER_PORT
-import sagemaker_containers.beta.framework as framework
 
 
 @pytest.fixture(name='training_env')
@@ -60,7 +63,7 @@ def test_train(run_module, training_env):
     train(training_env)
 
     run_module.assert_called_with(training_env.module_dir, training_env.to_cmd_args(),
-                                          training_env.to_env_vars(), training_env.module_name)
+                                  training_env.to_env_vars(), training_env.module_name)
 
 
 @patch('sagemaker_containers.beta.framework.modules.run_module', MagicMock())
