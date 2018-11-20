@@ -63,7 +63,8 @@ def test_train(run_module, training_env):
     train(training_env)
 
     run_module.assert_called_with(training_env.module_dir, training_env.to_cmd_args(),
-                                  training_env.to_env_vars(), training_env.module_name)
+                                  training_env.to_env_vars(), training_env.module_name,
+                                  capture_error=True)
 
 
 @patch('sagemaker_containers.beta.framework.modules.run_module', MagicMock())
