@@ -21,7 +21,7 @@ import torch
 import torch.nn as nn
 from mock import MagicMock
 from mock import patch
-from sagemaker_containers.beta.framework import (content_types, encoders)
+from sagemaker_containers.beta.framework import content_types, errors
 from six import StringIO, BytesIO
 from torch.autograd import Variable
 
@@ -93,7 +93,7 @@ def test_default_input_fn_npy(tensor):
 
 
 def test_default_input_fn_bad_content_type():
-    with pytest.raises(encoders.UnsupportedFormatError):
+    with pytest.raises(errors.UnsupportedFormatError):
         default_input_fn('', 'application/not_supported')
 
 
@@ -171,7 +171,7 @@ def test_default_output_fn_csv_float():
 
 
 def test_default_output_fn_bad_accept():
-    with pytest.raises(encoders.UnsupportedFormatError):
+    with pytest.raises(errors.UnsupportedFormatError):
         default_output_fn('', 'application/not_supported')
 
 
