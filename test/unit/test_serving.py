@@ -141,7 +141,7 @@ def test_default_output_fn_json(tensor):
     output = default_output_fn(tensor, content_types.JSON)
 
     assert json.dumps(tensor.cpu().numpy().tolist()) in output.get_data(as_text=True)
-    assert content_types.JSON in output.content_type
+    assert content_types.JSON == output.mimetype
 
 
 def test_default_output_fn_npy(tensor):
@@ -151,7 +151,7 @@ def test_default_output_fn_npy(tensor):
     np.save(stream, tensor.cpu().numpy())
 
     assert stream.getvalue() in output.get_data(as_text=False)
-    assert content_types.NPY in output.content_type
+    assert content_types.NPY == output.mimetype
 
 
 def test_default_output_fn_csv_long():
@@ -159,7 +159,7 @@ def test_default_output_fn_csv_long():
     output = default_output_fn(tensor, content_types.CSV)
 
     assert '1,2,3\n4,5,6\n' in output.get_data(as_text=True)
-    assert content_types.CSV in output.content_type
+    assert content_types.CSV == output.mimetype
 
 
 def test_default_output_fn_csv_float():
@@ -167,7 +167,7 @@ def test_default_output_fn_csv_float():
     output = default_output_fn(tensor, content_types.CSV)
 
     assert '1.0,2.0,3.0\n4.0,5.0,6.0\n' in output.get_data(as_text=True)
-    assert content_types.CSV in output.content_type
+    assert content_types.CSV == output.mimetype
 
 
 def test_default_output_fn_bad_accept():
@@ -182,7 +182,7 @@ def test_default_output_fn_gpu():
     output = default_output_fn(tensor_gpu, content_types.CSV)
 
     assert '1,2,3\n4,5,6\n' in output.get_data(as_text=True)
-    assert content_types.CSV in output.content_type
+    assert content_types.CSV == output.mimetype
 
 
 @patch('sagemaker_containers.beta.framework.modules.import_module')
