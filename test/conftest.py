@@ -36,11 +36,11 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 
 
 def pytest_addoption(parser):
-    parser.addoption('--build-image', '-D', action="store_true")
-    parser.addoption('--build-base-image', '-B', action="store_true")
+    parser.addoption('--build-image', '-D', action='store_true')
+    parser.addoption('--build-base-image', '-B', action='store_true')
     parser.addoption('--aws-id')
-    parser.addoption('--instance-type')
-    parser.addoption('--install-container-support', '-C', action="store_true")
+    parser.addoption('--instance-type', default='local')
+    parser.addoption('--install-container-support', '-C', action='store_true')
     parser.addoption('--docker-base-name', default='pytorch')
     parser.addoption('--region', default='us-west-2')
     parser.addoption('--framework-version', default='0.4.0')
@@ -173,3 +173,11 @@ def fixture_dist_cpu_backend(request):
 @pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo', 'nccl'])
 def fixture_dist_gpu_backend(request):
     return request.param
+
+
+@pytest.fixture(autouse=True)
+def skip_by_device_type(request, use_gpu, instance_type):
+    is_gpu = use_gpu or instance_type[3] in ['g', 'p']
+    if (request.node.get_marker('skip_gpu') and is_gpu) or \
+            (request.node.get_marker('skip_cpu') and not is_gpu):
+        pytest.skip('Skipping because running on \'{}\' instance'.format(instance_type))

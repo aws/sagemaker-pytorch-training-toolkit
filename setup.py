@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 import os
 from glob import glob
 from os.path import basename
@@ -34,9 +35,10 @@ setup(
         'Programming Language :: Python :: 3.5',
     ],
 
-    install_requires=['numpy', 'sagemaker-containers==2.1.0', 'torch==0.4.0', 'retrying', 'six'],
+    install_requires=['numpy', 'sagemaker-containers>=2.3.5', 'torch==0.4.0', 'retrying', 'six'],
     extras_require={
-        'test': ['tox', 'flake8', 'coverage', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock', 'Flask', 'boto3>=1.4.8',
-                 'docker-compose', 'nvidia-docker-compose', 'sagemaker', 'PyYAML', 'torchvision']
+        'test': ['tox', 'flake8', 'coverage', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
+                 'Flask', 'boto3>=1.4.8', 'docker-compose', 'requests', 'sagemaker',
+                 'PyYAML', 'torchvision']
     },
 )

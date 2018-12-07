@@ -11,8 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+
 import json
 import logging
+import os
 import shutil
 import subprocess
 import sys
@@ -21,9 +23,7 @@ import tempfile
 from time import sleep
 
 import boto3
-import os
 import yaml
-
 from botocore.exceptions import ClientError
 from sagemaker import fw_utils, utils
 
@@ -53,10 +53,10 @@ DEFAULT_HOSTING_ENV = [
 
 def build_base_image(framework_name, framework_version, py_version,
                      processor, base_image_tag, cwd='.'):
-
     base_image_uri = get_base_image_uri(framework_name, base_image_tag)
 
-    dockerfile_location = os.path.join('docker', framework_version, 'base', 'Dockerfile.{}'.format(processor))
+    dockerfile_location = os.path.join('docker', framework_version, 'base',
+                                       'Dockerfile.{}'.format(processor))
 
     subprocess.check_call(['docker', 'build', '-t', base_image_uri,
                            '-f', dockerfile_location, '--build-arg',
@@ -73,8 +73,9 @@ def build_image(framework_name, framework_version, py_version, processor, tag, c
     dockerfile_location = os.path.join('docker', framework_version, 'final',
                                        'Dockerfile.{}'.format(processor))
 
-    subprocess.check_call(['docker', 'build', '-t', image_uri, '-f', dockerfile_location, '--build-arg',
-                           'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
+    subprocess.check_call(
+        ['docker', 'build', '-t', image_uri, '-f', dockerfile_location, '--build-arg',
+         'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
     print('created image {}'.format(image_uri))
     return image_uri
 
@@ -132,10 +133,13 @@ def save_as_json(data, filename):
         json.dump(data, f)
 
 
-def train(customer_script, data_dir, image_name, opt_ml, cluster_size=1, hyperparameters={}, additional_volumes=[],
+def train(customer_script, data_dir, image_name, opt_ml, cluster_size=1, hyperparameters={},
+          additional_volumes=[],
           additional_env_vars=[], use_gpu=False, entrypoint=None, source_dir=None):
-    tmpdir = create_training(data_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
-                             hyperparameters, cluster_size, entrypoint=entrypoint, source_dir=source_dir)
+    tmpdir = create_training(data_dir, customer_script, opt_ml, image_name, additional_volumes,
+                             additional_env_vars,
+                             hyperparameters, cluster_size, entrypoint=entrypoint,
+                             source_dir=source_dir, use_gpu=use_gpu)
     command = create_docker_command(tmpdir, use_gpu)
     start_docker(tmpdir, command)
     purge()
@@ -143,15 +147,16 @@ def train(customer_script, data_dir, image_name, opt_ml, cluster_size=1, hyperpa
 
 def serve(customer_script, model_dir, image_name, opt_ml, cluster_size=1, additional_volumes=[],
           additional_env_vars=[], use_gpu=False, entrypoint=None, source_dir=None):
-
-    tmpdir = create_hosting_dir(model_dir, customer_script, opt_ml, image_name, additional_volumes, additional_env_vars,
-                                cluster_size, source_dir, entrypoint)
+    tmpdir = create_hosting_dir(model_dir, customer_script, opt_ml, image_name, additional_volumes,
+                                additional_env_vars,
+                                cluster_size, source_dir, entrypoint, use_gpu)
     command = create_docker_command(tmpdir, use_gpu)
     return Container(tmpdir, command)
 
 
-def create_hosting_dir(model_dir, customer_script, optml, image, additional_volumes, additional_env_vars,
-                       cluster_size=1, source_dir=None, entrypoint=None):
+def create_hosting_dir(model_dir, customer_script, optml, image, additional_volumes,
+                       additional_env_vars,
+                       cluster_size=1, source_dir=None, entrypoint=None, use_gpu=False):
     tmpdir = os.path.abspath(optml)
     print('creating hosting dir in {}'.format(tmpdir))
 
@@ -164,10 +169,12 @@ def create_hosting_dir(model_dir, customer_script, optml, image, additional_volu
             os.makedirs(host_dir)
             shutil.copytree(model_dir, os.path.join(tmpdir, h, 'model'))
 
-    write_docker_file('serve', tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                      source_dir, entrypoint)
+    write_docker_file('serve', tmpdir, hosts, image, additional_volumes, additional_env_vars,
+                      customer_script,
+                      source_dir, entrypoint, use_gpu)
 
-    print("hosting dir: \n{}".format(str(subprocess.check_output(['ls', '-lR', tmpdir]).decode('utf-8'))))
+    print("hosting dir: \n{}".format(
+        str(subprocess.check_output(['ls', '-lR', tmpdir]).decode('utf-8'))))
 
     return tmpdir
 
@@ -224,7 +231,7 @@ def shutdown(compose_file):
 
 
 def create_docker_command(tmpdir, use_gpu=False, detached=False):
-    compose_cmd = 'nvidia-docker-compose' if use_gpu else 'docker-compose'
+    compose_cmd = 'docker-compose'
 
     command = [
         compose_cmd,
@@ -241,8 +248,10 @@ def create_docker_command(tmpdir, use_gpu=False, detached=False):
     return command
 
 
-def create_training(data_dir, customer_script, optml, image, additional_volumes, additional_env_vars,
-                    additional_hps={}, cluster_size=1, source_dir=None, entrypoint=None):
+def create_training(data_dir, customer_script, optml, image, additional_volumes,
+                    additional_env_vars,
+                    additional_hps={}, cluster_size=1, source_dir=None, entrypoint=None,
+                    use_gpu=False):
     session = boto3.Session()
     tmpdir = os.path.abspath(optml)
 
@@ -274,10 +283,12 @@ def create_training(data_dir, customer_script, optml, image, additional_volumes,
 
         shutil.copytree(data_dir, os.path.join(tmpdir, host, 'input', 'data'))
 
-    write_docker_file('train', tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                      source_dir, entrypoint)
+    write_docker_file('train', tmpdir, hosts, image, additional_volumes, additional_env_vars,
+                      customer_script,
+                      source_dir, entrypoint, use_gpu)
 
-    print("training dir: \n{}".format(str(subprocess.check_output(['ls', '-lR', tmpdir]).decode('utf-8'))))
+    print("training dir: \n{}".format(
+        str(subprocess.check_output(['ls', '-lR', tmpdir]).decode('utf-8'))))
 
     return tmpdir
 
@@ -312,19 +323,22 @@ def create_input_data_config(data_path):
     return config
 
 
-def write_docker_file(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                      source_dir, entrypoint):
+def write_docker_file(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
+                      customer_script,
+                      source_dir, entrypoint, use_gpu):
     filename = os.path.join(tmpdir, DOCKER_COMPOSE_FILENAME)
-    content = create_docker_compose(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
-                                    customer_script, source_dir, entrypoint)
+    content = create_docker_compose(command, tmpdir, hosts, image, additional_volumes,
+                                    additional_env_vars,
+                                    customer_script, source_dir, entrypoint, use_gpu)
 
     print('docker compose file: \n{}'.format(content))
     with open(filename, 'w') as f:
         f.write(content)
 
 
-def create_docker_services(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                           source_dir, entrypoint):
+def create_docker_services(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
+                           customer_script,
+                           source_dir, entrypoint, use_gpu):
     environment = []
     session = boto3.Session()
 
@@ -354,12 +368,16 @@ def create_docker_services(command, tmpdir, hosts, image, additional_volumes, ad
 
     environment.extend(additional_env_vars)
 
-    return {h: create_docker_host(tmpdir, h, image, environment, optml_dirs, command, additional_volumes, entrypoint)
-            for h in
-            hosts}
+    return {
+        h: create_docker_host(tmpdir, h, image, environment, optml_dirs, command,
+                              additional_volumes,
+                              entrypoint, use_gpu)
+        for h in
+        hosts}
 
 
-def create_docker_host(tmpdir, host, image, environment, optml_subdirs, command, volumes, entrypoint=None):
+def create_docker_host(tmpdir, host, image, environment, optml_subdirs, command, volumes,
+                       entrypoint=None, use_gpu=False):
     optml_volumes = optml_volumes_list(tmpdir, host, optml_subdirs)
     optml_volumes = ['/private' + v if v.startswith('/var') else v for v in optml_volumes]
     optml_volumes.extend(volumes)
@@ -372,6 +390,8 @@ def create_docker_host(tmpdir, host, image, environment, optml_subdirs, command,
         'environment': environment,
         'command': command,
     }
+    if use_gpu:
+        host_config['runtime'] = 'nvidia'
 
     if entrypoint:
         host_config['entrypoint'] = entrypoint
@@ -390,8 +410,9 @@ def optml_volumes_list(opt_root_folder, host, subdirs, single_model_dir=False):
     """
     It takes a folder with the necessary files for training and creates a list of opt volumes that
     the Container needs to start.
-    If args.single_model_dir is True, all the hosts will point the opt/ml/model subdir to the first container. That is
-    useful for distributed training, so all the containers can read and write the same checkpoints.
+    If args.single_model_dir is True, all the hosts will point the opt/ml/model subdir
+    to the first container. That is useful for distributed training, so all the containers
+    can read and write the same checkpoints.
 
     :param opt_root_folder: root folder with the contents to be mapped to the container
     :param host: host name of the container
@@ -436,13 +457,15 @@ def credentials_to_env(session):
     return []
 
 
-def create_docker_compose(command, tmpdir, hosts, image, additional_volumes, additional_env_vars, customer_script,
-                          source_dir, entrypoint):
-    services = create_docker_services(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
-                                      customer_script, source_dir, entrypoint)
+def create_docker_compose(command, tmpdir, hosts, image, additional_volumes, additional_env_vars,
+                          customer_script,
+                          source_dir, entrypoint, use_gpu):
+    services = create_docker_services(command, tmpdir, hosts, image, additional_volumes,
+                                      additional_env_vars,
+                                      customer_script, source_dir, entrypoint, use_gpu)
     content = {
         # docker version on ACC hosts only supports compose 2.1 format
-        'version': '2.1',
+        'version': '2.3',
         'services': services
     }
 
@@ -521,7 +544,8 @@ def default_bucket(boto_session):
             if region == 'us-east-1':
                 s3.create_bucket(Bucket=bucket)
             else:
-                s3.create_bucket(Bucket=bucket, CreateBucketConfiguration={'LocationConstraint': region})
+                s3.create_bucket(Bucket=bucket,
+                                 CreateBucketConfiguration={'LocationConstraint': region})
 
             print('Created S3 bucket: {}'.format(bucket))
         except ClientError as e:
@@ -539,7 +563,8 @@ def tar_and_upload_dir(session, bucket, job_name, script, directory):
         if not os.path.isdir(directory):
             raise ValueError('"{}" is not a directory.'.format(directory))
         if script not in os.listdir(directory):
-            raise ValueError('No file named "{}" was found in directory "{}".'.format(script, directory))
+            raise ValueError(
+                'No file named "{}" was found in directory "{}".'.format(script, directory))
         source_files = [os.path.join(directory, name) for name in os.listdir(directory)]
     else:
         # If no directory is specified, the script parameter needs to be a valid relative path.
@@ -581,7 +606,8 @@ def copy_resource(resource_path, opt_ml_path, relative_src_path, relative_dst_pa
     if not relative_dst_path:
         relative_dst_path = relative_src_path
 
-    shutil.copytree(os.path.join(resource_path, relative_src_path), os.path.join(opt_ml_path, relative_dst_path))
+    shutil.copytree(os.path.join(resource_path, relative_src_path),
+                    os.path.join(opt_ml_path, relative_dst_path))
 
 
 def file_exists(resource_folder, file_name, host='algo-1'):
