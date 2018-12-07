@@ -6,9 +6,9 @@ ARG py_version
 RUN test $py_version || exit 1
 
 # Install python and nginx
-RUN add-apt-repository ppa:deadsnakes/ppa -y && \
-    apt-get update && \
-    apt-get -y install \
+RUN apt-get update && apt-get install -y --no-install-recommends software-properties-common && \
+    add-apt-repository ppa:deadsnakes/ppa -y && \
+    apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         curl \
         jq \
