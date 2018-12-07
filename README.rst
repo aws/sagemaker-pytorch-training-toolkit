@@ -71,7 +71,7 @@ Base Images
 The "base" Dockerfile encompass the installation of the framework and all of the dependencies
 needed.
 
-Tagging scheme is based on <PyTorch_version>-<processor>-py<python_version>. (e.g. 0.4.0-cpu-py3)
+Tagging scheme is based on <PyTorch_version>-<processor>-py<python_version>. (e.g.1.0.0-cpu-py3)
 
 All "final" Dockerfiles build images using base images that use the tagging scheme
 above.
@@ -93,17 +93,17 @@ If you want to build your base docker image, then use:
     # Example
 
     # CPU
-    docker build -t pytorch-base:0.4.0-cpu-py3 -f docker/0.4.0/base/Dockerfile.cpu --build-arg py_version=3 .
+    docker build -t pytorch-base:1.0.0-cpu-py3 -f docker/1.0.0/base/Dockerfile.cpu --build-arg py_version=3 .
 
     # GPU
-    docker build -t pytorch-base:0.4.0-gpu-py3 -f docker/0.4.0/base/Dockerfile.gpu --build-arg py_version=3 .
+    docker build -t pytorch-base:1.0.0-gpu-py3 -f docker/1.0.0/base/Dockerfile.gpu --build-arg py_version=3 .
 
 Final Images
 ~~~~~~~~~~~~
 
 The "final" Dockerfiles encompass the installation of the SageMaker specific support code.
 
-All "final" Dockerfiles use `base images for building <https://github.com/aws/sagemaker-pytorch-container/blob/refactor-notebooks/docker/0.4.0/final/Dockerfile.cpu#L2>`__.
+All "final" Dockerfiles use `base images for building <https://github.com/aws/sagemaker-pytorch-container/blob/refactor-notebooks/docker/1.0.0/final/Dockerfile.cpu#L2>`__.
 
 These "base" images are specified with the naming convention of
 pytorch-base:<PyTorch_version>-<processor>-py<python_version>.
@@ -137,10 +137,10 @@ If you want to build "final" Docker images, then use:
     # Example
 
     # CPU
-    docker build -t preprod-pytorch:0.4.0-cpu-py3 -f docker/0.4.0/final/Dockerfile.cpu --build-arg py_version=3 .
+    docker build -t preprod-pytorch:1.0.0-cpu-py3 -f docker/1.0.0/final/Dockerfile.cpu --build-arg py_version=3 .
 
     # GPU
-    docker build -t preprod-pytorch:0.4.0-gpu-py3 -f docker/0.4.0/final/Dockerfile.gpu --build-arg py_version=3 .
+    docker build -t preprod-pytorch:1.0.0-gpu-py3 -f docker/1.0.0/final/Dockerfile.gpu --build-arg py_version=3 .
 
 
 Running the tests
@@ -209,7 +209,7 @@ If you want to run local integration tests, then use:
     pytest test/integration/local --docker-base-name preprod-pytorch \
                       --tag 1.0 \
                       --py-version 3 \
-                      --framework-version 0.4.0 \
+                      --framework-version 1.0.0 \
                       --processor cpu
 
 SageMaker Integration Tests
