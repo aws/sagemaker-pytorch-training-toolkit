@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+
 import os
 from glob import glob
 from os.path import basename
@@ -35,10 +36,11 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['numpy', 'sagemaker-containers>=2.3.5', 'Pillow', 'retrying', 'six',
-                      'torch', 'torchvision'],
+    install_requires=['numpy', 'Pillow', 'retrying', 'sagemaker-containers>=2.3.5', 'six',
+                      'torch==1.0.0'],
     extras_require={
-        'test': ['tox', 'flake8', 'coverage', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'Flask', 'boto3>=1.4.8', 'docker-compose', 'sagemaker', 'PyYAML']
+        'test': ['boto3>=1.4.8', 'coverage', 'docker-compose', 'flake8', 'Flask', 'mock',
+                 'pytest', 'pytest-cov', 'pytest-xdist', 'PyYAML', 'requests', 'sagemaker',
+                 'torchvision', 'tox']
     },
 )

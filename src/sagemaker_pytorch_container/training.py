@@ -48,7 +48,8 @@ def train(training_environment):
     logger.info('Invoking user training script.')
     try:
         framework.modules.run_module(training_environment.module_dir, training_environment.to_cmd_args(),
-                                     training_environment.to_env_vars(), training_environment.module_name)
+                                     training_environment.to_env_vars(), training_environment.module_name,
+                                     capture_error=True)
     except framework.errors.ExecuteUserScriptError as err:
         message = str(err)
         if message.find('terminate called after throwing an instance of \'gloo::EnforceNotMet\'') > -1:

@@ -80,7 +80,7 @@ def default_output_fn(prediction, accept):
     if type(prediction) == torch.Tensor:
         prediction = prediction.detach().cpu().numpy()
 
-    return worker.Response(encoders.encode(prediction, accept), accept)
+    return worker.Response(response=encoders.encode(prediction, accept), mimetype=accept)
 
 
 def _user_module_transformer(user_module):
