@@ -210,7 +210,8 @@ def main():
                   world_size,
                   args.rows,
                   args.columns,
-                  args.current_host)
+                  args.current_host,
+                  args.num_gpus)
         )
         p.start()
         processes.append(p)
@@ -221,34 +222,30 @@ def main():
     save('success', args.model_dir)
 
 
-def init_processes(backend, master_addr, master_port, rank, world_size, rows, columns, host):
+def init_processes(backend, master_addr, master_port, rank, world_size,
+                   rows, columns, host, num_gpus):
     # Initialize the distributed environment.
     os.environ['WORLD_SIZE'] = str(world_size)
+    os.environ['RANK'] = str(rank)
     os.environ['MASTER_ADDR'] = master_addr
     os.environ['MASTER_PORT'] = master_port
 
     logger.info('Init process rank {} on host \'{}\''.format(rank, host))
     dist.init_process_group(backend=backend, rank=rank, world_size=world_size)
-    run(backend, rank, rows, columns)
+    run(backend, rank, rows, columns, num_gpus)
 
 
-def run(backend, rank, rows, columns):
-    # http://pytorch.org/docs/master/distributed.html
-    if backend == 'tcp':
-        print('Run operations supported by \'tcp\' backend.')
-        _broadcast(rank, rows, columns)
-        _all_reduce(rank, rows, columns)
-        _barrier(rank)
-        _send_recv(rank, rows, columns)
-        _reduce(rank, rows, columns)
-        _all_gather(rank, rows, columns)
-        _gather(rank, rows, columns)
-        _scatter(rank, rows, columns)
-    elif backend == 'gloo':
+def run(backend, rank, rows, columns, num_gpus):
+    # https://pytorch.org/docs/master/distributed.html
+    if backend == 'gloo':
         print('Run operations supported by \'gloo\' backend.')
         _broadcast(rank, rows, columns)
         _all_reduce(rank, rows, columns)
         _barrier(rank)
+
+        # this operation supported only on cpu
+        if num_gpus == 0:
+            _send_recv(rank, rows, columns)
     elif backend == 'nccl':
         print('Run operations supported by \'nccl\' backend.')
         # Note: nccl does not support gather or scatter as well:

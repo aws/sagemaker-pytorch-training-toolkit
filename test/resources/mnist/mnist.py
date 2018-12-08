@@ -77,7 +77,7 @@ def _average_gradients(model):
     # Gradient averaging.
     size = float(dist.get_world_size())
     for param in model.parameters():
-        dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM, group=0)
+        dist.all_reduce(param.grad.data, op=dist.reduce_op.SUM)
         param.grad.data /= size
 
 
@@ -94,6 +94,7 @@ def train(args):
         world_size = len(args.hosts)
         os.environ['WORLD_SIZE'] = str(world_size)
         host_rank = args.hosts.index(args.current_host)
+        os.environ['RANK'] = str(host_rank)
         dist.init_process_group(backend=args.backend, rank=host_rank, world_size=world_size)
         logger.info('Initialized the distributed environment: \'{}\' backend on {} nodes. '.format(
             args.backend, dist.get_world_size()) + 'Current host rank is {}. Number of gpus: {}'.format(
@@ -162,7 +163,7 @@ def test(model, test_loader, device):
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
-            test_loss += F.nll_loss(output, target, size_average=False).item()  # sum up batch loss
+            test_loss += F.nll_loss(output, target, size_average=None).item()  # sum up batch loss
             pred = output.max(1, keepdim=True)[1]  # get the index of the max log-probability
             correct += pred.eq(target.view_as(pred)).sum().item()
 

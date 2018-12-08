@@ -6,6 +6,7 @@ from os.path import basename
 from os.path import splitext
 
 from setuptools import setup, find_packages
+import subprocess
 
 
 def read(fname):
@@ -14,7 +15,7 @@ def read(fname):
 
 setup(
     name='sagemaker_pytorch_container',
-    version='1.0',
+    version='1.1',
     description='Open source library for creating PyTorch containers to run on Amazon SageMaker.',
 
     packages=find_packages(where='src', exclude=('test',)),
@@ -32,13 +33,14 @@ setup(
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['numpy', 'sagemaker-containers>=2.3.5', 'torch==0.4.0', 'retrying', 'six'],
+    install_requires=['numpy', 'Pillow', 'retrying', 'sagemaker-containers>=2.3.5', 'six',
+                      'torch==1.0.0'],
     extras_require={
-        'test': ['tox', 'flake8', 'coverage', 'pytest', 'pytest-cov', 'pytest-xdist', 'mock',
-                 'Flask', 'boto3>=1.4.8', 'docker-compose', 'requests', 'sagemaker',
-                 'PyYAML', 'torchvision']
+        'test': ['boto3>=1.4.8', 'coverage', 'docker-compose', 'flake8', 'Flask', 'mock',
+                 'pytest', 'pytest-cov', 'pytest-xdist', 'PyYAML', 'requests', 'sagemaker',
+                 'torchvision', 'tox']
     },
 )

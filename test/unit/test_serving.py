@@ -21,7 +21,7 @@ import torch
 import torch.nn as nn
 from mock import MagicMock
 from mock import patch
-from sagemaker_containers.beta.framework import (content_types, errors)
+from sagemaker_containers.beta.framework import content_types, errors
 from six import StringIO, BytesIO
 from torch.autograd import Variable
 
