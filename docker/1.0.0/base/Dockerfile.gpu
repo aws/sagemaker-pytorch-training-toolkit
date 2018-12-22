@@ -28,4 +28,5 @@ RUN cd /tmp && \
 # Force stdin, stdout and stderr to be totally unbuffered. Good for logging
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 
-RUN pip install --no-cache-dir Pillow retrying six torch torchvision
+RUN pip install --no-cache-dir Pillow retrying six torch torchvision && \
+    if [ $py_version -eq 3 ]; then pip install --no-cache-dir fastai; fi
