@@ -24,7 +24,7 @@ from test.utils import local_mode
 def fixture_dist_gpu_backend(request):
     return request.param
 
-
+@pytest.mark.skip
 @pytest.mark.skip_cpu
 def test_dist_fastai_cifar(docker_image, opt_ml, py_version):
     if py_version != 'py3':
