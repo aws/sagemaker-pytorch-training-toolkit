@@ -29,7 +29,7 @@ def fixture_dist_gpu_backend(request):
 def test_dist_fastai_cifar(docker_image, opt_ml, py_version):
     if py_version != 'py3':
         print('Skipping the test because fastai supports >= Python 3.6.')
-        pass
+        return
 
     local_mode.train(fastai_cifar_script, os.path.join(fastai_path, 'mnist_tiny'), docker_image,
                      opt_ml, source_dir=fastai_path, cluster_size=1)
