@@ -1,15 +1,9 @@
 # Based on https://github.com/fastai/fastai/blob/master/examples/train_cifar.py
-
-print('Before imports!!!')
-
-from fastai.script import *
 from fastai.script import *
 from fastai.vision import *
 from fastai.vision.models.wrn import wrn_22
 from fastai.distributed import *
-import subprocess, torch
-
-print('Do we even get here!')
+import torch
 
 torch.backends.cudnn.benchmark = True
 
@@ -21,16 +15,14 @@ def main(gpu:Param("GPU to run on", str)=None):
     gpu = setup_distrib(gpu)
     n_gpus = int(os.environ.get("WORLD_SIZE", 1))
     tgz_path = os.environ.get('SM_CHANNEL_TRAINING')
-    path = os.path.join(tgz_path, 'mnist_tiny')
+    path = os.path.join(tgz_path, 'cifar_tiny')
     tarfile.open(f'{path}.tgz', 'r:gz').extractall(tgz_path)
     ds_tfms = ([*rand_pad(4, 32), flip_lr(p=0.5)], [])
     workers = min(16, num_cpus()//n_gpus)
-    print('workers = min(16, num_cpus()//n_gpus)')
     data = ImageDataBunch.from_folder(path, valid='test', ds_tfms=ds_tfms, bs=512//n_gpus,
                                       num_workers=workers)
     data.normalize(cifar_stats)
     learn = Learner(data, wrn_22(), metrics=accuracy, path='/opt/ml', model_dir='model')
-    print('learn = Learner(data, wrn_22(), metrics=accuracy)')
     if gpu is None: learn.model = nn.DataParallel(learn.model)
     else: learn.distributed(gpu)
     learn.to_fp16()
