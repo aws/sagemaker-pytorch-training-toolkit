@@ -26,7 +26,11 @@ def test_mnist(docker_image, opt_ml, use_gpu, processor):
     assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
 
 
-def test_fastai_mnist(docker_image, opt_ml, use_gpu):
+def test_fastai_mnist(docker_image, opt_ml, use_gpu, py_version):
+    if py_version != 'py3':
+        print('Skipping the test because fastai supports >= Python 3.6.')
+        pass
+
     local_mode.train(fastai_mnist_script, os.path.join(fastai_path, 'mnist_tiny'), docker_image,
                      opt_ml, use_gpu=use_gpu)
 

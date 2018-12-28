@@ -14,13 +14,28 @@ from __future__ import absolute_import
 
 import pytest
 
-from test.integration import data_dir, dist_operations_path, mnist_script
+from test.integration import (data_dir, dist_operations_path, fastai_path, fastai_cifar_script,
+                              mnist_script)
 from test.utils import local_mode
 
 
 @pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo'])
 def fixture_dist_gpu_backend(request):
     return request.param
+
+
+@pytest.mark.skip_cpu
+def test_dist_fastai_cifar(docker_image, opt_ml, py_version):
+    if py_version != 'py3':
+        print('Skipping the test because fastai supports >= Python 3.6.')
+        pass
+
+    local_mode.train(fastai_cifar_script, data_dir, docker_image, opt_ml, source_dir=fastai_path,
+                     cluster_size=1)
+
+    assert local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
+    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
+    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
 
 
 @pytest.mark.skip_gpu
