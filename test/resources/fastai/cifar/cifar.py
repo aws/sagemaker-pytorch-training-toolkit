@@ -15,7 +15,7 @@ def main(gpu:Param("GPU to run on", str)=None):
     gpu = setup_distrib(gpu)
     n_gpus = int(os.environ.get("WORLD_SIZE", 1))
     tgz_path = os.environ.get('SM_CHANNEL_TRAINING')
-    path = os.path.join(tgz_path, 'cifar_tiny')
+    path = os.path.join(tgz_path, 'cifar10_tiny')
     tarfile.open(f'{path}.tgz', 'r:gz').extractall(tgz_path)
     ds_tfms = ([*rand_pad(4, 32), flip_lr(p=0.5)], [])
     workers = min(16, num_cpus()//n_gpus)
