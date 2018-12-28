@@ -11,8 +11,9 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+import os
 import pytest
-from test.integration import dist_operations_path
+from test.integration import dist_operations_path, fastai_cifar_script, fastai_path
 from test.integration.sagemaker.estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout
 
@@ -33,6 +34,28 @@ def test_dist_operations_gpu(sagemaker_session, instance_type, ecr_image, dist_g
 def test_dist_operations_multi_gpu(sagemaker_session, ecr_image, dist_gpu_backend):
     instance_type = 'ml.p3.8xlarge'
     _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_gpu_backend, 1)
+
+
+@pytest.mark.skip_cpu
+def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
+    if py_version != 'py3':
+        print('Skipping the test because fastai supports >= Python 3.6.')
+        return
+
+    instance_type = 'ml.p3.8xlarge'
+    with timeout(minutes=8):
+        pytorch = PytorchTestEstimator(entry_point=fastai_cifar_script,
+                                       role='SageMakerRole',
+                                       train_instance_count=1,
+                                       train_instance_type=instance_type,
+                                       sagemaker_session=sagemaker_session,
+                                       docker_image_uri=ecr_image)
+        pytorch.sagemaker_session.default_bucket()
+        training_nput = pytorch.sagemaker_session.upload_data(
+            path=os.path.join(fastai_path, 'cifar_tiny', 'training'),
+            key_prefix='pytorch/distributed_operations'
+        )
+        pytorch.fit({'training': training_nput})
 
 
 def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=3):
