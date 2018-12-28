@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+import os
 
 import pytest
 
@@ -30,8 +31,8 @@ def test_dist_fastai_cifar(docker_image, opt_ml, py_version):
         print('Skipping the test because fastai supports >= Python 3.6.')
         pass
 
-    local_mode.train(fastai_cifar_script, data_dir, docker_image, opt_ml, source_dir=fastai_path,
-                     cluster_size=1)
+    local_mode.train(fastai_cifar_script, os.path.join(fastai_path, 'mnist_tiny'), docker_image,
+                     opt_ml, source_dir=fastai_path, cluster_size=1)
 
     assert local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
