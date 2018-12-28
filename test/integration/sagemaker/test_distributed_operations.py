@@ -45,6 +45,7 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
     instance_type = 'ml.p3.8xlarge'
     with timeout(minutes=8):
         pytorch = PytorchTestEstimator(entry_point=fastai_cifar_script,
+                                       source_dir=os.path.join(fastai_path, 'cifar'),
                                        role='SageMakerRole',
                                        train_instance_count=1,
                                        train_instance_type=instance_type,

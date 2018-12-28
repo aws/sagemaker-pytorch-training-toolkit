@@ -32,7 +32,7 @@ def test_dist_fastai_cifar(docker_image, opt_ml, py_version):
         return
 
     local_mode.train(fastai_cifar_script, os.path.join(fastai_path, 'cifar_tiny'), docker_image,
-                     opt_ml, source_dir=fastai_path, cluster_size=1)
+                     opt_ml, source_dir=os.path.join(fastai_path, 'cifar'), cluster_size=1)
 
     assert local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
     assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
