@@ -13,7 +13,7 @@
 from __future__ import absolute_import
 import os
 import pytest
-from test.integration import dist_operations_path, fastai_cifar_script, fastai_path
+from test.integration import dist_operations_path, fastai_path
 from test.integration.sagemaker.estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout
 
@@ -44,7 +44,7 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
 
     instance_type = 'ml.p3.8xlarge'
     with timeout(minutes=8):
-        pytorch = PytorchTestEstimator(entry_point=fastai_cifar_script,
+        pytorch = PytorchTestEstimator(entry_point='train_cifar.py',
                                        source_dir=os.path.join(fastai_path, 'cifar'),
                                        role='SageMakerRole',
                                        train_instance_count=1,
