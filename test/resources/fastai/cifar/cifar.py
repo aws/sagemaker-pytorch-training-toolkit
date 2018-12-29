@@ -28,4 +28,3 @@ def main(gpu:Param("GPU to run on", str)=None):
     learn.to_fp16()
     learn.fit_one_cycle(2, 3e-3, wd=0.4)
     learn.save(name='model')
-    print('Done - Yay!!!!!!')
