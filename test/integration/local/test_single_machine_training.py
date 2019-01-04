@@ -14,7 +14,7 @@ from __future__ import absolute_import
 import os
 
 from test.utils import local_mode
-from test.integration import data_dir, fastai_path, fastai_mnist_script, mnist_script
+from test.integration import data_dir, fastai_path, fastai_mnist_script, mnist_script, PYTHON3
 
 
 def test_mnist(docker_image, opt_ml, use_gpu, processor):
@@ -27,7 +27,7 @@ def test_mnist(docker_image, opt_ml, use_gpu, processor):
 
 
 def test_fastai_mnist(docker_image, opt_ml, use_gpu, py_version):
-    if py_version != 'py3':
+    if py_version != PYTHON3:
         print('Skipping the test because fastai supports >= Python 3.6.')
         return
 

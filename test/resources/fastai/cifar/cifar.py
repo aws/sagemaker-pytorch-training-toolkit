@@ -1,4 +1,18 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
 # Based on https://github.com/fastai/fastai/blob/master/examples/train_cifar.py
+# imports and the code was as much preserved to match the official example
 from fastai.script import *
 from fastai.vision import *
 from fastai.vision.models.wrn import wrn_22
@@ -23,8 +37,10 @@ def main(gpu:Param("GPU to run on", str)=None):
                                       num_workers=workers)
     data.normalize(cifar_stats)
     learn = Learner(data, wrn_22(), metrics=accuracy, path='/opt/ml', model_dir='model')
-    if gpu is None: learn.model = nn.DataParallel(learn.model)
-    else: learn.distributed(gpu)
+    if gpu is None:
+        learn.model = nn.DataParallel(learn.model)
+    else:
+        learn.distributed(gpu)
     learn.to_fp16()
     learn.fit_one_cycle(2, 3e-3, wd=0.4)
     learn.save(name='model')
