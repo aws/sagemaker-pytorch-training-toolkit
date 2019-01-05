@@ -17,6 +17,7 @@ from test.integration import dist_operations_path, fastai_path, DEFAULT_TIMEOUT,
 from test.integration.sagemaker.estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout
 
+MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
 
 @pytest.mark.skip_gpu
 def test_dist_operations_cpu(sagemaker_session, ecr_image, instance_type, dist_cpu_backend):
@@ -32,8 +33,7 @@ def test_dist_operations_gpu(sagemaker_session, instance_type, ecr_image, dist_g
 
 @pytest.mark.skip_cpu
 def test_dist_operations_multi_gpu(sagemaker_session, ecr_image, dist_gpu_backend):
-    instance_type = 'ml.p3.8xlarge'
-    _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_gpu_backend, 1)
+    _test_dist_operations(sagemaker_session, ecr_image, MULTI_GPU_INSTANCE, dist_gpu_backend, 1)
 
 
 @pytest.mark.skip_cpu
@@ -42,13 +42,12 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
         print('Skipping the test because fastai supports >= Python 3.6.')
         return
 
-    instance_type = 'ml.p3.8xlarge'
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PytorchTestEstimator(entry_point='train_cifar.py',
                                        source_dir=os.path.join(fastai_path, 'cifar'),
                                        role='SageMakerRole',
                                        train_instance_count=1,
-                                       train_instance_type=instance_type,
+                                       train_instance_type=MULTI_GPU_INSTANCE,
                                        sagemaker_session=sagemaker_session,
                                        docker_image_uri=ecr_image)
         pytorch.sagemaker_session.default_bucket()
