@@ -11,8 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+import boto3
 import os
 import pytest
+from six.moves.urllib.parse import urlparse
 from test.integration import dist_operations_path, fastai_path, DEFAULT_TIMEOUT, PYTHON3
 from test.integration.sagemaker.estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout
@@ -57,6 +59,9 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
         )
         pytorch.fit({'training': training_nput})
 
+    model_s3_url = pytorch.create_model().model_data
+    _assert_s3_file_exists(model_s3_url)
+
 
 def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=3):
     with timeout(minutes=DEFAULT_TIMEOUT):
@@ -68,3 +73,9 @@ def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_back
         fake_input = pytorch.sagemaker_session.upload_data(path=dist_operations_path,
                                                            key_prefix='pytorch/distributed_operations')
         pytorch.fit({'required_argument': fake_input})
+
+
+def _assert_s3_file_exists(s3_url):
+    parsed_url = urlparse(s3_url)
+    s3 = boto3.resource('s3')
+    s3.Object(parsed_url.netloc, parsed_url.path.lstrip('/')).load()
