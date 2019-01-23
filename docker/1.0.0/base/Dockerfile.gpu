@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends software-proper
 # Install pip
 RUN cd /tmp && \
     curl -O https://bootstrap.pypa.io/get-pip.py && \
-    python get-pip.py && rm get-pip.py
+    python get-pip.py 'pip<=18.1' && rm get-pip.py
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
 # Force stdin, stdout and stderr to be totally unbuffered. Good for logging
