@@ -11,15 +11,19 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
-import boto3
+
 import os
+
+import boto3
 import pytest
 from six.moves.urllib.parse import urlparse
+
 from test.integration import dist_operations_path, fastai_path, DEFAULT_TIMEOUT, PYTHON3
 from test.integration.sagemaker.estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout
 
 MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
+
 
 @pytest.mark.skip_gpu
 def test_dist_operations_cpu(sagemaker_session, ecr_image, instance_type, dist_cpu_backend):
@@ -60,7 +64,7 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
         pytorch.fit({'training': training_nput})
 
     model_s3_url = pytorch.create_model().model_data
-    _assert_s3_file_exists(model_s3_url)
+    _assert_s3_file_exists(sagemaker_session.boto_region_name, model_s3_url)
 
 
 def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=3):
@@ -75,7 +79,7 @@ def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_back
         pytorch.fit({'required_argument': fake_input})
 
 
-def _assert_s3_file_exists(s3_url):
+def _assert_s3_file_exists(region, s3_url):
     parsed_url = urlparse(s3_url)
-    s3 = boto3.resource('s3')
+    s3 = boto3.resource('s3', region_name=region)
     s3.Object(parsed_url.netloc, parsed_url.path.lstrip('/')).load()
