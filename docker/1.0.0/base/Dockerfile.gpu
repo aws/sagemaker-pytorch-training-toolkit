@@ -22,11 +22,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends software-proper
 # Install pip
 RUN cd /tmp && \
     curl -O https://bootstrap.pypa.io/get-pip.py && \
-    python get-pip.py && rm get-pip.py
+    python get-pip.py 'pip<=18.1' && rm get-pip.py
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
 # Force stdin, stdout and stderr to be totally unbuffered. Good for logging
-ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=UTF-8 LANG=C.UTF-8 LC_ALL=C.UTF-8
 
 RUN pip install --no-cache-dir Pillow retrying six torch torchvision && \
-    if [ $py_version -eq 3 ]; then pip install --no-cache-dir fastai; fi
+    if [ $py_version -eq 3 ]; then pip install --no-cache-dir fastai==1.0.39; fi
