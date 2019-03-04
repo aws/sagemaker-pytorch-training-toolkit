@@ -95,7 +95,7 @@ def _assert_prediction_csv(test_loader, accept):
 
 def _get_test_data_loader(batch_size):
     return torch.utils.data.DataLoader(
-        datasets.MNIST(training_dir, train=False, transform=transforms.Compose([
+        datasets.MNIST(training_dir, train=False, download=True, transform=transforms.Compose([
             transforms.ToTensor(),
             transforms.Normalize((0.1307,), (0.3081,))
         ])),
