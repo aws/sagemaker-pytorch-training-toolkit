@@ -35,9 +35,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
     ],
-    # freeze numpy version because of the python2 bug
-    # in 16.0: https://github.com/numpy/numpy/pull/12754
-    install_requires=['numpy<=1.15.4', 'Pillow', 'retrying', 'sagemaker-containers>=2.3.5', 'six',
+    install_requires=['numpy', 'Pillow', 'retrying', 'sagemaker-containers>=2.3.5', 'six',
                       'torch==1.0.0'],
     extras_require={
         'test': ['boto3>=1.4.8', 'coverage', 'docker-compose', 'flake8', 'Flask', 'mock',
