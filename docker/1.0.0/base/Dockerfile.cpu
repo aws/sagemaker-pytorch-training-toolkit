@@ -32,4 +32,4 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=UTF-8 LANG=C.U
 RUN if [ $py_version -eq 3 ]; \
         then pip install --no-cache-dir http://download.pytorch.org/whl/cpu/torch-1.0.0-cp36-cp36m-linux_x86_64.whl fastai; \
         else pip install --no-cache-dir http://download.pytorch.org/whl/cpu/torch-1.0.0-cp27-cp27mu-linux_x86_64.whl; fi && \
-    pip install --no-cache-dir opencv-python==4.0 Pillow retrying six torchvision==0.2.1
+    pip install --no-cache-dir 'opencv-python>=4.0,<4.1' Pillow retrying six torchvision==0.2.1
