@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends software-proper
         build-essential \
         curl \
         jq \
+        # opencv dependencies
+        libsm6 \
+        libxext6 \
+        libxrender-dev \
         nginx && \
     if [ $py_version -eq 3 ]; \
        then apt-get install -y --no-install-recommends python3.6-dev \
