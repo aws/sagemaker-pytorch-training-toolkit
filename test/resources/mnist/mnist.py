@@ -27,7 +27,6 @@ import torch.utils.data
 import torch.utils.data.distributed
 from torchvision import datasets, transforms
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
