@@ -14,8 +14,10 @@ from __future__ import absolute_import
 import argparse
 import logging
 import os
-import sagemaker_containers
 import sys
+
+import cv2 as cv
+import sagemaker_containers
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -189,6 +191,9 @@ def save_model(model, model_dir):
 
 
 if __name__ == '__main__':
+    # test opencv
+    print(cv.__version__)
+
     parser = argparse.ArgumentParser()
 
     # Data and model checkpoints directories
