@@ -11,29 +11,49 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+
 import os
 
-from test.utils import local_mode
+import pytest
+from sagemaker.pytorch import PyTorch
+
+from test.utils.local_mode_utils import assert_files_exist
 from test.integration import data_dir, fastai_path, fastai_mnist_script, mnist_script, PYTHON3
 
 
-def test_mnist(docker_image, opt_ml, use_gpu, processor):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, use_gpu=use_gpu,
-                     hyperparameters={'processor': processor})
+def test_mnist(docker_image, processor, instance_type, sagemaker_local_session, tmpdir):
+    estimator = PyTorch(entry_point=mnist_script,
+                        role='SageMakerRole',
+                        image_name=docker_image,
+                        train_instance_count=1,
+                        train_instance_type=instance_type,
+                        sagemaker_session=sagemaker_local_session,
+                        hyperparameters={'processor': processor},
+                        output_path='file://{}'.format(tmpdir))
 
-    assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+    _train_and_assert_success(estimator, data_dir, str(tmpdir))
 
 
-def test_fastai_mnist(docker_image, opt_ml, use_gpu, py_version):
+def test_fastai_mnist(docker_image, py_version, instance_type, sagemaker_local_session, tmpdir):
     if py_version != PYTHON3:
-        print('Skipping the test because fastai supports >= Python 3.6.')
-        return
+        pytest.skip('Skipping the test because fastai supports >= Python 3.6.')
 
-    local_mode.train(fastai_mnist_script, os.path.join(fastai_path, 'mnist_tiny'), docker_image,
-                     opt_ml, use_gpu=use_gpu)
+    estimator = PyTorch(entry_point=fastai_mnist_script,
+                        role='SageMakerRole',
+                        image_name=docker_image,
+                        train_instance_count=1,
+                        train_instance_type=instance_type,
+                        sagemaker_session=sagemaker_local_session,
+                        output_path='file://{}'.format(tmpdir))
 
-    assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+    _train_and_assert_success(estimator, os.path.join(fastai_path, 'mnist_tiny'), str(tmpdir))
+
+
+def _train_and_assert_success(estimator, input_dir, output_path):
+    estimator.fit({'training': 'file://{}'.format(os.path.join(input_dir, 'training'))})
+
+    success_files = {
+        'model': ['model.pth'],
+        'output': ['success'],
+    }
+    assert_files_exist(output_path, success_files)
