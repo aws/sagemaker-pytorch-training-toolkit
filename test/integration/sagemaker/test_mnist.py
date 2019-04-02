@@ -11,11 +11,12 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+
 import numpy as np
 import pytest
-from test.integration import training_dir, mnist_script, DEFAULT_TIMEOUT
+from sagemaker.pytorch import PyTorch
 
-from test.integration.sagemaker.estimator import PytorchTestEstimator
+from test.integration import training_dir, mnist_script, DEFAULT_TIMEOUT
 from test.integration.sagemaker.timeout import timeout, timeout_and_delete_endpoint
 
 
@@ -33,10 +34,13 @@ def test_mnist_distributed_gpu(sagemaker_session, ecr_image, instance_type, dist
 
 def _test_mnist_distributed(sagemaker_session, ecr_image, instance_type, dist_backend):
     with timeout(minutes=DEFAULT_TIMEOUT):
-        pytorch = PytorchTestEstimator(entry_point=mnist_script, role='SageMakerRole',
-                                       train_instance_count=2, train_instance_type=instance_type,
-                                       sagemaker_session=sagemaker_session, docker_image_uri=ecr_image,
-                                       hyperparameters={'backend': dist_backend, 'epochs': 1})
+        pytorch = PyTorch(entry_point=mnist_script,
+                          role='SageMakerRole',
+                          train_instance_count=2,
+                          train_instance_type=instance_type,
+                          sagemaker_session=sagemaker_session,
+                          image_name=ecr_image,
+                          hyperparameters={'backend': dist_backend, 'epochs': 1})
         training_input = pytorch.sagemaker_session.upload_data(path=training_dir,
                                                                key_prefix='pytorch/mnist')
         pytorch.fit({'training': training_input})
