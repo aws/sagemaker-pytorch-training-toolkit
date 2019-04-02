@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -20,7 +20,7 @@ import shutil
 import sys
 import tempfile
 
-from sagemaker import Session
+from sagemaker import LocalSession, Session
 from sagemaker.pytorch import PyTorch
 
 from test.utils import local_mode
@@ -41,7 +41,7 @@ def pytest_addoption(parser):
     parser.addoption('--build-image', '-D', action='store_true')
     parser.addoption('--build-base-image', '-B', action='store_true')
     parser.addoption('--aws-id')
-    parser.addoption('--instance-type', default='local')
+    parser.addoption('--instance-type')
     parser.addoption('--install-container-support', '-C', action='store_true')
     parser.addoption('--docker-base-name', default='pytorch')
     parser.addoption('--region', default='us-west-2')
@@ -147,14 +147,21 @@ def fixture_sagemaker_session(region):
     return Session(boto_session=boto3.Session(region_name=region))
 
 
+@pytest.fixture(scope='session', name='sagemaker_local_session')
+def fixture_sagemaker_local_session(region):
+    return LocalSession(boto_session=boto3.Session(region_name=region))
+
+
 @pytest.fixture(name='aws_id', scope='session')
 def fixture_aws_id(request):
     return request.config.getoption('--aws-id')
 
 
 @pytest.fixture(name='instance_type', scope='session')
-def fixture_instance_type(request):
-    return request.config.getoption('--instance-type')
+def fixture_instance_type(request, processor):
+    provided_instance_type = request.config.getoption('--instance-type')
+    default_instance_type = 'local' if processor == 'cpu' else 'local_gpu'
+    return provided_instance_type or default_instance_type
 
 
 @pytest.fixture(name='docker_registry', scope='session')
