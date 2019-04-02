@@ -16,10 +16,10 @@ import os
 
 import boto3
 import pytest
+from sagemaker.pytorch import PyTorch
 from six.moves.urllib.parse import urlparse
 
 from test.integration import dist_operations_path, fastai_path, DEFAULT_TIMEOUT, PYTHON3
-from test.integration.sagemaker.estimator import PytorchTestEstimator
 from test.integration.sagemaker.timeout import timeout
 
 MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
@@ -49,13 +49,13 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
         return
 
     with timeout(minutes=DEFAULT_TIMEOUT):
-        pytorch = PytorchTestEstimator(entry_point='train_cifar.py',
-                                       source_dir=os.path.join(fastai_path, 'cifar'),
-                                       role='SageMakerRole',
-                                       train_instance_count=1,
-                                       train_instance_type=MULTI_GPU_INSTANCE,
-                                       sagemaker_session=sagemaker_session,
-                                       docker_image_uri=ecr_image)
+        pytorch = PyTorch(entry_point='train_cifar.py',
+                          source_dir=os.path.join(fastai_path, 'cifar'),
+                          role='SageMakerRole',
+                          train_instance_count=1,
+                          train_instance_type=MULTI_GPU_INSTANCE,
+                          sagemaker_session=sagemaker_session,
+                          image_name=ecr_image)
         pytorch.sagemaker_session.default_bucket()
         training_nput = pytorch.sagemaker_session.upload_data(
             path=os.path.join(fastai_path, 'cifar_tiny', 'training'),
@@ -69,10 +69,13 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
 
 def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=3):
     with timeout(minutes=DEFAULT_TIMEOUT):
-        pytorch = PytorchTestEstimator(entry_point=dist_operations_path, role='SageMakerRole',
-                                       train_instance_count=train_instance_count, train_instance_type=instance_type,
-                                       sagemaker_session=sagemaker_session, docker_image_uri=ecr_image,
-                                       hyperparameters={'backend': dist_backend})
+        pytorch = PyTorch(entry_point=dist_operations_path,
+                          role='SageMakerRole',
+                          train_instance_count=train_instance_count,
+                          train_instance_type=instance_type,
+                          sagemaker_session=sagemaker_session,
+                          image_name=ecr_image,
+                          hyperparameters={'backend': dist_backend})
         pytorch.sagemaker_session.default_bucket()
         fake_input = pytorch.sagemaker_session.upload_data(path=dist_operations_path,
                                                            key_prefix='pytorch/distributed_operations')
