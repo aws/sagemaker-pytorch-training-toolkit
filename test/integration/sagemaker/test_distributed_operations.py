@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -19,7 +19,8 @@ import pytest
 from sagemaker.pytorch import PyTorch
 from six.moves.urllib.parse import urlparse
 
-from test.integration import dist_operations_path, fastai_path, DEFAULT_TIMEOUT, PYTHON3
+from test.integration import (data_dir, dist_operations_path, fastai_path, mnist_script,
+                              DEFAULT_TIMEOUT, PYTHON3)
 from test.integration.sagemaker.timeout import timeout
 
 MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
@@ -57,14 +58,29 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
                           sagemaker_session=sagemaker_session,
                           image_name=ecr_image)
         pytorch.sagemaker_session.default_bucket()
-        training_nput = pytorch.sagemaker_session.upload_data(
+        training_input = pytorch.sagemaker_session.upload_data(
             path=os.path.join(fastai_path, 'cifar_tiny', 'training'),
             key_prefix='pytorch/distributed_operations'
         )
-        pytorch.fit({'training': training_nput})
+        pytorch.fit({'training': training_input})
 
     model_s3_url = pytorch.create_model().model_data
     _assert_s3_file_exists(sagemaker_session.boto_region_name, model_s3_url)
+
+
+@pytest.mark.skip_cpu
+def test_mnist_gpu(sagemaker_session, ecr_image, py_version, dist_gpu_backend):
+    pytorch = PyTorch(entry_point=mnist_script,
+                      role='SageMakerRole',
+                      train_instance_count=2,
+                      image_name=ecr_image,
+                      train_instance_type=MULTI_GPU_INSTANCE,
+                      sagemaker_session=sagemaker_session,
+                      hyperparameters={'backend': dist_gpu_backend})
+
+    training_input = sagemaker_session.upload_data(path=os.path.join(data_dir, 'training'),
+                                                   key_prefix='pytorch/mnist')
+    pytorch.fit({'training': training_input})
 
 
 def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=3):

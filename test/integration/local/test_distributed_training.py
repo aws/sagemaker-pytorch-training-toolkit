@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -40,20 +40,6 @@ def test_dist_operations_path_cpu(docker_image, dist_cpu_backend, sagemaker_loca
                         train_instance_type='local',
                         sagemaker_session=sagemaker_local_session,
                         hyperparameters={'backend': dist_cpu_backend},
-                        output_path='file://{}'.format(tmpdir))
-
-    _train_and_assert_success(estimator, str(tmpdir))
-
-
-@pytest.mark.skip_cpu
-def test_dist_operations_path_gpu(docker_image, dist_gpu_backend, sagemaker_local_session, tmpdir):
-    estimator = PyTorch(entry_point=dist_operations_path,
-                        role='SageMakerRole',
-                        image_name=docker_image,
-                        train_instance_count=3,
-                        train_instance_type='local_gpu',
-                        sagemaker_session=sagemaker_local_session,
-                        hyperparameters={'backend': dist_gpu_backend},
                         output_path='file://{}'.format(tmpdir))
 
     _train_and_assert_success(estimator, str(tmpdir))
@@ -102,24 +88,6 @@ def test_mnist_cpu(docker_image, dist_cpu_backend, sagemaker_local_session, tmpd
                         train_instance_type='local',
                         sagemaker_session=sagemaker_local_session,
                         hyperparameters={'backend': dist_cpu_backend},
-                        output_path='file://{}'.format(tmpdir))
-
-    success_files = {
-        'model': ['model.pth'],
-        'output': ['success'],
-    }
-    _train_and_assert_success(estimator, str(tmpdir), success_files)
-
-
-@pytest.mark.skip_cpu
-def test_mnist_gpu(docker_image, dist_gpu_backend, sagemaker_local_session, tmpdir):
-    estimator = PyTorch(entry_point=mnist_script,
-                        role='SageMakerRole',
-                        image_name=docker_image,
-                        train_instance_count=2,
-                        train_instance_type='local_gpu',
-                        sagemaker_session=sagemaker_local_session,
-                        hyperparameters={'backend': dist_gpu_backend},
                         output_path='file://{}'.format(tmpdir))
 
     success_files = {
