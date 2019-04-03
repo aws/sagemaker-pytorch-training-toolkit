@@ -12,10 +12,18 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
+import os
+
 import pytest
+from sagemaker.pytorch import PyTorch
 
 from test.integration import data_dir, dist_operations_path, mnist_script
-from test.utils import local_mode
+from test.utils.local_mode_utils import assert_files_exist
+
+MODEL_SUCCESS_FILES = {
+    'model': ['success'],
+    'output': ['success'],
+}
 
 
 @pytest.fixture(scope='session', name='dist_gpu_backend', params=['gloo'])
@@ -24,61 +32,103 @@ def fixture_dist_gpu_backend(request):
 
 
 @pytest.mark.skip_gpu
-def test_dist_operations_path_cpu(docker_image, opt_ml, dist_cpu_backend):
-    local_mode.train(dist_operations_path, data_dir, docker_image, opt_ml, cluster_size=3,
-                     hyperparameters={'backend': dist_cpu_backend})
+def test_dist_operations_path_cpu(docker_image, dist_cpu_backend, sagemaker_local_session, tmpdir):
+    estimator = PyTorch(entry_point=dist_operations_path,
+                        role='SageMakerRole',
+                        image_name=docker_image,
+                        train_instance_count=2,
+                        train_instance_type='local',
+                        sagemaker_session=sagemaker_local_session,
+                        hyperparameters={'backend': dist_cpu_backend},
+                        output_path='file://{}'.format(tmpdir))
 
-    assert local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
-
-
-@pytest.mark.skip_cpu
-def test_dist_operations_path_gpu(docker_image, opt_ml, dist_gpu_backend):
-    local_mode.train(dist_operations_path, data_dir, docker_image, opt_ml, cluster_size=3,
-                     use_gpu=True, hyperparameters={'backend': dist_gpu_backend})
-
-    assert local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+    _train_and_assert_success(estimator, str(tmpdir))
 
 
 @pytest.mark.skip_cpu
-def test_dist_operations_path_gpu_nccl(docker_image, opt_ml):
-    local_mode.train(dist_operations_path, data_dir, docker_image, opt_ml, cluster_size=1,
-                     use_gpu=True, hyperparameters={'backend': 'nccl'})
+def test_dist_operations_path_gpu(docker_image, dist_gpu_backend, sagemaker_local_session, tmpdir):
+    estimator = PyTorch(entry_point=dist_operations_path,
+                        role='SageMakerRole',
+                        image_name=docker_image,
+                        train_instance_count=3,
+                        train_instance_type='local_gpu',
+                        sagemaker_session=sagemaker_local_session,
+                        hyperparameters={'backend': dist_gpu_backend},
+                        output_path='file://{}'.format(tmpdir))
 
-    assert local_mode.file_exists(opt_ml, 'model/success'), 'Script success file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+    _train_and_assert_success(estimator, str(tmpdir))
+
+
+@pytest.mark.skip_cpu
+def test_dist_operations_path_gpu_nccl(docker_image, sagemaker_local_session, tmpdir):
+    estimator = PyTorch(entry_point=dist_operations_path,
+                        role='SageMakerRole',
+                        image_name=docker_image,
+                        train_instance_count=1,
+                        train_instance_type='local_gpu',
+                        sagemaker_session=sagemaker_local_session,
+                        hyperparameters={'backend': 'nccl'},
+                        output_path='file://{}'.format(tmpdir))
+
+    _train_and_assert_success(estimator, str(tmpdir))
 
 
 @pytest.mark.skip_gpu
-def test_cpu_nccl(docker_image, opt_ml):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, cluster_size=2,
-                     hyperparameters={'backend': 'nccl'})
+def test_cpu_nccl(docker_image, sagemaker_local_session, tmpdir):
+    estimator = PyTorch(entry_point=mnist_script,
+                        role='SageMakerRole',
+                        image_name=docker_image,
+                        train_instance_count=2,
+                        train_instance_type='local',
+                        sagemaker_session=sagemaker_local_session,
+                        hyperparameters={'backend': 'nccl'},
+                        output_path='file://{}'.format(tmpdir))
 
-    assert not local_mode.file_exists(opt_ml,
-                                      'model/success'), 'Script success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/failure'), 'Failure not happened'
+    # Local Mode doesn't export model/output artifacts upon failure
+    # https://github.com/aws/sagemaker-python-sdk/blob/master/src/sagemaker/local/image.py#L133-L141
+    with pytest.raises(RuntimeError) as e:
+        estimator.fit({'training': 'file://{}'.format(os.path.join(data_dir, 'training'))})
+
+    assert 'Failed to run:' in str(e)
+    assert 'Process exited with code: 1' in str(e)
 
 
 @pytest.mark.skip_gpu
-def test_mnist_cpu(docker_image, opt_ml, dist_cpu_backend):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, cluster_size=2,
-                     hyperparameters={'backend': dist_cpu_backend})
+def test_mnist_cpu(docker_image, dist_cpu_backend, sagemaker_local_session, tmpdir):
+    estimator = PyTorch(entry_point=mnist_script,
+                        role='SageMakerRole',
+                        image_name=docker_image,
+                        train_instance_count=2,
+                        train_instance_type='local',
+                        sagemaker_session=sagemaker_local_session,
+                        hyperparameters={'backend': dist_cpu_backend},
+                        output_path='file://{}'.format(tmpdir))
 
-    assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+    success_files = {
+        'model': ['model.pth'],
+        'output': ['success'],
+    }
+    _train_and_assert_success(estimator, str(tmpdir), success_files)
 
 
 @pytest.mark.skip_cpu
-def test_mnist_gpu(docker_image, opt_ml, dist_gpu_backend):
-    local_mode.train(mnist_script, data_dir, docker_image, opt_ml, cluster_size=2,
-                     use_gpu=True, hyperparameters={'backend': dist_gpu_backend})
+def test_mnist_gpu(docker_image, dist_gpu_backend, sagemaker_local_session, tmpdir):
+    estimator = PyTorch(entry_point=mnist_script,
+                        role='SageMakerRole',
+                        image_name=docker_image,
+                        train_instance_count=2,
+                        train_instance_type='local_gpu',
+                        sagemaker_session=sagemaker_local_session,
+                        hyperparameters={'backend': dist_gpu_backend},
+                        output_path='file://{}'.format(tmpdir))
 
-    assert local_mode.file_exists(opt_ml, 'model/model.pth'), 'Model file was not created'
-    assert local_mode.file_exists(opt_ml, 'output/success'), 'Success file was not created'
-    assert not local_mode.file_exists(opt_ml, 'output/failure'), 'Failure happened'
+    success_files = {
+        'model': ['model.pth'],
+        'output': ['success'],
+    }
+    _train_and_assert_success(estimator, str(tmpdir), success_files)
+
+
+def _train_and_assert_success(estimator, output_path, output_files=MODEL_SUCCESS_FILES):
+    estimator.fit({'training': 'file://{}'.format(os.path.join(data_dir, 'training'))})
+    assert_files_exist(output_path, output_files)
