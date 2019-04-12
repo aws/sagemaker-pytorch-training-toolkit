@@ -43,7 +43,6 @@ ACCEPT_TYPE_TO_DESERIALIZER_MAP = {
 
 
 @pytest.fixture(name='mnist_predictor')
-@contextmanager
 def fixture_mnist_predictor(docker_image, use_gpu, sagemaker_local_session, instance_type):
     model_dir = model_gpu_dir if use_gpu else model_cpu_dir
     with _predictor(model_dir, mnist_script, docker_image, sagemaker_local_session, instance_type) as p:
@@ -51,7 +50,6 @@ def fixture_mnist_predictor(docker_image, use_gpu, sagemaker_local_session, inst
 
 
 @pytest.fixture(name='mnist_1d_predictor')
-@contextmanager
 def fixture_1d_mnist_predictor(docker_image, use_gpu, sagemaker_local_session, instance_type):
     model_dir = model_gpu_dir if use_gpu else model_cpu_1d_dir
     with _predictor(model_dir, mnist_1d_script, docker_image, sagemaker_local_session, instance_type) as p:
