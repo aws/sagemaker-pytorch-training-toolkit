@@ -42,84 +42,63 @@ ACCEPT_TYPE_TO_DESERIALIZER_MAP = {
 }
 
 
-@pytest.fixture(name='mnist_predictor')
-def fixture_mnist_predictor(docker_image, use_gpu, sagemaker_local_session, instance_type):
-    model_dir = model_gpu_dir if use_gpu else model_cpu_dir
-    with _predictor(model_dir, mnist_script, docker_image, sagemaker_local_session, instance_type) as p:
-        yield p
-
-
-@pytest.fixture(name='mnist_1d_predictor')
-def fixture_1d_mnist_predictor(docker_image, use_gpu, sagemaker_local_session, instance_type):
-    model_dir = model_gpu_dir if use_gpu else model_cpu_1d_dir
-    with _predictor(model_dir, mnist_1d_script, docker_image, sagemaker_local_session, instance_type) as p:
-        yield p
-
-
-@contextmanager
-def _predictor(model_dir, script, image, sagemaker_local_session, instance_type):
-    model = _pytorch_model(model_dir, script, image, sagemaker_local_session)
-
-    with local_mode_utils.lock():
-        try:
-            predictor = model.deploy(1, instance_type)
-            yield predictor
-        finally:
-            predictor.delete_endpoint()
-
-
-def _pytorch_model(model_dir, script, image, sagemaker_local_session):
-    return PyTorchModel('file://{}'.format(model_dir),
-                        ROLE,
-                        script,
-                        image=image,
-                        sagemaker_session=sagemaker_local_session)
-
-
 @pytest.fixture(name='test_loader')
 def fixture_test_loader():
     #  Largest batch size is only 300 because client_max_body_size is 5M
     return _get_test_data_loader(batch_size=300)
 
 
-def test_serve_json_npy(mnist_predictor, test_loader):
-    with mnist_predictor as predictor:
+def test_serve_json_npy(test_loader, use_gpu, docker_image, sagemaker_local_session, instance_type):
+    model_dir = model_gpu_dir if use_gpu else model_cpu_dir
+    with _predictor(model_dir, mnist_script, docker_image, sagemaker_local_session,
+                    instance_type) as predictor:
         for content_type in (content_types.JSON, content_types.NPY):
             for accept in (content_types.JSON, content_types.CSV, content_types.NPY):
                 _assert_prediction_npy_json(predictor, test_loader, content_type, accept)
 
 
-def test_serve_csv(mnist_1d_predictor, test_loader):
-    with mnist_1d_predictor as predictor:
+def test_serve_csv(test_loader, use_gpu, docker_image, sagemaker_local_session, instance_type):
+    model_dir = model_gpu_dir if use_gpu else model_cpu_1d_dir
+    with _predictor(model_dir, mnist_1d_script, docker_image, sagemaker_local_session,
+                    instance_type) as predictor:
         for accept in (content_types.JSON, content_types.CSV, content_types.NPY):
             _assert_prediction_csv(predictor, test_loader, accept)
 
 
 @pytest.mark.skip_cpu
-def test_serve_cpu_model_on_gpu(mnist_1d_predictor, test_loader):
-    with mnist_1d_predictor as predictor:
+def test_serve_cpu_model_on_gpu(test_loader, docker_image, sagemaker_local_session, instance_type):
+    with _predictor(model_gpu_dir, mnist_1d_script, docker_image, sagemaker_local_session,
+                    instance_type) as predictor:
         _assert_prediction_npy_json(predictor, test_loader, content_types.NPY, content_types.JSON)
 
 
 def test_serving_calls_model_fn_once(docker_image, sagemaker_local_session, instance_type):
-    model = PyTorchModel('file://{}'.format(model_cpu_dir),
+    with _predictor(model_cpu_dir, call_model_fn_once_script, docker_image, sagemaker_local_session,
+                    instance_type, model_server_workers=2) as predictor:
+        predictor.accept = None
+        predictor.deserializer = BytesDeserializer()
+
+        # call enough times to ensure multiple requests to a worker
+        for i in range(3):
+            # will return 500 error if model_fn called during request handling
+            output = predictor.predict(b'input')
+            assert output == b'output'
+
+
+@contextmanager
+def _predictor(model_dir, script, image, sagemaker_local_session, instance_type,
+               model_server_workers=None):
+    model = PyTorchModel('file://{}'.format(model_dir),
                          ROLE,
-                         call_model_fn_once_script,
-                         image=docker_image,
+                         script,
+                         image=image,
                          sagemaker_session=sagemaker_local_session,
-                         model_server_workers=2)
+                         model_server_workers=model_server_workers)
 
     with local_mode_utils.lock():
         try:
             predictor = model.deploy(1, instance_type)
-            predictor.accept = None
-            predictor.deserializer = BytesDeserializer()
-
-            # call enough times to ensure multiple requests to a worker
-            for i in range(3):
-                # will return 500 error if model_fn called during request handling
-                output = predictor.predict(b'input')
-                assert output == b'output'
+            yield predictor
         finally:
             predictor.delete_endpoint()
 
