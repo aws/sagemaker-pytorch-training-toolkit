@@ -58,8 +58,7 @@ def test_serve_json_npy(test_loader, use_gpu, docker_image, sagemaker_local_sess
 
 
 def test_serve_csv(test_loader, use_gpu, docker_image, sagemaker_local_session, instance_type):
-    model_dir = model_gpu_dir if use_gpu else model_cpu_1d_dir
-    with _predictor(model_dir, mnist_1d_script, docker_image, sagemaker_local_session,
+    with _predictor(model_cpu_1d_dir, mnist_1d_script, docker_image, sagemaker_local_session,
                     instance_type) as predictor:
         for accept in (content_types.JSON, content_types.CSV, content_types.NPY):
             _assert_prediction_csv(predictor, test_loader, accept)
@@ -67,7 +66,7 @@ def test_serve_csv(test_loader, use_gpu, docker_image, sagemaker_local_session, 
 
 @pytest.mark.skip_cpu
 def test_serve_cpu_model_on_gpu(test_loader, docker_image, sagemaker_local_session, instance_type):
-    with _predictor(model_gpu_dir, mnist_1d_script, docker_image, sagemaker_local_session,
+    with _predictor(model_cpu_1d_dir, mnist_1d_script, docker_image, sagemaker_local_session,
                     instance_type) as predictor:
         _assert_prediction_npy_json(predictor, test_loader, content_types.NPY, content_types.JSON)
 
