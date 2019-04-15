@@ -17,7 +17,7 @@ import os
 import pytest
 from sagemaker.pytorch import PyTorch
 
-from test.integration import data_dir, dist_operations_path, mnist_script
+from test.integration import data_dir, dist_operations_path, mnist_script, ROLE
 from test.utils.local_mode_utils import assert_files_exist
 
 MODEL_SUCCESS_FILES = {
@@ -34,7 +34,7 @@ def fixture_dist_gpu_backend(request):
 @pytest.mark.skip_gpu
 def test_dist_operations_path_cpu(docker_image, dist_cpu_backend, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=dist_operations_path,
-                        role='SageMakerRole',
+                        role=ROLE,
                         image_name=docker_image,
                         train_instance_count=2,
                         train_instance_type='local',
@@ -48,7 +48,7 @@ def test_dist_operations_path_cpu(docker_image, dist_cpu_backend, sagemaker_loca
 @pytest.mark.skip_cpu
 def test_dist_operations_path_gpu_nccl(docker_image, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=dist_operations_path,
-                        role='SageMakerRole',
+                        role=ROLE,
                         image_name=docker_image,
                         train_instance_count=1,
                         train_instance_type='local_gpu',
@@ -62,7 +62,7 @@ def test_dist_operations_path_gpu_nccl(docker_image, sagemaker_local_session, tm
 @pytest.mark.skip_gpu
 def test_cpu_nccl(docker_image, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=mnist_script,
-                        role='SageMakerRole',
+                        role=ROLE,
                         image_name=docker_image,
                         train_instance_count=2,
                         train_instance_type='local',
@@ -70,19 +70,17 @@ def test_cpu_nccl(docker_image, sagemaker_local_session, tmpdir):
                         hyperparameters={'backend': 'nccl'},
                         output_path='file://{}'.format(tmpdir))
 
-    # Local Mode doesn't export model/output artifacts upon failure
-    # https://github.com/aws/sagemaker-python-sdk/blob/master/src/sagemaker/local/image.py#L133-L141
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(RuntimeError):
         estimator.fit({'training': 'file://{}'.format(os.path.join(data_dir, 'training'))})
 
-    assert 'Failed to run:' in str(e)
-    assert 'Process exited with code: 1' in str(e)
+    failure_file = {'output': ['failure']}
+    assert_files_exist(str(tmpdir), failure_file)
 
 
 @pytest.mark.skip_gpu
 def test_mnist_cpu(docker_image, dist_cpu_backend, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=mnist_script,
-                        role='SageMakerRole',
+                        role=ROLE,
                         image_name=docker_image,
                         train_instance_count=2,
                         train_instance_type='local',
