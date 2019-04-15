@@ -11,6 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+
 import boto3
 import os
 import logging
@@ -23,7 +24,7 @@ import tempfile
 from sagemaker import LocalSession, Session
 from sagemaker.pytorch import PyTorch
 
-from test.utils import local_mode
+from test.utils import image_utils
 
 logger = logging.getLogger(__name__)
 logging.getLogger('boto').setLevel(logging.INFO)
@@ -42,7 +43,6 @@ def pytest_addoption(parser):
     parser.addoption('--build-base-image', '-B', action='store_true')
     parser.addoption('--aws-id')
     parser.addoption('--instance-type')
-    parser.addoption('--install-container-support', '-C', action='store_true')
     parser.addoption('--docker-base-name', default='pytorch')
     parser.addoption('--region', default='us-west-2')
     parser.addoption('--framework-version', default=PyTorch.LATEST_VERSION)
@@ -107,23 +107,16 @@ def fixture_use_gpu(processor):
     return processor == 'gpu'
 
 
-@pytest.fixture(scope='session', name='install_container_support', autouse=True)
-def fixture_install_container_support(request):
-    install = request.config.getoption('--install-container-support')
-    if install:
-        local_mode.install_container_support()
-
-
 @pytest.fixture(scope='session', name='build_base_image', autouse=True)
 def fixture_build_base_image(request, framework_version, py_version, processor, tag, docker_base_name):
     build_base_image = request.config.getoption('--build-base-image')
     if build_base_image:
-        return local_mode.build_base_image(framework_name=docker_base_name,
-                                           framework_version=framework_version,
-                                           py_version=py_version,
-                                           base_image_tag=tag,
-                                           processor=processor,
-                                           cwd=os.path.join(dir_path, '..'))
+        return image_utils.build_base_image(framework_name=docker_base_name,
+                                            framework_version=framework_version,
+                                            py_version=py_version,
+                                            base_image_tag=tag,
+                                            processor=processor,
+                                            cwd=os.path.join(dir_path, '..'))
 
     return tag
 
@@ -132,12 +125,12 @@ def fixture_build_base_image(request, framework_version, py_version, processor, 
 def fixture_build_image(request, framework_version, py_version, processor, tag, docker_base_name):
     build_image = request.config.getoption('--build-image')
     if build_image:
-        return local_mode.build_image(framework_name=docker_base_name,
-                                      framework_version=framework_version,
-                                      py_version=py_version,
-                                      processor=processor,
-                                      tag=tag,
-                                      cwd=os.path.join(dir_path, '..'))
+        return image_utils.build_image(framework_name=docker_base_name,
+                                       framework_version=framework_version,
+                                       py_version=py_version,
+                                       processor=processor,
+                                       tag=tag,
+                                       cwd=os.path.join(dir_path, '..'))
 
     return tag
 

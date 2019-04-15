@@ -31,5 +31,6 @@ model_gpu_dir = os.path.join(mnist_path, 'model_gpu')
 model_gpu_1d_dir = os.path.join(model_gpu_dir, '1d')
 call_model_fn_once_script = os.path.join(resources_path, 'call_model_fn_once.py')
 
+ROLE = 'dummy/unused-role'
 DEFAULT_TIMEOUT = 10
 PYTHON3 = 'py3'
