@@ -103,7 +103,7 @@ Final Images
 
 The "final" Dockerfiles encompass the installation of the SageMaker specific support code.
 
-All "final" Dockerfiles use `base images for building <https://github.com/aws/sagemaker-pytorch-container/blob/refactor-notebooks/docker/1.0.0/final/Dockerfile.cpu#L2>`__.
+All "final" Dockerfiles use `base images for building <https://github.com/aws/sagemaker-pytorch-container/blob/master/docker/1.0.0/final/Dockerfile.cpu#L2>`__.
 
 These "base" images are specified with the naming convention of
 pytorch-base:<PyTorch_version>-<processor>-py<python_version>.
