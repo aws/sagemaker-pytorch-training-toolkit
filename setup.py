@@ -46,11 +46,11 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
     ],
-    install_requires=['numpy', 'Pillow', 'retrying', 'sagemaker-containers>=2.3.5', 'six',
+    install_requires=['numpy', 'Pillow', 'retrying', 'sagemaker-containers>=2.4.6', 'six',
                       'torch==1.0.0'],
     extras_require={
         'test': ['boto3>=1.4.8', 'coverage', 'docker-compose', 'flake8', 'Flask', 'mock',
-                 'pytest', 'pytest-cov', 'pytest-xdist', 'PyYAML==3.10', 'sagemaker>=1.18.14',
+                 'pytest', 'pytest-cov', 'pytest-xdist', 'PyYAML==3.10', 'sagemaker==1.18.16',
                  'torchvision==0.2.1', 'tox']
     },
 )
