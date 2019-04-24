@@ -46,7 +46,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
     ],
-    install_requires=['numpy', 'Pillow', 'retrying', 'sagemaker-containers>=2.4.4', 'six',
+    install_requires=['numpy', 'Pillow', 'retrying', 'sagemaker-containers>=2.4.6', 'six',
                       'torch==1.0.0'],
     extras_require={
         'test': ['boto3>=1.4.8', 'coverage', 'docker-compose', 'flake8', 'Flask', 'mock',
