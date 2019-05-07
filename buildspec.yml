@@ -18,11 +18,10 @@ phases:
   pre_build:
     commands:
       - start-dockerd
-      - |
-        ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
-        PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
-        PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
-        echo "Pull request number: $PR_NUM. No value means this build is not from pull request."
+      - ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
+      - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
+      - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
+      - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
 
   build:
     commands:
@@ -34,47 +33,41 @@ phases:
       - pytest test/unit
 
       # build cpu base image
-      - |
-        base_dir="docker/$FRAMEWORK_VERSION/base"
-        cpu_base_tag="$FRAMEWORK_VERSION-cpu-py$CPU_PY_VERSION"
-        cpu_dockerfile="Dockerfile.cpu"
-        cd $base_dir
-        docker build -t $LOCAL_BASE_REPO:$cpu_base_tag -f $cpu_dockerfile --build-arg py_version=$CPU_PY_VERSION .
-        cd ../../../
+      - base_dir="docker/$FRAMEWORK_VERSION/base"
+      - cpu_base_tag="$FRAMEWORK_VERSION-cpu-py$CPU_PY_VERSION"
+      - cpu_dockerfile="Dockerfile.cpu"
+      - cd $base_dir
+      - docker build -t $LOCAL_BASE_REPO:$cpu_base_tag -f $cpu_dockerfile --build-arg py_version=$CPU_PY_VERSION .
+      - cd ../../../
 
       # build gpu base image
-      - |
-        gpu_base_tag="$FRAMEWORK_VERSION-gpu-py$GPU_PY_VERSION"
-        gpu_dockerfile="Dockerfile.gpu"
-        cd $base_dir
-        docker build -t $LOCAL_BASE_REPO:$gpu_base_tag -f $gpu_dockerfile --build-arg py_version=$GPU_PY_VERSION .
-        cd ../../../
+      - gpu_base_tag="$FRAMEWORK_VERSION-gpu-py$GPU_PY_VERSION"
+      - gpu_dockerfile="Dockerfile.gpu"
+      - cd $base_dir
+      - docker build -t $LOCAL_BASE_REPO:$gpu_base_tag -f $gpu_dockerfile --build-arg py_version=$GPU_PY_VERSION .
+      - cd ../../../
 
       # create wheel
       - python3 setup.py bdist_wheel
 
       # build cpu image
-      - |
-        build_dir="docker/$FRAMEWORK_VERSION/final"
-        build_id="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
-        CPU_TAG="$FRAMEWORK_VERSION-cpu-py$CPU_PY_VERSION-$build_id"
-        docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=$CPU_PY_VERSION -t $PREPROD_IMAGE:$CPU_TAG .
+      - build_dir="docker/$FRAMEWORK_VERSION/final"
+      - build_id="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
+      - CPU_TAG="$FRAMEWORK_VERSION-cpu-py$CPU_PY_VERSION-$build_id"
+      - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=$CPU_PY_VERSION -t $PREPROD_IMAGE:$CPU_TAG .
 
       # build gpu image
-      - |
-        GPU_TAG="$FRAMEWORK_VERSION-gpu-py$GPU_PY_VERSION-$build_id"
+      - GPU_TAG="$FRAMEWORK_VERSION-gpu-py$GPU_PY_VERSION-$build_id" \
         docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=$GPU_PY_VERSION -t $PREPROD_IMAGE:$GPU_TAG .
 
       # push images to ecr
-      - |
-        $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
-        docker push $PREPROD_IMAGE:$CPU_TAG
-        docker push $PREPROD_IMAGE:$GPU_TAG
+      - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker push $PREPROD_IMAGE:$CPU_TAG
+      - docker push $PREPROD_IMAGE:$GPU_TAG
 
       # launch remote gpu instance
-      - |
-        prefix='ml.'
-        instance_type=${GPU_INSTANCE_TYPE#"$prefix"}
+      - prefix='ml.'
+      - instance_type=${GPU_INSTANCE_TYPE#"$prefix"}
       - create-key-pair
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
@@ -118,6 +111,5 @@ phases:
       - cleanup-key-pairs
 
       # remove ecr image
-      - |
-        aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_TAG
-        aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_TAG
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_TAG
+      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_TAG
