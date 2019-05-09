@@ -13,7 +13,6 @@ env:
     SETUP_FILE: 'setup_cmds.sh'
     SETUP_CMDS: '#!/bin/bash\npip install --upgrade pip\npip install -U -e .\npip install -U -e .[test]'
 
-
 phases:
   pre_build:
     commands:
