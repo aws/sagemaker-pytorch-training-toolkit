@@ -1,4 +1,4 @@
-FROM nvidia/cuda:9.0-cudnn7-runtime-ubuntu16.04
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
 
 ARG py_version
 
@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends software-proper
         build-essential \
         curl \
         jq \
+        git \
         libsm6 \
         libxext6 \
         libxrender-dev \
@@ -31,5 +32,15 @@ RUN cd /tmp && \
 # Force stdin, stdout and stderr to be totally unbuffered. Good for logging
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONIOENCODING=UTF-8 LANG=C.UTF-8 LC_ALL=C.UTF-8
 
-RUN pip install --no-cache-dir 'opencv-python>=4.0,<4.1' Pillow retrying six torch torchvision==0.2.1 && \
+RUN pip install --no-cache-dir 'opencv-python>=4.0,<4.1' Pillow retrying six torch scikit-learn pytorch-pretrained-bert torchvision==0.2.1 && \
     if [ $py_version -eq 3 ]; then pip install --no-cache-dir fastai==1.0.39; fi
+
+# First uninstall existing apex if there is
+RUN pip uninstall apex
+
+# Install apex
+RUN cd /tmp && \
+    git clone https://github.com/NVIDIA/apex && \
+    cd apex && rm -rf build && \
+    pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
+

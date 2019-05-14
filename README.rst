@@ -124,6 +124,18 @@ If you want to build "final" Docker images, then use:
 
 ::
 
+    # After building base images, rather than building final images only, they can be build and push to ECR via build_and_push.sh bash script
+
+    chmod +x ./build_and_push
+
+    #CPU
+    ./build_and_push cpu
+
+    #GPU
+    ./build_and_push gpu
+
+::
+
     # All build instructions assume you're building from the root directory of the sagemaker-pytorch-container.
 
     # CPU
