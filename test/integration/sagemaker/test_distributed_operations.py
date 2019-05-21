@@ -68,13 +68,9 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
     _assert_s3_file_exists(sagemaker_session.boto_region_name, model_s3_url)
 
 
-# TODO: Fix this test after PyTorch 1.1 upgrade
 @pytest.mark.skip_cpu
+@pytest.mark.skip_py2
 def test_mnist_gpu(sagemaker_session, ecr_image, py_version, dist_gpu_backend):
-    if py_version != PYTHON3:
-        print('Skipping the test for now if py_version is py2')
-        return
-
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=mnist_script,
                           role='SageMakerRole',
