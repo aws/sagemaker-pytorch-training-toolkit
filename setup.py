@@ -50,7 +50,7 @@ setup(
                       'torch==1.1.0'],
     extras_require={
         'test': ['boto3>=1.4.8', 'coverage', 'docker-compose', 'flake8', 'Flask', 'mock',
-                 'pytest', 'pytest-cov', 'pytest-xdist', 'PyYAML==3.10', 'sagemaker==1.18.16',
+                 'pytest==4.5.0', 'pytest-cov', 'pytest-xdist', 'PyYAML==3.10', 'sagemaker==1.18.16',
                  'torchvision==0.3.0', 'tox']
     },
 )
