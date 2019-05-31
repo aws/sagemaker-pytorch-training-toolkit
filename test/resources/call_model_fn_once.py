@@ -21,6 +21,8 @@ def model_fn(model_dir):
         raise RuntimeError('model_fn called more than once (lock: {})'.format(lock_file))
 
     open(lock_file, 'a').close()
+    # delete lock file otherwise following test run with different python version will fail
+    os.remove(lock_file)
 
     return 'model'
 

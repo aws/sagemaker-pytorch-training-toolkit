@@ -17,4 +17,3 @@ ENV SAGEMAKER_SERVING_MODULE sagemaker_pytorch_container.serving:main
 
 # Starts framework
 ENTRYPOINT ["bash", "-m", "start_with_right_hostname.sh"]
-# ENTRYPOINT ["bash"]
