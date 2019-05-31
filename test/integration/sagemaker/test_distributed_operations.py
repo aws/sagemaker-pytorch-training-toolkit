@@ -69,7 +69,6 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
 
 
 @pytest.mark.skip_cpu
-@pytest.mark.skip_py2
 def test_mnist_gpu(sagemaker_session, ecr_image, py_version, dist_gpu_backend):
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=mnist_script,
@@ -85,7 +84,7 @@ def test_mnist_gpu(sagemaker_session, ecr_image, py_version, dist_gpu_backend):
         pytorch.fit({'training': training_input})
 
 
-def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=3):
+def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=2):
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=dist_operations_path,
                           role='SageMakerRole',
