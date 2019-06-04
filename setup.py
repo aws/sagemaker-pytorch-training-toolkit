@@ -26,7 +26,7 @@ def read(fname):
 
 setup(
     name='sagemaker_pytorch_container',
-    version='1.1',
+    version='1.2',
     description='Open source library for creating PyTorch containers to run on Amazon SageMaker.',
 
     packages=find_packages(where='src', exclude=('test',)),
@@ -47,10 +47,10 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     install_requires=['numpy', 'Pillow', 'retrying', 'sagemaker-containers>=2.4.6', 'six',
-                      'torch==1.0.0'],
+                      'torch==1.1.0'],
     extras_require={
         'test': ['boto3>=1.4.8', 'coverage', 'docker-compose', 'flake8', 'Flask', 'mock',
                  'pytest', 'pytest-cov', 'pytest-xdist', 'PyYAML==3.10', 'sagemaker==1.18.16',
-                 'torchvision==0.2.1', 'tox']
+                 'torchvision==0.3.0', 'tox']
     },
 )
