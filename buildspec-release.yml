@@ -6,7 +6,7 @@ env:
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
     GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
     LOCAL_BASE_REPO: 'pytorch-base'
-    ECR_REPO: 'sagemaker-test'
+    ECR_REPO: 'sagemaker-pytorch'
     GITHUB_REPO: 'sagemaker-pytorch-container'
     SETUP_FILE: 'setup_cmds.sh'
     SETUP_CMDS: '#!/bin/bash\npip install --upgrade pip\npip install -U -e .\npip install -U -e .[test]'
@@ -18,11 +18,12 @@ phases:
       - start-dockerd
       - ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
       - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
-      - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
-      - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
 
   build:
     commands:
+      # prepare the release
+      - git-release --prepare --min-version 1.2.0
+
       # install
       - pip3 install -U -e .
       - pip3 install -U -e .[test]
@@ -98,13 +99,39 @@ phases:
       - cmd="IGONORE_COVERAGE=- tox -e py36 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_PY3_TAG --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
       - remote-test --github-repo $GITHUB_REPO --test-cmd "$cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
 
+      - |
+        echo '[{
+          "repository": "sagemaker-pytorch",
+          "tags": [{
+            "source": "1.1.0-cpu-py2",
+            "dest": ["1.1.0-cpu-py2", "1.1-cpu-py2", "1.1.0-cpu-py2-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.1.0-cpu-py3",
+            "dest": ["1.1.0-cpu-py3", "1.1-cpu-py3", "1.1.0-cpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.1.0-gpu-py2",
+            "dest": ["1.1.0-gpu-py2", "1.1-gpu-py2", "1.1.0-gpu-py2-'${CODEBUILD_BUILD_ID#*:}'"]
+          },{
+            "source": "1.1.0-gpu-py3",
+            "dest": ["1.1.0-gpu-py3", "1.1-gpu-py3", "1.1.0-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
+          }],
+          "test": [
+            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 3 --processor cpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION'",
+            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 3 --processor gpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION'",
+            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 2 --processor cpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION'",
+            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 2 --processor gpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION'"
+          ]
+        }]' > deployments.json
+
+      # publish the release to github
+      - git-release --publish
+
     finally:
       # shut down remote gpu instance
       - cleanup-gpu-instances
       - cleanup-key-pairs
 
-      # remove ecr image
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_PY2_TAG
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_PY3_TAG
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_PY2_TAG
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_PY3_TAG
+artifacts:
+  files:
+    - deployments.json
+  name: ARTIFACT_1
