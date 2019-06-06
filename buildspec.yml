@@ -78,6 +78,7 @@ phases:
         else
           echo "skipping cpu integration tests"
         fi
+
       # run gpu integration tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
@@ -87,6 +88,7 @@ phases:
         else
           echo "skipping gpu integration tests"
         fi
+
       # run cpu sagemaker tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
@@ -94,6 +96,7 @@ phases:
         else
           echo "skipping cpu sagemaker tests"
         fi
+
       # run gpu sagemaker tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
