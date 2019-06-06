@@ -18,6 +18,8 @@ phases:
       - start-dockerd
       - ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
       - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
+      - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
+      - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
 
   build:
     commands:
@@ -53,18 +55,17 @@ phases:
       # create wheel
       - python3 setup.py bdist_wheel
 
+      # build cpu image
       - build_dir="docker/$FRAMEWORK_VERSION/final"
       - build_id="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
-
-      # build cpu image
-      - CPU_PY2_TAG="$FRAMEWORK_VERSION-cpu-py2"
-      - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3"
+      - CPU_PY2_TAG="$FRAMEWORK_VERSION-cpu-py2-$build_id"
+      - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3-$build_id"
       - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$CPU_PY2_TAG .
       - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$CPU_PY3_TAG .
 
       # build gpu image
-      - GPU_PY2_TAG="$FRAMEWORK_VERSION-gpu-py2"
-      - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3"
+      - GPU_PY2_TAG="$FRAMEWORK_VERSION-gpu-py2-$build_id"
+      - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3-$build_id"
       - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$GPU_PY2_TAG .
       - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$GPU_PY3_TAG .
 
@@ -75,27 +76,46 @@ phases:
       - docker push $PREPROD_IMAGE:$GPU_PY2_TAG
       - docker push $PREPROD_IMAGE:$GPU_PY3_TAG
 
-      # run local cpu integ tests
-      - IGNORE_COVERAGE=- tox -e py36 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_PY3_TAG --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu
-
-      # run cpu sagemaker tests
-      - IGNORE_COVERAGE=- tox -e py27 -- test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --tag $CPU_PY2_TAG --instance-type $CPU_INSTANCE_TYPE --processor cpu
-      - IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --tag $CPU_PY3_TAG --instance-type $CPU_INSTANCE_TYPE --processor cpu
-
-      # run gpu sagemaker tests
-      - IGNORE_COVERAGE=- tox -e py27 -- test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --tag $GPU_PY2_TAG --instance-type $GPU_INSTANCE_TYPE --processor gpu
-      - IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --tag $GPU_PY3_TAG --instance-type $GPU_INSTANCE_TYPE --processoe gpu
-
       # launch remote gpu instance
       - prefix='ml.'
       - instance_type=${GPU_INSTANCE_TYPE#"$prefix"}
       - create-key-pair
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
+      # run cpu integration tests
+      - |
+        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
+          pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_PY3_TAG --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu
+        else
+          echo "skipping cpu integration tests"
+        fi
       # run gpu integration tests
-      - printf "$SETUP_CMDS" > $SETUP_FILE
-      - cmd="IGONORE_COVERAGE=- tox -e py36 -- test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_PY3_TAG --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
-      - remote-test --github-repo $GITHUB_REPO --test-cmd "$cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
+      - |
+        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
+          printf "$SETUP_CMDS" > $SETUP_FILE
+          py2_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_PY2_TAG --framework-version $FRAMEWORK_VERSION --py-version 2 --processor gpu"
+          py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_PY3_TAG --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
+          remote-test --github-repo $GITHUB_REPO --test-cmd "$py2_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
+          remote-test --github-repo $GITHUB_REPO --test-cmd "$py3_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
+        else
+          echo "skipping gpu integration tests"
+        fi
+      # run cpu sagemaker tests
+      - |
+        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $CPU_PY2_TAG --instance-type $CPU_INSTANCE_TYPE
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $CPU_PY3_TAG --instance-type $CPU_INSTANCE_TYPE
+        else
+          echo "skipping cpu sagemaker tests"
+        fi
+      # run gpu sagemaker tests
+      - |
+        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $GPU_PY2_TAG --instance-type $GPU_INSTANCE_TYPE
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $GPU_PY3_TAG --instance-type $GPU_INSTANCE_TYPE
+        else
+          echo "skipping gpu sagemaker tests"
+        fi
 
       - |
         echo '[{
@@ -112,17 +132,12 @@ phases:
           },{
             "source": "1.1.0-gpu-py3",
             "dest": ["1.1.0-gpu-py3", "1.1-gpu-py3", "1.1.0-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
-          }],
-          "test": [
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 3 --processor cpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION'",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 3 --processor gpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION'",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 2 --processor cpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION'",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 2 --processor gpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION'"
-          ]
+          }]
         }]' > deployments.json
 
-      # publish the release to github
-      - git-release --publish
+        # publish the release to github
+        - git-release --publish
+
 
     finally:
       # shut down remote gpu instance
