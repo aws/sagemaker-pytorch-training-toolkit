@@ -83,39 +83,22 @@ phases:
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
       # run cpu integration tests
-      - |
-        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_PY3_TAG --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu
-        else
-          echo "skipping cpu integration tests"
-        fi
-      # run gpu integration tests
-      - |
-        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          printf "$SETUP_CMDS" > $SETUP_FILE
-          py2_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_PY2_TAG --framework-version $FRAMEWORK_VERSION --py-version 2 --processor gpu"
-          py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_PY3_TAG --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
-          remote-test --github-repo $GITHUB_REPO --test-cmd "$py2_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
-          remote-test --github-repo $GITHUB_REPO --test-cmd "$py3_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
-        else
-          echo "skipping gpu integration tests"
-        fi
+      - pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $CPU_PY3_TAG --framework-version $FRAMEWORK_VERSION --py-version 3 --processor cpu
+
       # run cpu sagemaker tests
-      - |
-        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $CPU_PY2_TAG --instance-type $CPU_INSTANCE_TYPE
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $CPU_PY3_TAG --instance-type $CPU_INSTANCE_TYPE
-        else
-          echo "skipping cpu sagemaker tests"
-        fi
+      - pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $CPU_PY2_TAG --instance-type $CPU_INSTANCE_TYPE
+      - pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $CPU_PY3_TAG --instance-type $CPU_INSTANCE_TYPE
+
       # run gpu sagemaker tests
-      - |
-        if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $GPU_PY2_TAG --instance-type $GPU_INSTANCE_TYPE
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $GPU_PY3_TAG --instance-type $GPU_INSTANCE_TYPE
-        else
-          echo "skipping gpu sagemaker tests"
-        fi
+      - pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $GPU_PY2_TAG --instance-type $GPU_INSTANCE_TYPE
+      - pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --tag $GPU_PY3_TAG --instance-type $GPU_INSTANCE_TYPE
+
+      # run gpu integration tests
+      - printf "$SETUP_CMDS" > $SETUP_FILE
+      - py2_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_PY2_TAG --framework-version $FRAMEWORK_VERSION --py-version 2 --processor gpu"
+      - py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --tag $GPU_PY3_TAG --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
+      - remote-test --github-repo $GITHUB_REPO --test-cmd "$py2_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
+      - remote-test --github-repo $GITHUB_REPO --test-cmd "$py3_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
 
       - |
         echo '[{
