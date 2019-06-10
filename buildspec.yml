@@ -64,6 +64,7 @@ phases:
 
       # build gpu image
       - GPU_PY2_TAG="$FRAMEWORK_VERSION-gpu-py2-$build_id"
+      - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3-$build_id"
       - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$GPU_PY2_TAG .
       - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$GPU_PY3_TAG .
 
