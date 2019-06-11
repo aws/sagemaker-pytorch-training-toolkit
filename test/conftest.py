@@ -188,4 +188,4 @@ def skip_by_device_type(request, use_gpu, instance_type):
 @pytest.fixture(autouse=True)
 def skip_by_py_version(request, py_version):
     if request.node.get_closest_marker('skip_py2') and py_version != 'py3':
-        pytest.skip('Skipping the mnist distributed training test if py_version is py2 for now')
+        pytest.skip('Skipping the test because Python 2 is not supported.')

@@ -44,11 +44,8 @@ def test_dist_operations_multi_gpu(sagemaker_session, ecr_image, dist_gpu_backen
 
 
 @pytest.mark.skip_cpu
-def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
-    if py_version != PYTHON3:
-        print('Skipping the test because fastai supports >= Python 3.6.')
-        return
-
+@pytest.mark.skip_py2
+def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image):
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point='train_cifar.py',
                           source_dir=os.path.join(fastai_path, 'cifar'),
