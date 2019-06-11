@@ -3,7 +3,9 @@ version: 0.2
 env:
   variables:
     FRAMEWORK_VERSION: '1.1.0'
+    CPU_PY_VERSION: '2'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
+    GPU_PY_VERSION: '3'
     GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
     LOCAL_BASE_REPO: 'pytorch-base'
     ECR_REPO: 'sagemaker-test'
@@ -81,7 +83,7 @@ phases:
       # run cpu integration tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version 2 --processor cpu
+          pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY_VERSION --processor cpu
         else
           echo "skipping cpu integration tests"
         fi
@@ -90,7 +92,7 @@ phases:
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
           printf "$SETUP_CMDS" > $SETUP_FILE
-          py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version 3 --processor gpu"
+          py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY_VERSION --processor gpu"
           remote-test --github-repo $GITHUB_REPO --test-cmd "$py3_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
         else
           echo "skipping gpu integration tests"
@@ -99,8 +101,7 @@ phases:
       # run cpu sagemaker tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE
         else
           echo "skipping cpu sagemaker tests"
         fi
@@ -108,8 +109,7 @@ phases:
       # run gpu sagemaker tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE
         else
           echo "skipping gpu sagemaker tests"
         fi

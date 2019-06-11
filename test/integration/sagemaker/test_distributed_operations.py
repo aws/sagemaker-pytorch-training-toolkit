@@ -20,7 +20,7 @@ from sagemaker.pytorch import PyTorch
 from six.moves.urllib.parse import urlparse
 
 from test.integration import (data_dir, dist_operations_path, fastai_path, mnist_script,
-                              DEFAULT_TIMEOUT, PYTHON3)
+                              DEFAULT_TIMEOUT)
 from test.integration.sagemaker.timeout import timeout
 
 MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
