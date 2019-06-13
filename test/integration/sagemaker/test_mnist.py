@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 from sagemaker.pytorch import PyTorch
 
-from test.integration import training_dir, mnist_script, DEFAULT_TIMEOUT, PYTHON3
+from test.integration import training_dir, mnist_script, DEFAULT_TIMEOUT
 from test.integration.sagemaker.timeout import timeout, timeout_and_delete_endpoint
 
 
