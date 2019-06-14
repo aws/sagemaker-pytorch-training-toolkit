@@ -20,7 +20,7 @@ from sagemaker.pytorch import PyTorch
 from six.moves.urllib.parse import urlparse
 
 from test.integration import (data_dir, dist_operations_path, fastai_path, mnist_script,
-                              DEFAULT_TIMEOUT, PYTHON3)
+                              DEFAULT_TIMEOUT)
 from test.integration.sagemaker.timeout import timeout
 
 MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
@@ -44,11 +44,8 @@ def test_dist_operations_multi_gpu(sagemaker_session, ecr_image, dist_gpu_backen
 
 
 @pytest.mark.skip_cpu
-def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image, py_version):
-    if py_version != PYTHON3:
-        print('Skipping the test because fastai supports >= Python 3.6.')
-        return
-
+@pytest.mark.skip_py2
+def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image):
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point='train_cifar.py',
                           source_dir=os.path.join(fastai_path, 'cifar'),
