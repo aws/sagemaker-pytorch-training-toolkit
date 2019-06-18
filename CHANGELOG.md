@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.3 (2019-06-18)
+
+### Bug fixes and other changes
+
+ * modify buildspecs and tox files
+
 ## v1.0.2 (2019-06-17)
 
 ### Bug fixes and other changes
