@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.2 (2019-06-17)
+
+### Bug fixes and other changes
+
+ * freeze dependency versions
+
 ## v1.0.1 (2019-06-13)
 
 ### Bug fixes and other changes
@@ -31,4 +37,3 @@
  * Add support for fastai (https://github.com/fastai/fastai) library.
  * Remove "requsests" from tests dependencies to avoid regular conflicts with "requests" package from "sagemaker" dependencies.
  * Add support for PyTorch-1.0.
-
