@@ -37,6 +37,10 @@ logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
+NO_P2_REGIONS = ['ca-central-1', 'eu-central-1', 'eu-west-2', 'us-west-1']
+NO_P3_REGIONS = ['ap-southeast-1', 'ap-southeast-2', 'ap-south-1', 'ca-central-1',
+                 'eu-central-1', 'eu-west-2', 'us-west-1']
+
 
 def pytest_addoption(parser):
     parser.addoption('--build-image', '-D', action='store_true')
@@ -189,3 +193,10 @@ def skip_by_device_type(request, use_gpu, instance_type):
 def skip_by_py_version(request, py_version):
     if request.node.get_closest_marker('skip_py2') and py_version != 'py3':
         pytest.skip('Skipping the test because Python 2 is not supported.')
+
+
+@pytest.fixture(autouse=True)
+def skip_gpu_instance_restricted_regions(region, instance_type):
+    if((region in NO_P2_REGIONS and instance_type.startswith('ml.p2')) or
+       (region in NO_P3_REGIONS and instance_type.startswith('ml.p3'))):
+        pytest.skip('Skipping GPU test in region {}'.format(region))
