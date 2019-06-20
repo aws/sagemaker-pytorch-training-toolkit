@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.5 (2019-06-20)
+
+### Bug fixes and other changes
+
+ * update p2 restricted regions
+
 ## v1.0.4 (2019-06-19)
 
 ### Bug fixes and other changes
