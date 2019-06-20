@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.4 (2019-06-19)
+
+### Bug fixes and other changes
+
+ * skip tests in gpu instance restricted regions
+
 ## v1.0.3 (2019-06-18)
 
 ### Bug fixes and other changes
