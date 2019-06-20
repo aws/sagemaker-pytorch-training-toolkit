@@ -27,12 +27,14 @@ MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
 
 
 @pytest.mark.skip_gpu
+@pytest.mark.deploy_test
 def test_dist_operations_cpu(sagemaker_session, ecr_image, instance_type, dist_cpu_backend):
     instance_type = instance_type or 'ml.c4.xlarge'
     _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_cpu_backend)
 
 
 @pytest.mark.skip_cpu
+@pytest.mark.deploy_test
 def test_dist_operations_gpu(sagemaker_session, instance_type, ecr_image, dist_gpu_backend):
     instance_type = instance_type or 'ml.p2.xlarge'
     _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_gpu_backend)

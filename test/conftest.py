@@ -37,8 +37,9 @@ logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-NO_P2_REGIONS = ['ca-central-1', 'eu-central-1', 'eu-west-2', 'us-west-1']
-NO_P3_REGIONS = ['ap-southeast-1', 'ap-southeast-2', 'ap-south-1', 'ca-central-1',
+NO_P2_REGIONS = ['ap-northeast-3', 'ap-southeast-2', 'ca-central-1', 'eu-central-1',
+                 'eu-west-2', 'us-west-1']
+NO_P3_REGIONS = ['ap-northeast-3', 'ap-southeast-1', 'ap-southeast-2', 'ap-south-1', 'ca-central-1',
                  'eu-central-1', 'eu-west-2', 'us-west-1']
 
 

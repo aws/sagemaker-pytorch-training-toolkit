@@ -132,10 +132,10 @@ phases:
             "dest": ["1.1.0-gpu-py3", "1.1-gpu-py3", "1.1.0-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 3 --processor cpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION' --instance-type '$CPU_INSTANCE_TYPE'",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 2 --processor cpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION' --instance-type '$CPU_INSTANCE_TYPE'",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 3 --processor gpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION' --instance-type '$GPU_INSTANCE_TYPE'",
-            "IGNORE_COVERAGE=- tox -e py36 -- test/integration/sagemaker --py-version 2 --processor gpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION' --instance-type '$GPU_INSTANCE_TYPE'"
+            "IGNORE_COVERAGE=- tox -e py36 -- -m deploy_test test/integration/sagemaker --py-version 3 --processor cpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION' --instance-type '$CPU_INSTANCE_TYPE'",
+            "IGNORE_COVERAGE=- tox -e py36 -- -m deploy_test test/integration/sagemaker --py-version 2 --processor cpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION' --instance-type '$CPU_INSTANCE_TYPE'",
+            "IGNORE_COVERAGE=- tox -e py36 -- -m deploy_test test/integration/sagemaker --py-version 3 --processor gpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION' --instance-type '$GPU_INSTANCE_TYPE'",
+            "IGNORE_COVERAGE=- tox -e py36 -- -m deploy_test test/integration/sagemaker --py-version 2 --processor gpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION' --instance-type '$GPU_INSTANCE_TYPE'"
           ]
         }]' > deployments.json
 
