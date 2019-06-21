@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.6 (2019-06-21)
+
+### Bug fixes and other changes
+
+ * unmark 2 deploy tests
+
 ## v1.0.5 (2019-06-20)
 
 ### Bug fixes and other changes
