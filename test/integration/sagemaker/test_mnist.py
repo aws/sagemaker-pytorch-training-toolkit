@@ -22,7 +22,6 @@ from test.integration.sagemaker.timeout import timeout, timeout_and_delete_endpo
 
 @pytest.mark.skip_gpu
 @pytest.mark.skip_py2
-@pytest.mark.deploy_test
 def test_mnist_distributed_cpu(sagemaker_session, ecr_image, instance_type, dist_cpu_backend, py_version):
     instance_type = instance_type or 'ml.c4.xlarge'
     _test_mnist_distributed(sagemaker_session, ecr_image, instance_type, dist_cpu_backend)
@@ -30,7 +29,6 @@ def test_mnist_distributed_cpu(sagemaker_session, ecr_image, instance_type, dist
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_py2
-@pytest.mark.deploy_test
 def test_mnist_distributed_gpu(sagemaker_session, ecr_image, instance_type, dist_gpu_backend, py_version):
     instance_type = instance_type or 'ml.p2.xlarge'
     _test_mnist_distributed(sagemaker_session, ecr_image, instance_type, dist_gpu_backend)
