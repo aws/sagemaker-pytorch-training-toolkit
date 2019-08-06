@@ -12,12 +12,11 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import numpy as np
 import pytest
 from sagemaker.pytorch import PyTorch
 
 from test.integration import training_dir, mnist_script, DEFAULT_TIMEOUT
-from test.integration.sagemaker.timeout import timeout, timeout_and_delete_endpoint
+from test.integration.sagemaker.timeout import timeout
 
 
 @pytest.mark.skip_gpu
@@ -46,12 +45,3 @@ def _test_mnist_distributed(sagemaker_session, ecr_image, instance_type, dist_ba
         training_input = pytorch.sagemaker_session.upload_data(path=training_dir,
                                                                key_prefix='pytorch/mnist')
         pytorch.fit({'training': training_input})
-
-    with timeout_and_delete_endpoint(estimator=pytorch, minutes=30):
-        predictor = pytorch.deploy(initial_instance_count=1, instance_type=instance_type)
-
-        batch_size = 100
-        data = np.random.rand(batch_size, 1, 28, 28).astype(np.float32)
-        output = predictor.predict(data)
-
-        assert output.shape == (batch_size, 10)
