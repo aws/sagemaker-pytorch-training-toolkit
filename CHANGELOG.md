@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.7 (2019-08-06)
+
+### Bug fixes and other changes
+
+ * upgrade sagemaker-container version
+
 ## v1.0.6 (2019-06-21)
 
 ### Bug fixes and other changes
