@@ -53,19 +53,15 @@ phases:
       # build cpu image
       - build_dir="docker/$FRAMEWORK_VERSION/final"
       - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3"
-      - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$CPU_PY2_TAG .
       - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$CPU_PY3_TAG .
 
       # build gpu image
       - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3"
-      - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$GPU_PY2_TAG .
       - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$GPU_PY3_TAG .
 
       # push images to ecr
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
-      - docker push $PREPROD_IMAGE:$CPU_PY2_TAG
       - docker push $PREPROD_IMAGE:$CPU_PY3_TAG
-      - docker push $PREPROD_IMAGE:$GPU_PY2_TAG
       - docker push $PREPROD_IMAGE:$GPU_PY3_TAG
 
       # launch remote gpu instance
@@ -114,7 +110,5 @@ phases:
       - cleanup-key-pairs
 
       # remove ecr image
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_PY2_TAG
       - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$CPU_PY3_TAG
-      - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_PY2_TAG
       - aws ecr batch-delete-image --repository-name $ECR_REPO --region $AWS_DEFAULT_REGION --image-ids imageTag=$GPU_PY3_TAG
