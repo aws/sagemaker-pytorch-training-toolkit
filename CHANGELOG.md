@@ -1,12 +1,10 @@
 # Changelog
 
-## v1.0.5 (2019-08-05)
+## v1.0.7 (2019-08-06)
 
 ### Bug fixes and other changes
 
  * upgrade sagemaker-container version
- * unmark 2 deploy tests
- * update p2 restricted regions
 
 ## v1.0.6 (2019-06-21)
 
