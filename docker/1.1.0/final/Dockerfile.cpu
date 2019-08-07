@@ -48,7 +48,8 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
      /opt/conda/bin/conda clean -ya
 ENV PATH /opt/conda/bin:$PATH
 
-RUN conda install -c conda-forge awscli==1.16.210 && \
+RUN conda install -c conda-forge awscli==1.16.210 opencv==4.0.0 && \
+    conda install -c fastai fastai && \
     conda install -y scikit-learn==0.21.2 \
                      pandas==0.25.0 \
                      pillow==5.4.1 \
@@ -56,11 +57,18 @@ RUN conda install -c conda-forge awscli==1.16.210 && \
                      requests==2.22.0 && \
     conda install pytorch-cpu==1.1.0 torchvision-cpu==0.3.0 -c pytorch
 
-WORKDIR /home/ubuntu/sagemaker-pytorch-container
+# Python won’t try to write .pyc or .pyo files on the import of source modules
+# Force stdin, stdout and stderr to be totally unbuffered. Good for logging
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib" \
+    PYTHONIOENCODING=UTF-8 \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8
 
 # Copy workaround script for incorrect hostname
-COPY lib/changehostname.c /
-COPY lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
+COPY changehostname.c /
+COPY start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
 RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_pytorch_container.training:main
