@@ -57,8 +57,8 @@ RUN conda install -c conda-forge awscli==1.16.210 && \
     conda install pytorch-cpu==1.1.0 torchvision-cpu==0.3.0 -c pytorch
 
 # Copy workaround script for incorrect hostname
-COPY lib/changehostname.c /
-COPY lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
+COPY /home/ubuntu/sagemaker-pytorch-container/lib/changehostname.c /
+COPY /home/ubuntu/sagemaker-pytorch-container/lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
 RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
 
 ENV SAGEMAKER_TRAINING_MODULE sagemaker_pytorch_container.training:main
