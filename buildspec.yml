@@ -34,20 +34,16 @@ phases:
 
       # build cpu base image
       - base_dir="docker/$FRAMEWORK_VERSION/base"
-      - cpu_py2_base_tag="$FRAMEWORK_VERSION-cpu-py2"
       - cpu_py3_base_tag="$FRAMEWORK_VERSION-cpu-py3"
       - cpu_dockerfile="Dockerfile.cpu"
       - cd $base_dir
-      - docker build -t $LOCAL_BASE_REPO:$cpu_py2_base_tag -f $cpu_dockerfile --build-arg py_version=2 .
       - docker build -t $LOCAL_BASE_REPO:$cpu_py3_base_tag -f $cpu_dockerfile --build-arg py_version=3 .
       - cd ../../../
 
       # build gpu base image
-      - gpu_py2_base_tag="$FRAMEWORK_VERSION-gpu-py2"
       - gpu_py3_base_tag="$FRAMEWORK_VERSION-gpu-py3"
       - gpu_dockerfile="Dockerfile.gpu"
       - cd $base_dir
-      - docker build -t $LOCAL_BASE_REPO:$gpu_py2_base_tag -f $gpu_dockerfile --build-arg py_version=2 .
       - docker build -t $LOCAL_BASE_REPO:$gpu_py3_base_tag -f $gpu_dockerfile --build-arg py_version=3 .
       - cd ../../../
 
@@ -56,13 +52,11 @@ phases:
 
       # build cpu image
       - build_dir="docker/$FRAMEWORK_VERSION/final"
-      - CPU_PY2_TAG="$FRAMEWORK_VERSION-cpu-py2"
       - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3"
       - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$CPU_PY2_TAG .
       - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$CPU_PY3_TAG .
 
       # build gpu image
-      - GPU_PY2_TAG="$FRAMEWORK_VERSION-gpu-py2"
       - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3"
       - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$GPU_PY2_TAG .
       - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$GPU_PY3_TAG .
