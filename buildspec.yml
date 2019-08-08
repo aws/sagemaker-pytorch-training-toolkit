@@ -21,6 +21,7 @@ phases:
       - ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
       - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
       - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
+      - BUILD_ID="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
       - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
 
   build:
@@ -52,11 +53,11 @@ phases:
 
       # build cpu image
       - build_dir="docker/$FRAMEWORK_VERSION/final"
-      - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3"
+      - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3-$BUILD_ID"
       - docker build -f "$build_dir/$cpu_dockerfile" -t $PREPROD_IMAGE:$CPU_PY3_TAG .
 
       # build gpu image
-      - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3"
+      - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3-$BUILD_ID"
       - docker build -f "$build_dir/$gpu_dockerfile" -t $PREPROD_IMAGE:$GPU_PY3_TAG .
 
       # push images to ecr
