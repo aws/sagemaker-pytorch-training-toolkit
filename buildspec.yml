@@ -62,7 +62,9 @@ phases:
       # push images to ecr
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
       - docker push $PREPROD_IMAGE:$CPU_PY3_TAG
+      - echo docker push $PREPROD_IMAGE:$CPU_PY3_TAG
       - docker push $PREPROD_IMAGE:$GPU_PY3_TAG
+      - echo docker push $PREPROD_IMAGE:$GPU_PY3_TAG
 
       # launch remote gpu instance
       - prefix='ml.'
