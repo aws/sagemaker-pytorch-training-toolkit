@@ -12,6 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
     vim \
     build-essential \
+    jq \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 

@@ -17,6 +17,10 @@ RUN apt-get update && apt-get install -y  --allow-downgrades --allow-change-held
         cuda-curand-10-0 \
         cuda-cusolver-10-0 \
         cuda-cusparse-10-0 \
+        jq \
+        libsm6 \
+        libxext6 \
+        libxrender-dev \
         libcudnn7=${CUDNN_VERSION} \
         libnccl2=${NCCL_VERSION} \
         libnccl-dev=${NCCL_VERSION} \
