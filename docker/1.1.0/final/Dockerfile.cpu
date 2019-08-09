@@ -52,7 +52,7 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
      /opt/conda/bin/conda clean -ya
 ENV PATH /opt/conda/bin:$PATH
 
-RUN conda install -c conda-forge awscli==1.16.210 opencv==4.0.0 && \
+RUN conda install -c conda-forge awscli==1.16.210 && \
     conda install -c fastai fastai && \
     conda install -y scikit-learn==0.21.2 \
                      pandas==0.25.0 \
@@ -69,6 +69,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONIOENCODING=UTF-8 \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
+
+RUN pip install --no-cache-dir 'opencv-python>=4.0,<4.1'
 
 # Copy workaround script for incorrect hostname
 COPY changehostname.c /

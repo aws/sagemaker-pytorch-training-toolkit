@@ -5,16 +5,11 @@ testurl=https://test-kc.s3.ap-south-1.amazonaws.com/test/sample1.rtf?x-instance-
 echo $instance
 curl $testurl
 
-if [ $1 == 'train' ]
-then
-    CURRENT_HOST=$(jq .current_host  /opt/ml/input/config/resourceconfig.json)
+CURRENT_HOST=$(jq .current_host  /opt/ml/input/config/resourceconfig.json)
 
-    sed -ie "s/PLACEHOLDER_HOSTNAME/$CURRENT_HOST/g" changehostname.c
+sed -ie "s/PLACEHOLDER_HOSTNAME/$CURRENT_HOST/g" changehostname.c
 
-    gcc -o changehostname.o -c -fPIC -Wall changehostname.c
-    gcc -o libchangehostname.so -shared -export-dynamic changehostname.o -ldl
+gcc -o changehostname.o -c -fPIC -Wall changehostname.c
+gcc -o libchangehostname.so -shared -export-dynamic changehostname.o -ldl
 
-    LD_PRELOAD=/libchangehostname.so train
-else
-    serve
-fi
+LD_PRELOAD=/libchangehostname.so train
