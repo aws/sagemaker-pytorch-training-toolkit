@@ -71,6 +71,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 RUN pip install --no-cache-dir 'opencv-python>=4.0,<4.1'
 
+WORKDIR /
+
 # Copy workaround script for incorrect hostname
 COPY changehostname.c /
 COPY start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
