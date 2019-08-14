@@ -53,6 +53,7 @@ phases:
 
       # create wheel
       - python3 setup.py bdist_wheel
+      - cp dist/sagemaker_pytorch_container-1.2-py2.py3-none-any.whl docker/$FRAMEWORK_VERSION/final/sagemaker_pytorch_container-1.2-py2.py3-none-any.whl
 
       # build cpu image
       - build_dir="docker/$FRAMEWORK_VERSION/final"
