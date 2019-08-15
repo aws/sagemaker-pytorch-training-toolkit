@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.9 (2019-08-15)
+
+### Bug fixes and other changes
+
+ * fix placeholder name cpu-instance-type in buildspec-release.yml
+
 ## v1.0.8 (2019-08-15)
 
 ### Bug fixes and other changes
