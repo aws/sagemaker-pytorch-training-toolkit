@@ -2,7 +2,8 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '1.1.0'
+    FRAMEWORK_VERSION: '1.2.0'
+    FRAMEWORK_SHORT_VERSION: '1.2'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
     CPU_PY_VERSION: '2'
     GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
@@ -119,17 +120,17 @@ phases:
         echo '[{
           "repository": "sagemaker-pytorch",
           "tags": [{
-            "source": "1.1.0-cpu-py2",
-            "dest": ["1.1.0-cpu-py2", "1.1-cpu-py2", "1.1.0-cpu-py2-'${CODEBUILD_BUILD_ID#*:}'"]
+            "source": "'$FRAMEWORK_VERSION'-cpu-py2",
+            "dest": ["'$FRAMEWORK_VERSION'-cpu-py2", "'$FRAMEWORK_SHORT_VERSION'-cpu-py2", "'$FRAMEWORK_VERSION'-cpu-py2-'${CODEBUILD_BUILD_ID#*:}'"]
           },{
-            "source": "1.1.0-cpu-py3",
-            "dest": ["1.1.0-cpu-py3", "1.1-cpu-py3", "1.1.0-cpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
+            "source": "'$FRAMEWORK_VERSION'-cpu-py3",
+            "dest": ["'$FRAMEWORK_VERSION'-cpu-py3", "'$FRAMEWORK_SHORT_VERSION'-cpu-py3", "'$FRAMEWORK_VERSION'-cpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
           },{
-            "source": "1.1.0-gpu-py2",
-            "dest": ["1.1.0-gpu-py2", "1.1-gpu-py2", "1.1.0-gpu-py2-'${CODEBUILD_BUILD_ID#*:}'"]
+            "source": "'$FRAMEWORK_VERSION'-gpu-py2",
+            "dest": ["'$FRAMEWORK_VERSION'-gpu-py2", "'$FRAMEWORK_SHORT_VERSION'-gpu-py2", "'$FRAMEWORK_VERSION'-gpu-py2-'${CODEBUILD_BUILD_ID#*:}'"]
           },{
-            "source": "1.1.0-gpu-py3",
-            "dest": ["1.1.0-gpu-py3", "1.1-gpu-py3", "1.1.0-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
+            "source": "'$FRAMEWORK_VERSION'-gpu-py3",
+            "dest": ["'$FRAMEWORK_VERSION'-gpu-py3", "'$FRAMEWORK_SHORT_VERSION'-gpu-py3", "'$FRAMEWORK_VERSION'-gpu-py3-'${CODEBUILD_BUILD_ID#*:}'"]
           }],
           "test": [
             "IGNORE_COVERAGE=- tox -e py36 -- -m deploy_test test/integration/sagemaker --py-version 3 --processor cpu --region {region} --docker-base-name '$ECR_REPO' --aws-id 520713654638 --framework-version '$FRAMEWORK_VERSION' --instance-type '$CPU_INSTANCE_TYPE'",
