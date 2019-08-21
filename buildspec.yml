@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '1.1.0'
+    FRAMEWORK_VERSION: '1.2.0'
     CPU_PY_VERSION: '2'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
     GPU_PY_VERSION: '3'
