@@ -1,4 +1,5 @@
-FROM pytorch-base:1.0.0-gpu-py3
+ARG py_version
+FROM pytorch-base:1.1.0-gpu-py$py_version
 
 LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 

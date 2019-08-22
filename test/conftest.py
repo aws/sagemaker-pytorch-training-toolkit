@@ -51,8 +51,9 @@ def pytest_addoption(parser):
     parser.addoption('--docker-base-name', default='pytorch')
     parser.addoption('--region', default='us-west-2')
     parser.addoption('--framework-version', default=PyTorch.LATEST_VERSION)
+    parser.addoption('--py-version', choices=['2', '3'], default=str(sys.version_info.major))
     parser.addoption('--processor', choices=['gpu', 'cpu'], default='cpu')
-    # If not specified, will default to {framework-version}-{processor}-py3
+    # If not specified, will default to {framework-version}-{processor}-py{py-version}
     parser.addoption('--tag', default=None)
 
 
@@ -71,15 +72,20 @@ def fixture_framework_version(request):
     return request.config.getoption('--framework-version')
 
 
+@pytest.fixture(scope='session', name='py_version')
+def fixture_py_version(request):
+    return 'py{}'.format(int(request.config.getoption('--py-version')))
+
+
 @pytest.fixture(scope='session', name='processor')
 def fixture_processor(request):
     return request.config.getoption('--processor')
 
 
 @pytest.fixture(scope='session', name='tag')
-def fixture_tag(request, framework_version, processor):
+def fixture_tag(request, framework_version, processor, py_version):
     provided_tag = request.config.getoption('--tag')
-    default_tag = '{}-{}-py3'.format(framework_version, processor)
+    default_tag = '{}-{}-{}'.format(framework_version, processor, py_version)
     return provided_tag if provided_tag else default_tag
 
 
@@ -107,11 +113,12 @@ def fixture_use_gpu(processor):
 
 
 @pytest.fixture(scope='session', name='build_base_image', autouse=True)
-def fixture_build_base_image(request, framework_version, processor, tag, docker_base_name):
+def fixture_build_base_image(request, framework_version, py_version, processor, tag, docker_base_name):
     build_base_image = request.config.getoption('--build-base-image')
     if build_base_image:
         return image_utils.build_base_image(framework_name=docker_base_name,
                                             framework_version=framework_version,
+                                            py_version=py_version,
                                             base_image_tag=tag,
                                             processor=processor,
                                             cwd=os.path.join(dir_path, '..'))
@@ -120,11 +127,12 @@ def fixture_build_base_image(request, framework_version, processor, tag, docker_
 
 
 @pytest.fixture(scope='session', name='build_image', autouse=True)
-def fixture_build_image(request, framework_version, processor, tag, docker_base_name):
+def fixture_build_image(request, framework_version, py_version, processor, tag, docker_base_name):
     build_image = request.config.getoption('--build-image')
     if build_image:
         return image_utils.build_image(framework_name=docker_base_name,
                                        framework_version=framework_version,
+                                       py_version=py_version,
                                        processor=processor,
                                        tag=tag,
                                        cwd=os.path.join(dir_path, '..'))
