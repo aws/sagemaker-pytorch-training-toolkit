@@ -34,7 +34,6 @@ RUN wget https://www.open-mpi.org/software/ompi/v4.0/downloads/openmpi-$OPEN_MPI
     make all install && \
     cd .. && rm openmpi-$OPEN_MPI_VERSION.tar.gz && rm -rf openmpi-$OPEN_MPI_VERSION
 
-
 ENV PATH="$PATH:/home/.openmpi/bin"
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/home/.openmpi/lib/"
 
