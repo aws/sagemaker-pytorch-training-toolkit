@@ -25,12 +25,15 @@ ENV LANG C.UTF-8
 
 # Add arguments to achieve the version, python and url
 ARG PYTHON_VERSION=3.6.6
+ARG OPEN_MPI_VERSION=4.0.1
 
-RUN wget https://www.open-mpi.org/software/ompi/v4.0/downloads/openmpi-4.0.1.tar.gz && \
-    gunzip -c openmpi-4.0.1.tar.gz | tar xf - && \
-    cd openmpi-4.0.1 && \
+RUN wget https://www.open-mpi.org/software/ompi/v4.0/downloads/openmpi-$OPEN_MPI_VERSION.tar.gz && \
+    gunzip -c openmpi-$OPEN_MPI_VERSION.tar.gz | tar xf - && \
+    cd openmpi-$OPEN_MPI_VERSION && \
     ./configure --prefix=/home/.openmpi && \
-    make all install
+    make all install && \
+    cd .. && rm openmpi-$OPEN_MPI_VERSION.tar.gz && rm -rf openmpi-$OPEN_MPI_VERSION
+
 
 ENV PATH="$PATH:/home/.openmpi/bin"
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/home/.openmpi/lib/"
@@ -61,7 +64,10 @@ RUN conda install -c conda-forge awscli==1.16.210 && \
                      pillow==5.4.1 \
                      h5py==2.9.0 \
                      requests==2.22.0 && \
-    conda install pytorch==$PYTORCH_VERSION torchvision==$TORCHVISION_VERSION cpuonly -c pytorch
+    conda install pytorch==$PYTORCH_VERSION torchvision==$TORCHVISION_VERSION cpuonly -c pytorch && \
+    conda clean -ya && \
+    pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org && \
+    ln -s /opt/conda/bin/pip /usr/local/bin/pip3
 
 # Python won’t try to write .pyc or .pyo files on the import of source modules
 # Force stdin, stdout and stderr to be totally unbuffered. Good for logging
