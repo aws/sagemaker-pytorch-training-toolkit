@@ -55,7 +55,6 @@ ENV PATH /opt/conda/bin:$PATH
 ARG PYTORCH_VERSION=1.2.0
 ARG TORCHVISION_VERSION=0.4.0
 RUN conda install -c conda-forge awscli==1.16.210 && \
-    conda install -c fastai fastai && \
     conda install -y scikit-learn==0.21.2 \
                      pandas==0.25.0 \
                      pillow==5.4.1 \
@@ -72,7 +71,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-RUN pip install --no-cache-dir 'opencv-python>=4.0,<4.1'
+RUN pip install --no-cache-dir 'opencv-python>=4.0,<4.1' fastai==1.0.39
 
 WORKDIR /
 

@@ -34,24 +34,24 @@ phases:
       # run unit tests
       - pytest test/unit
 
-#      # build cpu base image
-#      - base_dir="docker/1.0.0/base"
-#      - cpu_py2_base_tag="1.0.0-cpu-py2"
-#      - cpu_py3_base_tag="1.0.0-cpu-py3"
-#      - cpu_dockerfile="Dockerfile.cpu"
-#      - cd $base_dir
-#      - docker build -t $LOCAL_BASE_REPO:$cpu_py2_base_tag -f $cpu_dockerfile --build-arg py_version=2 .
-#      - docker build -t $LOCAL_BASE_REPO:$cpu_py3_base_tag -f $cpu_dockerfile --build-arg py_version=3 .
-#      - cd ../../../
-#
-#      # build gpu base image
-#      - gpu_py2_base_tag="1.0.0-gpu-py2"
-#      - gpu_py3_base_tag="1.0.0-gpu-py3"
-#      - gpu_dockerfile="Dockerfile.gpu"
-#      - cd $base_dir
-#      - docker build -t $LOCAL_BASE_REPO:$gpu_py2_base_tag -f $gpu_dockerfile --build-arg py_version=2 .
-#      - docker build -t $LOCAL_BASE_REPO:$gpu_py3_base_tag -f $gpu_dockerfile --build-arg py_version=3 .
-#      - cd ../../../
+      # build cpu base image
+      - base_dir="docker/$FRAMEWORK_VERSION/base"
+      - cpu_py2_base_tag="$FRAMEWORK_VERSION-cpu-py2"
+      - cpu_py3_base_tag="$FRAMEWORK_VERSION-cpu-py3"
+      - cpu_dockerfile="Dockerfile.cpu"
+      - cd $base_dir
+      - docker build -t $LOCAL_BASE_REPO:$cpu_py2_base_tag -f $cpu_dockerfile --build-arg py_version=2 .
+      - docker build -t $LOCAL_BASE_REPO:$cpu_py3_base_tag -f $cpu_dockerfile --build-arg py_version=3 .
+      - cd ../../../
+
+      # build gpu base image
+      - gpu_py2_base_tag="$FRAMEWORK_VERSION-gpu-py2"
+      - gpu_py3_base_tag="$FRAMEWORK_VERSION-gpu-py3"
+      - gpu_dockerfile="Dockerfile.gpu"
+      - cd $base_dir
+      - docker build -t $LOCAL_BASE_REPO:$gpu_py2_base_tag -f $gpu_dockerfile --build-arg py_version=2 .
+      - docker build -t $LOCAL_BASE_REPO:$gpu_py3_base_tag -f $gpu_dockerfile --build-arg py_version=3 .
+      - cd ../../../
 
       # create wheel
       - python3 setup.py bdist_wheel
