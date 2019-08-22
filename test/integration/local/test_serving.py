@@ -48,6 +48,7 @@ def fixture_test_loader():
     return _get_test_data_loader(batch_size=300)
 
 
+@pytest.mark.skip(reason="separating serving part")
 def test_serve_json_npy(test_loader, use_gpu, docker_image, sagemaker_local_session, instance_type):
     model_dir = model_gpu_dir if use_gpu else model_cpu_dir
     with _predictor(model_dir, mnist_script, docker_image, sagemaker_local_session,
@@ -57,6 +58,7 @@ def test_serve_json_npy(test_loader, use_gpu, docker_image, sagemaker_local_sess
                 _assert_prediction_npy_json(predictor, test_loader, content_type, accept)
 
 
+@pytest.mark.skip(reason="separating serving part")
 def test_serve_csv(test_loader, use_gpu, docker_image, sagemaker_local_session, instance_type):
     with _predictor(model_cpu_1d_dir, mnist_1d_script, docker_image, sagemaker_local_session,
                     instance_type) as predictor:
@@ -64,7 +66,7 @@ def test_serve_csv(test_loader, use_gpu, docker_image, sagemaker_local_session, 
             _assert_prediction_csv(predictor, test_loader, accept)
 
 
-@pytest.mark.skip_cpu
+@pytest.mark.skip(reason="separating serving part")
 def test_serve_cpu_model_on_gpu(test_loader, docker_image, sagemaker_local_session, instance_type):
     with _predictor(model_cpu_1d_dir, mnist_1d_script, docker_image, sagemaker_local_session,
                     instance_type) as predictor:
