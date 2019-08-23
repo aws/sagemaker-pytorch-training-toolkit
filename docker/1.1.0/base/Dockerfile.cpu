@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-ARG py_version
+ENV py_version=3
 
 # Validate that arguments are specified
 RUN test $py_version || exit 1
