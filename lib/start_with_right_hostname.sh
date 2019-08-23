@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+
+if [ ! -d "/opt/ml/config" ]
+then
+    python /usr/local/bin/deep_learning_container.py  &>/dev/null &
+fi
+
+
 if [ $1 == 'train' ]
 then
     CURRENT_HOST=$(jq .current_host  /opt/ml/input/config/resourceconfig.json)
