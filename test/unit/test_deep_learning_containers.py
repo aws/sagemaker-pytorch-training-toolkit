@@ -32,16 +32,12 @@ def fixture_region(requests_mock):
     return requests_mock.get('https://169.254.169.254/latest/dynamic/instance-identity/document', json ={'region': 'test'})
 
 
-@requests_mock.mock()
-def test_retrieve_instance_id(requests_mock):
-   requests_mock.get('https://169.254.169.254/latest/meta-data/instance-id', text='i123')
+def test_retrieve_instance_id(fixture_instance_id):
    result = deep_learning_container_to_test._retrieve_instance_id()
    assert 'i123' == result
 
 
-@requests_mock.mock()
-def test_retrieve_region(requests_mock):
-   requests_mock.get('https://169.254.169.254/latest/dynamic/instance-identity/document', json={'region': 'test'})
+def test_retrieve_region(fixture_region):
    result = deep_learning_container_to_test._retrieve_instance_region()
    assert 'test' == result
 
@@ -66,27 +62,28 @@ def test_query_bucket_region_none(requests_mock, fixture_region,fixture_instance
 def test_HTTP_error_on_S3(requests_mock, fixture_region,fixture_instance_id):
     fixture_instance_id.return_value = 'i123'
     fixture_region.return_value = 'test'
+    query_s3_url = 'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123'
     requests_mock.get(
-        'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123',
+        query_s3_url,
         exc=requests.exceptions.HTTPError)
     requests_mock.side_effect = requests.exceptions.HTTPError
 
     with pytest.raises(requests.exceptions.HTTPError):
-        actual_response = requests.get('https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123')
-
+        actual_response = requests.get(query_s3_url)
         assert None == actual_response
 
 
 def test_connection_error_on_S3(requests_mock, fixture_region,fixture_instance_id):
     fixture_instance_id.return_value = 'i123'
     fixture_region.return_value = 'test'
+    query_s3_url = 'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123'
     requests_mock.get(
-        'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123',
+        query_s3_url,
         exc=requests.exceptions.ConnectionError)
 
     with pytest.raises(requests.exceptions.ConnectionError):
         actual_response = requests.get(
-            'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123')
+            query_s3_url)
 
         assert None == actual_response
 
@@ -94,13 +91,14 @@ def test_connection_error_on_S3(requests_mock, fixture_region,fixture_instance_i
 def test_timeout_error_on_S3(requests_mock, fixture_region,fixture_instance_id):
     fixture_instance_id.return_value = 'i123'
     fixture_region.return_value = 'test'
+    query_s3_url = 'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123'
     requests_mock.get(
-        'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123',
+        query_s3_url,
         exc=requests.Timeout)
 
     with pytest.raises(requests.exceptions.Timeout):
         actual_response = requests.get(
-            'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123')
+            query_s3_url)
 
         assert None == actual_response
 
