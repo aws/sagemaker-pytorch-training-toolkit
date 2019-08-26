@@ -24,12 +24,12 @@ from sagemaker_pytorch_container import deep_learning_container as deep_learning
 
 @pytest.fixture(name='fixture_instance_id')
 def fixture_instance_id(requests_mock):
-    return requests_mock.get('https://169.254.169.254/latest/meta-data/instance-id', text = 'i123')
+    return requests_mock.get('http://169.254.169.254/latest/meta-data/instance-id', text = 'i123')
 
 
 @pytest.fixture(name='fixture_region')
 def fixture_region(requests_mock):
-    return requests_mock.get('https://169.254.169.254/latest/dynamic/instance-identity/document', json ={'region': 'test'})
+    return requests_mock.get('http://169.254.169.254/latest/dynamic/instance-identity/document', json ={'region': 'test'})
 
 
 def test_retrieve_instance_id(fixture_instance_id):
