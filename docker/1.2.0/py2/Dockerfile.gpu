@@ -56,25 +56,24 @@ RUN ompi_info --parsable --all | grep mpi_built_with_cuda_support:value && \
     /opt/conda/bin/conda update conda && \
     /opt/conda/bin/conda install -y python=$PYTHON_VERSION \
 	                              numpy==1.16.4 \
-	                              scipy==1.3.0 \
-	                              ipython==7.7.0 \
+	                              scipy==1.2.1 \
+	                              ipython==5.8.0 \
 	                              mkl==2019.4 \
 	                              mkl-include==2019.4 \
 	                              cython==0.29.12 \
-	                              typing==3.6.4 \
+	                              typing==3.7.4 \
 	                              future==0.17.1 && \
 	/opt/conda/bin/conda clean -ya
 ENV PATH /opt/conda/bin:$PATH
 
 RUN conda install -c pytorch magma-cuda100==2.5.1 && \
     conda install -c conda-forge awscli==1.16.210 opencv==4.0.1 && \
-    conda install -y scikit-learn==0.21.2 \
-                     pandas==0.25.0 \
-                     pillow==5.4.1 \
+    conda install -y scikit-learn==0.20.3 \
+                     pandas==0.24.2 \
+                     pillow==6.1.0 \
                      h5py==2.9.0 \
                      requests==2.22.0 && \
     conda clean -ya
-
 
 ARG PYTORCH_VERSION=1.2.0
 ARG TORCHVISION_VERSION=0.4.0
@@ -91,8 +90,7 @@ RUN git clone --recursive -b v$PYTORCH_VERSION --single-branch https://github.co
 WORKDIR /root
 
 RUN /opt/conda/bin/conda config --set ssl_verify False && \
-    pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org && \
-    ln -s /opt/conda/bin/pip /usr/local/bin/pip3
+    pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org
 
 # Install Horovod
 RUN ldconfig /usr/local/cuda-10.0/targets/x86_64-linux/lib/stubs && \
