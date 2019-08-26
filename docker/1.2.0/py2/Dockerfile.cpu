@@ -77,8 +77,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
 
-RUN pip install --no-cache-dir fastai==1.0.39
-
 WORKDIR /
 
 # Copy workaround script for incorrect hostname
