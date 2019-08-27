@@ -34,12 +34,19 @@ def _retrieve_instance_region():
     Retrieve instance region from instance metadata service
     """
     region = None
+    valid_regions = ['ap-northeast-1', 'ap-northeast-2', 'ap-southeast-1', 'ap-southeast-2',
+                     'ap-south-1', 'ca-central-1', 'eu-central-1', 'eu-north-1',
+                     'eu-west-1', 'eu-west-2', 'eu-west-3', 'sa-east-1',
+                     'us-east-1', 'us-east-2', 'us-west-1', 'us-west-2']
+
     url = "http://169.254.169.254/latest/dynamic/instance-identity/document"
     response = requests_helper(url, timeout=0.1)
 
     if response is not None:
         response_json = json.loads(response.text)
-        region = response_json['region']
+
+        if response_json['region'] in valid_regions:
+            region = response_json['region']
 
     return region
 

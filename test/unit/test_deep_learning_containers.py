@@ -27,9 +27,14 @@ def fixture_instance_id(requests_mock):
     return requests_mock.get('http://169.254.169.254/latest/meta-data/instance-id', text = 'i123')
 
 
-@pytest.fixture(name='fixture_region')
-def fixture_region(requests_mock):
+@pytest.fixture(name='fixture_invalid_region')
+def fixture_invalid_region(requests_mock):
     return requests_mock.get('http://169.254.169.254/latest/dynamic/instance-identity/document', json ={'region': 'test'})
+
+
+@pytest.fixture(name='fixture_valid_region')
+def fixture_valid_region(requests_mock):
+    return requests_mock.get('http://169.254.169.254/latest/dynamic/instance-identity/document', json ={'region': 'us-east-1'})
 
 
 def test_retrieve_instance_id(fixture_instance_id):
@@ -37,32 +42,35 @@ def test_retrieve_instance_id(fixture_instance_id):
    assert 'i123' == result
 
 
-def test_retrieve_region(fixture_region):
+def test_retrieve_invalid_region(fixture_invalid_region):
    result = deep_learning_container_to_test._retrieve_instance_region()
-   assert 'test' == result
+   assert None == result
 
 
-def test_query_bucket(requests_mock, fixture_region,fixture_instance_id):
+def test_retrieve_valid_region(fixture_valid_region):
+   result = deep_learning_container_to_test._retrieve_instance_region()
+   assert 'us-east-1' == result
+
+
+def test_query_bucket_valid_region(requests_mock, fixture_valid_region,fixture_instance_id):
     fixture_instance_id.return_value = 'i123'
-    fixture_region.return_value = 'test'
-    requests_mock.get('https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123', text = 'Access Denied')
+    fixture_valid_region.return_value = 'us-east-1'
+    requests_mock.get('https://aws-deep-learning-containers-us-east-1.s3.us-east-1.amazonaws.com/dlc-containers.txt?x-instance-id=i123', text = 'Access Denied')
     actual_response = deep_learning_container_to_test.query_bucket()
     assert 'Access Denied' == actual_response.text
 
 
-def test_query_bucket_region_none(requests_mock, fixture_region,fixture_instance_id):
+def test_query_bucket_region_none(fixture_invalid_region,fixture_instance_id):
     fixture_instance_id.return_value = 'i123'
-    fixture_region.return_value = None
-    requests_mock.get(
-        'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123')
+    fixture_invalid_region.return_value = None
     actual_response = deep_learning_container_to_test.query_bucket()
-    assert not actual_response.text
+    assert None == actual_response
 
 
-def test_HTTP_error_on_S3(requests_mock, fixture_region,fixture_instance_id):
+def test_HTTP_error_on_S3(requests_mock, fixture_valid_region, fixture_instance_id):
     fixture_instance_id.return_value = 'i123'
-    fixture_region.return_value = 'test'
-    query_s3_url = 'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123'
+    fixture_valid_region.return_value = 'us-east-1'
+    query_s3_url = 'https://aws-deep-learning-containers-us-east-1.s3.us-east-1.amazonaws.com/dlc-containers.txt?x-instance-id=i123'
     requests_mock.get(
         query_s3_url,
         exc=requests.exceptions.HTTPError)
@@ -73,10 +81,10 @@ def test_HTTP_error_on_S3(requests_mock, fixture_region,fixture_instance_id):
         assert None == actual_response
 
 
-def test_connection_error_on_S3(requests_mock, fixture_region,fixture_instance_id):
+def test_connection_error_on_S3(requests_mock, fixture_valid_region, fixture_instance_id):
     fixture_instance_id.return_value = 'i123'
-    fixture_region.return_value = 'test'
-    query_s3_url = 'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123'
+    fixture_valid_region.return_value = 'us-east-1'
+    query_s3_url = 'https://aws-deep-learning-containers-us-east-1.s3.us-east-1.amazonaws.com/dlc-containers.txt?x-instance-id=i123'
     requests_mock.get(
         query_s3_url,
         exc=requests.exceptions.ConnectionError)
@@ -88,10 +96,10 @@ def test_connection_error_on_S3(requests_mock, fixture_region,fixture_instance_i
         assert None == actual_response
 
 
-def test_timeout_error_on_S3(requests_mock, fixture_region,fixture_instance_id):
+def test_timeout_error_on_S3(requests_mock, fixture_valid_region, fixture_instance_id):
     fixture_instance_id.return_value = 'i123'
-    fixture_region.return_value = 'test'
-    query_s3_url = 'https://aws-deep-learning-containers-test.s3.test.amazonaws.com/dlc-containers.txt?x-instance-id=i123'
+    fixture_valid_region.return_value = 'us-east-1'
+    query_s3_url = 'https://aws-deep-learning-containers-us-east-1.s3.us-east-1.amazonaws.com/dlc-containers.txt?x-instance-id=i123'
     requests_mock.get(
         query_s3_url,
         exc=requests.Timeout)
