@@ -10,9 +10,21 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import re
 import json
 import logging
 import requests
+
+
+def _validate_instance_id(instance_id):
+    instance_id_regex = '^(i-\S{17})'
+    compiled_regex = re.compile(instance_id_regex)
+    match = compiled_regex.match(instance_id)
+
+    if not match:
+        return None
+
+    return match.group(1)
 
 
 def _retrieve_instance_id():
@@ -24,7 +36,7 @@ def _retrieve_instance_id():
     response = requests_helper(url, timeout=0.1)
 
     if response is not None:
-        instance_id = response.text
+        instance_id = _validate_instance_id(response.text)
 
     return instance_id
 
@@ -59,7 +71,7 @@ def query_bucket():
     instance_id = _retrieve_instance_id()
     region = _retrieve_instance_region()
 
-    if region is not None:
+    if instance_id is not None and region is not None:
         url = "https://aws-deep-learning-containers-{0}.s3.{0}.amazonaws.com/dlc-containers.txt?x-instance-id={1}".format(region, instance_id)
         response = requests_helper(url, timeout=0.2)
 
