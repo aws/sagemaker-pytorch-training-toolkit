@@ -17,6 +17,9 @@ import requests
 
 
 def _validate_instance_id(instance_id):
+    """
+    Validate instance ID
+    """
     instance_id_regex = '^(i-\S{17})'
     compiled_regex = re.compile(instance_id_regex)
     match = compiled_regex.match(instance_id)
@@ -75,7 +78,7 @@ def query_bucket():
         url = "https://aws-deep-learning-containers-{0}.s3.{0}.amazonaws.com/dlc-containers.txt?x-instance-id={1}".format(region, instance_id)
         response = requests_helper(url, timeout=0.2)
 
-    logging.debug("Tracking finished: {}".format(response))
+    logging.debug("Query bucket finished: {}".format(response))
 
     return response
 
@@ -92,7 +95,7 @@ def requests_helper(url, timeout):
 
 def main():
     """
-    Invoke tracking
+    Invoke bucket query
     """
 
     logging.basicConfig(level=logging.ERROR)

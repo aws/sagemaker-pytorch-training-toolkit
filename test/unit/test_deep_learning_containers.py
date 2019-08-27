@@ -136,7 +136,7 @@ def test_timeout_error_on_S3(requests_mock, fixture_valid_region, fixture_valid_
     fixture_valid_instance_id.return_value = 'i-123t32e11s32t1231'
     fixture_valid_region.return_value = 'us-east-1'
     query_s3_url = 'https://aws-deep-learning-containers-us-east-1.s3.us-east-1.amazonaws.com/dlc-containers.txt?x-instance-id=i-123t32e11s32t1231'
-    
+
     requests_mock.get(
         query_s3_url,
         exc=requests.Timeout)
