@@ -4,6 +4,7 @@
 if [ ! -d "/opt/ml/input/config" ]
 then
     python /usr/local/bin/deep_learning_container.py  &>/dev/null &
+    wait
 fi
 
 
