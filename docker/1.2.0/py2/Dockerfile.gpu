@@ -82,11 +82,20 @@ WORKDIR /opt/pytorch
 ENV TORCH_CUDA_ARCH_LIST="3.5 5.2 6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
-RUN git clone --recursive -b v$PYTORCH_VERSION --single-branch https://github.com/pytorch/pytorch.git && \
-    cd pytorch/ && \
-    python setup.py install && \
-    git clone -b v$TORCHVISION_VERSION --single-branch https://github.com/pytorch/vision.git && cd vision && \
-    python setup.py install && rm -rf /opt/pytorch
+
+RUN wget https://test-tfs-surakota.s3.amazonaws.com/torch-1.2.0a0%2B8554416-cp27-cp27mu-linux_x86_64.whl
+RUN wget https://test-tfs-surakota.s3.amazonaws.com/torchvision-0.4.0a0%2Ba1ed206-cp27-cp27mu-linux_x86_64.whl
+RUN pip install --no-cache-dir torch-1.2.0a0%2B8554416-cp27-cp27mu-linux_x86_64.whl && \
+    rm torch-1.2.0a0%2B8554416-cp27-cp27mu-linux_x86_64.whl
+RUN pip install --no-cache-dir torchvision-0.4.0a0%2Ba1ed206-cp27-cp27mu-linux_x86_64.whl && \
+    rm torchvision-0.4.0a0%2Ba1ed206-cp27-cp27mu-linux_x86_64.whl
+
+# RUN git clone --recursive -b v$PYTORCH_VERSION --single-branch https://github.com/pytorch/pytorch.git && \
+#    cd pytorch/ && \
+#    python setup.py install && \
+#    git clone -b v$TORCHVISION_VERSION --single-branch https://github.com/pytorch/vision.git && cd vision && \
+#    python setup.py install && rm -rf /opt/pytorch
+
 WORKDIR /root
 
 RUN /opt/conda/bin/conda config --set ssl_verify False && \
@@ -129,7 +138,10 @@ WORKDIR /
 # Copy workaround script for incorrect hostname
 COPY lib/changehostname.c /
 COPY lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
+COPY src/sagemaker_pytorch_serving_container/deep_learning_container.py /usr/local/bin/deep_learning_container.py
+
 RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
+RUN chmod +x /usr/local/bin/deep_learning_container.py
 
 COPY sagemaker_pytorch_container-1.2-py2.py3-none-any.whl /sagemaker_pytorch_container-1.2-py2.py3-none-any.whl
 RUN pip install --no-cache-dir /sagemaker_pytorch_container-1.2-py2.py3-none-any.whl && \
