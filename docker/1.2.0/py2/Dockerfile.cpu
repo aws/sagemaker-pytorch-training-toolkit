@@ -82,7 +82,7 @@ WORKDIR /
 # Copy workaround script for incorrect hostname
 COPY lib/changehostname.c /
 COPY lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
-COPY src/sagemaker_pytorch_serving_container/deep_learning_container.py /usr/local/bin/deep_learning_container.py
+COPY src/sagemaker_pytorch_container/deep_learning_container.py /usr/local/bin/deep_learning_container.py
 
 RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
 RUN chmod +x /usr/local/bin/deep_learning_container.py
