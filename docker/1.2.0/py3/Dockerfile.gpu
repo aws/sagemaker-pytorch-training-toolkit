@@ -84,19 +84,8 @@ ENV TORCH_CUDA_ARCH_LIST="3.5 5.2 6.0 6.1 7.0+PTX"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 
-RUN wget -O pytorch_36.whl https://test-tfs-surakota.s3.amazonaws.com/torch-1.2.0a0%2B8554416-cp36-cp36m-linux_x86_64.whl
-RUN wget -O torchvision_36.whl https://test-tfs-surakota.s3.amazonaws.com/torchvision-0.4.0a0%2Ba1ed206-cp36-cp36m-linux_x86_64.whl
-RUN pip install --no-cache-dir pytorch_36.whl && \
-    rm -rf pytorch_36.whl
-RUN pip install --no-cache-dir torchvision_36.whl && \
-    rm -rf torchvision_36.whl
-
-
-#RUN git clone --recursive -b v$PYTORCH_VERSION --single-branch https://github.com/pytorch/pytorch.git && \
-#    cd pytorch/ && \
-#    python setup.py install && \
-#    git clone -b v$TORCHVISION_VERSION --single-branch https://github.com/pytorch/vision.git && cd vision && \
-#    python setup.py install && rm -rf /opt/pytorch
+RUN pip install --no-cache-dir https://pytorch-deep-learning-container.s3.amazonaws.com/torch-1.2.0-cp36-cp36m-linux_x86_64.whl
+RUN pip install --no-cache-dir https://pytorch-deep-learning-container.s3.amazonaws.com/torchvision-0.4.0-cp36-cp36m-linux_x86_64.whl
 
 WORKDIR /root
 
