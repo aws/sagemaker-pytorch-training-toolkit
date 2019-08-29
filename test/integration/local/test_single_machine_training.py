@@ -35,6 +35,8 @@ def test_mnist(docker_image, processor, instance_type, sagemaker_local_session, 
 
 
 def test_fastai_mnist(docker_image, instance_type, sagemaker_local_session, tmpdir):
+    if py_version != PYTHON3:
+        pytest.skip('Skipping the test because fastai supports >= Python 3.6.')
 
     estimator = PyTorch(entry_point=fastai_mnist_script,
                         role=ROLE,
