@@ -84,7 +84,7 @@ ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 
 RUN pip install --no-cache-dir https://pytorch-deep-learning-container.s3.amazonaws.com/torch-1.2.0-cp27-cp27mu-linux_x86_64.whl
 RUN pip install torchvision==TORCHVISION_VERSION
-s
+
 WORKDIR /root
 
 RUN /opt/conda/bin/conda config --set ssl_verify False && \
