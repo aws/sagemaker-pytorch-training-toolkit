@@ -1,20 +1,22 @@
 # Changelog
 
-## v1.0.5 (2019-08-06)
+## v1.0.9 (2019-08-15)
+
+### Bug fixes and other changes
+
+ * fix placeholder name cpu-instance-type in buildspec-release.yml
+
+## v1.0.8 (2019-08-15)
+
+### Bug fixes and other changes
+
+ * Update no-p2 and no-p3 regions.
+
+## v1.0.7 (2019-08-06)
 
 ### Bug fixes and other changes
 
  * upgrade sagemaker-container version
- * unmark 2 deploy tests
- * update p2 restricted regions
-
-## v1.0.5 (2019-08-05)
-
-### Bug fixes and other changes
-
- * upgrade sagemaker-container version
- * unmark 2 deploy tests
- * update p2 restricted regions
 
 ## v1.0.6 (2019-06-21)
 
@@ -77,3 +79,4 @@
  * Add support for fastai (https://github.com/fastai/fastai) library.
  * Remove "requsests" from tests dependencies to avoid regular conflicts with "requests" package from "sagemaker" dependencies.
  * Add support for PyTorch-1.0.
+ 

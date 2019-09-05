@@ -37,10 +37,10 @@ logging.getLogger('connectionpool.py').setLevel(logging.INFO)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-NO_P2_REGIONS = ['ap-northeast-3', 'ap-southeast-2', 'ca-central-1', 'eu-central-1',
-                 'eu-west-2', 'us-west-1']
-NO_P3_REGIONS = ['ap-northeast-3', 'ap-southeast-1', 'ap-southeast-2', 'ap-south-1', 'ca-central-1',
-                 'eu-central-1', 'eu-west-2', 'us-west-1']
+NO_P2_REGIONS = ['ap-east-1', 'ap-northeast-3', 'ap-southeast-2', 'ca-central-1', 'eu-central-1', 'eu-north-1',
+                 'eu-west-2', 'eu-west-3', 'us-west-1', 'sa-east-1']
+NO_P3_REGIONS = ['ap-east-1', 'ap-northeast-3', 'ap-southeast-1', 'ap-southeast-2', 'ap-south-1', 'ca-central-1',
+                 'eu-central-1', 'eu-north-1', 'eu-west-2', 'eu-west-3', 'sa-east-1', 'us-west-1']
 
 
 def pytest_addoption(parser):
@@ -188,12 +188,6 @@ def skip_by_device_type(request, use_gpu, instance_type):
     if (request.node.get_closest_marker('skip_gpu') and is_gpu) or \
             (request.node.get_closest_marker('skip_cpu') and not is_gpu):
         pytest.skip('Skipping because running on \'{}\' instance'.format(instance_type))
-
-
-@pytest.fixture(autouse=True)
-def skip_by_py_version(request, py_version):
-    if request.node.get_closest_marker('skip_py2') and py_version != 'py3':
-        pytest.skip('Skipping the test because Python 2 is not supported.')
 
 
 @pytest.fixture(autouse=True)

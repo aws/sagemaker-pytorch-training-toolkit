@@ -2,10 +2,12 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '1.1.0'
-    CPU_PY_VERSION: '2'
+    FRAMEWORK_VERSION: '1.2.0'
+    CPU_PY2_VERSION: '2'
+    CPU_PY3_VERSION: '3'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
-    GPU_PY_VERSION: '3'
+    GPU_PY2_VERSION: '2'
+    GPU_PY3_VERSION: '3'
     GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
     LOCAL_BASE_REPO: 'pytorch-base'
     ECR_REPO: 'sagemaker-test'
@@ -21,6 +23,7 @@ phases:
       - ACCOUNT=$(aws sts get-caller-identity --query 'Account' --output text)
       - PREPROD_IMAGE="$ACCOUNT.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ECR_REPO"
       - PR_NUM=$(echo $CODEBUILD_SOURCE_VERSION | grep -o '[0-9]\+')
+      - BUILD_ID="$(echo $CODEBUILD_BUILD_ID | sed -e 's/:/-/g')"
       - echo 'Pull request number:' $PR_NUM '. No value means this build is not from pull request.'
 
   build:
@@ -32,39 +35,26 @@ phases:
       # run unit tests
       - pytest test/unit
 
-      # build cpu base image
-      - base_dir="docker/$FRAMEWORK_VERSION/base"
-      - cpu_py2_base_tag="$FRAMEWORK_VERSION-cpu-py2"
-      - cpu_py3_base_tag="$FRAMEWORK_VERSION-cpu-py3"
-      - cpu_dockerfile="Dockerfile.cpu"
-      - cd $base_dir
-      - docker build -t $LOCAL_BASE_REPO:$cpu_py2_base_tag -f $cpu_dockerfile --build-arg py_version=2 .
-      - docker build -t $LOCAL_BASE_REPO:$cpu_py3_base_tag -f $cpu_dockerfile --build-arg py_version=3 .
-      - cd ../../../
-
-      # build gpu base image
-      - gpu_py2_base_tag="$FRAMEWORK_VERSION-gpu-py2"
-      - gpu_py3_base_tag="$FRAMEWORK_VERSION-gpu-py3"
-      - gpu_dockerfile="Dockerfile.gpu"
-      - cd $base_dir
-      - docker build -t $LOCAL_BASE_REPO:$gpu_py2_base_tag -f $gpu_dockerfile --build-arg py_version=2 .
-      - docker build -t $LOCAL_BASE_REPO:$gpu_py3_base_tag -f $gpu_dockerfile --build-arg py_version=3 .
-      - cd ../../../
-
-      # create wheel
+      # create wheel in dist/
       - python3 setup.py bdist_wheel
+      - whl_name=$(ls dist/sagemaker_pytorch_container*.whl)
+      - cp $whl_name sagemaker_pytorch_container-1.2-py2.py3-none-any.whl
 
-      # build cpu image
-      - build_dir="docker/$FRAMEWORK_VERSION/final"
-      - CPU_PY2_TAG="$FRAMEWORK_VERSION-cpu-py2"
-      - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3"
+      - cpu_dockerfile="Dockerfile.cpu"
+      - gpu_dockerfile="Dockerfile.gpu"
+
+      # build py2 images
+      - build_dir="docker/$FRAMEWORK_VERSION/py$CPU_PY2_VERSION"
+      - CPU_PY2_TAG="$FRAMEWORK_VERSION-cpu-py2-$BUILD_ID"
+      - GPU_PY2_TAG="$FRAMEWORK_VERSION-gpu-py2-$BUILD_ID"
       - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$CPU_PY2_TAG .
-      - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$CPU_PY3_TAG .
-
-      # build gpu image
-      - GPU_PY2_TAG="$FRAMEWORK_VERSION-gpu-py2"
-      - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3"
       - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$GPU_PY2_TAG .
+
+      # build py3 image
+      - build_dir="docker/$FRAMEWORK_VERSION/py$GPU_PY3_VERSION"
+      - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3-$BUILD_ID"
+      - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3-$BUILD_ID"
+      - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$CPU_PY3_TAG .
       - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$GPU_PY3_TAG .
 
       # push images to ecr
@@ -83,7 +73,8 @@ phases:
       # run cpu integration tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY_VERSION --processor cpu
+          pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY3_VERSION --processor cpu --tag $CPU_PY3_TAG
+          pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY2_VERSION --processor cpu --tag $CPU_PY2_TAG
         else
           echo "skipping cpu integration tests"
         fi
@@ -92,7 +83,8 @@ phases:
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
           printf "$SETUP_CMDS" > $SETUP_FILE
-          py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY_VERSION --processor gpu"
+          py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY3_VERSION --processor gpu --tag $GPU_PY3_TAG"
+          py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY2_VERSION --processor gpu --tag $GPU_PY2_TAG"
           remote-test --github-repo $GITHUB_REPO --test-cmd "$py3_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
         else
           echo "skipping gpu integration tests"
@@ -101,7 +93,8 @@ phases:
       # run cpu sagemaker tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY3_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $CPU_PY3_TAG
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY2_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $CPU_PY2_TAG
         else
           echo "skipping cpu sagemaker tests"
         fi
@@ -109,7 +102,8 @@ phases:
       # run gpu sagemaker tests
       - |
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
-          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY3_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE --tag $GPU_PY3_TAG
+          pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY2_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $GPU_PY2_TAG
         else
           echo "skipping gpu sagemaker tests"
         fi

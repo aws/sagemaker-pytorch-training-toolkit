@@ -1,6 +1,6 @@
 FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu16.04
 
-ARG py_version
+ENV py_version=3
 
 # Validate that arguments are specified
 RUN test $py_version || exit 1
