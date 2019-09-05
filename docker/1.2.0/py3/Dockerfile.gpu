@@ -83,7 +83,7 @@ ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV CMAKE_PREFIX_PATH="$(dirname $(which conda))/../"
 
 RUN pip install --no-cache-dir https://pytorch-deep-learning-container.s3.amazonaws.com/torch-1.2.0-cp36-cp36m-linux_x86_64.whl
-RUN pip install torchvision==TORCHVISION_VERSION
+RUN pip install torchvision==$TORCHVISION_VERSION
 
 WORKDIR /root
 
