@@ -141,3 +141,4 @@ ENV SAGEMAKER_TRAINING_MODULE sagemaker_pytorch_container.training:main
 
 # Starts framework
 ENTRYPOINT ["bash", "-m", "start_with_right_hostname.sh"]
+CMD ["/bin/bash"]
