@@ -79,3 +79,4 @@
  * Add support for fastai (https://github.com/fastai/fastai) library.
  * Remove "requsests" from tests dependencies to avoid regular conflicts with "requests" package from "sagemaker" dependencies.
  * Add support for PyTorch-1.0.
+ 
