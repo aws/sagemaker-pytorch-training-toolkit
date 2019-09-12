@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.0-cudnn7-runtime-ubuntu16.04
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
 
 LABEL maintainer="Amazon AI"
 
@@ -17,10 +17,6 @@ RUN apt-get update && apt-get install -y  --allow-downgrades --allow-change-held
         cuda-curand-10-0 \
         cuda-cusolver-10-0 \
         cuda-cusparse-10-0 \
-        cuda-nvml-dev-10-0 \
-        cuda-minimal-build-10-0 \
-        cuda-command-line-tools-10-0 \
-        libnccl-dev=$NCCL_VERSION-1+cuda10.0 && \
         libglib2.0-0 \
         libgl1-mesa-glx \
         libsm6 \
@@ -34,6 +30,9 @@ RUN apt-get update && apt-get install -y  --allow-downgrades --allow-change-held
         vim \
         build-essential \
         zlib1g-dev
+
+RUN apt-get remove cuda-libraries-dev-10-0
+RUN apt autoremove
 
 # See http://bugs.python.org/issue19846
 ENV LANG C.UTF-8
