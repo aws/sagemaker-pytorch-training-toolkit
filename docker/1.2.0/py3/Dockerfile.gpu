@@ -31,8 +31,8 @@ RUN apt-get update && apt-get install -y  --allow-downgrades --allow-change-held
         build-essential \
         zlib1g-dev
 
-RUN apt-get remove cuda-libraries-dev-10-0
-RUN apt autoremove
+RUN apt-get remove -y cuda-libraries-dev-10-0
+RUN apt -y autoremove
 
 # See http://bugs.python.org/issue19846
 ENV LANG C.UTF-8
