@@ -33,7 +33,7 @@ def test_mnist(docker_image, processor, instance_type, sagemaker_local_session, 
 
     _train_and_assert_success(estimator, data_dir, str(tmpdir))
 
-
+@pytest.mark.skip_py2
 def test_fastai_mnist(docker_image, instance_type, py_version, sagemaker_local_session, tmpdir):
     if py_version != PYTHON3:
         pytest.skip('Skipping the test because fastai supports >= Python 3.6.')
