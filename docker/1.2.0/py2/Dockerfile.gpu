@@ -8,6 +8,7 @@ ENV HOROVOD_VERSION=0.16.4
 
 RUN apt-get update && apt-get install -y  --allow-downgrades --allow-change-held-packages --no-install-recommends \
         build-essential \
+        jq \
         ca-certificates \
         cmake \
         cuda-command-line-tools-10-0 \
@@ -16,7 +17,6 @@ RUN apt-get update && apt-get install -y  --allow-downgrades --allow-change-held
         cuda-curand-10-0 \
         cuda-cusolver-10-0 \
         cuda-cusparse-10-0 \
-        jq \
         libglib2.0-0 \
         libgl1-mesa-glx \
         libsm6 \
@@ -30,6 +30,14 @@ RUN apt-get update && apt-get install -y  --allow-downgrades --allow-change-held
         vim \
         build-essential \
         zlib1g-dev
+
+RUN apt-get remove -y cuda-cufft-dev-10-0 \
+        cuda-curand-dev-10-0 \
+        cuda-cusolver-dev-10-0 \
+        cuda-npp-dev-10-0 \
+        cuda-nvgraph-dev-10-0 \
+        cuda-nvjpeg-dev-10-0 \
+        cuda-nvrtc-dev-10-0
 
 # See http://bugs.python.org/issue19846
 ENV LANG C.UTF-8
