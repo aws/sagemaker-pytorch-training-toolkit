@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -47,9 +47,10 @@ def train(training_environment):
 
     logger.info('Invoking user training script.')
     try:
-        framework.modules.run_module(training_environment.module_dir, training_environment.to_cmd_args(),
-                                     training_environment.to_env_vars(), training_environment.module_name,
-                                     capture_error=True)
+        framework.modules.download_and_install(training_environment.module_dir)
+        framework.entry_point.run(training_environment.module_dir, training_environment.user_entry_point,
+                                  training_environment.to_cmd_args(), training_environment.to_env_vars(),
+                                  capture_error=True, runner=framework.runner.ProcessRunnerType)
     except framework.errors.ExecuteUserScriptError as err:
         message = str(err)
         if message.find('terminate called after throwing an instance of \'gloo::EnforceNotMet\'') > -1:
