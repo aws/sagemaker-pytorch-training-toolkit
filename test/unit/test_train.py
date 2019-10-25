@@ -1,4 +1,4 @@
-# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2018-2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -35,7 +35,7 @@ def fixture_training_env():
     tmp = tempfile.mkdtemp()
     os.makedirs(os.path.join(tmp, 'model'))
     env.model_dir = os.path.join(tmp, 'model')
-    env.module_name = 'user_script'
+    env.user_entry_point = 'user_script'
     yield env
     shutil.rmtree(tmp)
 
@@ -57,17 +57,20 @@ def fixture_user_module_with_save():
     return MagicMock(spec=['train', 'save'])
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module')
+@patch('sagemaker_containers.beta.framework.modules.download_and_install')
+@patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
-def test_train(run_module, training_env):
+def test_train(run_entry_point, download_and_install, training_env):
     train(training_env)
 
-    run_module.assert_called_with(training_env.module_dir, training_env.to_cmd_args(),
-                                  training_env.to_env_vars(), training_env.module_name,
-                                  capture_error=True)
+    download_and_install.assert_called_with(training_env.module_dir)
+    run_entry_point.assert_called_with(training_env.module_dir, training_env.user_entry_point,
+                                       training_env.to_cmd_args(), training_env.to_env_vars(),
+                                       capture_error=True, runner=framework.runner.ProcessRunnerType)
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module', MagicMock())
+@patch('sagemaker_containers.beta.framework.modules.download_and_install', MagicMock())
+@patch('sagemaker_containers.beta.framework.entry_point.run', MagicMock())
 @patch('socket.gethostbyname', MagicMock())
 def test_environment(training_env):
     train(training_env)
@@ -111,23 +114,25 @@ def test_dns_lookup_fail():
     assert not _dns_lookup('algo-1')
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module')
+@patch('sagemaker_containers.beta.framework.modules.download_and_install', MagicMock())
+@patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
-def test_gloo_exception_intercepted(run_module, training_env):
+def test_gloo_exception_intercepted(run_entry_point, training_env):
     output = 'terminate called after throwing an instance of \'gloo::EnforceNotMet\''
-    run_module.side_effect = framework.errors.ExecuteUserScriptError(
+    run_entry_point.side_effect = framework.errors.ExecuteUserScriptError(
         cmd='Command "/usr/bin/python -m userscript"',
         output=output.encode('latin1') if six.PY3 else output
     )
     train(training_env)
-    run_module.assert_called()
+    run_entry_point.assert_called()
 
 
-@patch('sagemaker_containers.beta.framework.modules.run_module')
+@patch('sagemaker_containers.beta.framework.modules.download_and_install', MagicMock())
+@patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
-def test_user_script_error_raised(run_module, training_env):
+def test_user_script_error_raised(run_entry_point, training_env):
     output = 'Not \'gloo::EnforceNotMet\' exception.'
-    run_module.side_effect = framework.errors.ExecuteUserScriptError(
+    run_entry_point.side_effect = framework.errors.ExecuteUserScriptError(
         cmd='Command "/usr/bin/python -m userscript"',
         output=output.encode('latin1') if six.PY3 else output
     )
