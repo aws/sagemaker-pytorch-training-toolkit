@@ -26,4 +26,4 @@ def main():
     data.normalize(imagenet_stats)
     learn = create_cnn(data, models.resnet18, metrics=accuracy, path='/opt/ml', model_dir='model')
     learn.fit_one_cycle(1, 0.02)
-    learn.save(name='model')
+    learn.save('model')

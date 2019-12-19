@@ -28,6 +28,7 @@ MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
 
 @pytest.mark.skip_gpu
 @pytest.mark.deploy_test
+@pytest.mark.skip_test_in_region
 def test_dist_operations_cpu(sagemaker_session, ecr_image, instance_type, dist_cpu_backend):
     instance_type = instance_type or 'ml.c4.xlarge'
     _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_cpu_backend)
@@ -46,7 +47,7 @@ def test_dist_operations_multi_gpu(sagemaker_session, ecr_image, dist_gpu_backen
 
 
 @pytest.mark.skip_cpu
-@pytest.mark.skip_py2
+@pytest.mark.skip_py2_containers
 def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image):
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point='train_cifar.py',
@@ -68,7 +69,7 @@ def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image):
 
 
 @pytest.mark.skip_cpu
-@pytest.mark.skip_py2
+@pytest.mark.skip_py2_containers
 def test_mnist_gpu(sagemaker_session, ecr_image, dist_gpu_backend):
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=mnist_script,

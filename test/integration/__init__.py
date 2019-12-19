@@ -23,6 +23,7 @@ fastai_mnist_script = os.path.join(fastai_path, 'mnist.py')
 data_dir = os.path.join(mnist_path, 'data')
 training_dir = os.path.join(data_dir, 'training')
 dist_operations_path = os.path.join(resources_path, 'distributed_operations.py')
+smdebug_mnist_script = os.path.join(mnist_path, 'smdebug_mnist.py')
 
 mnist_1d_script = os.path.join(mnist_path, 'mnist_1d.py')
 model_cpu_dir = os.path.join(mnist_path, 'model_cpu')

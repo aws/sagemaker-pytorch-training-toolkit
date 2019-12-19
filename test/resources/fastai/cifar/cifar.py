@@ -40,7 +40,7 @@ def main(gpu:Param("GPU to run on", str)=None):
     if gpu is None:
         learn.model = nn.DataParallel(learn.model)
     else:
-        learn.distributed(gpu)
+        learn.to_distributed(gpu)
     learn.to_fp16()
     learn.fit_one_cycle(2, 3e-3, wd=0.4)
-    learn.save(name='model')
+    learn.save('model')
