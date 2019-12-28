@@ -192,8 +192,20 @@ def skip_by_device_type(request, use_gpu, instance_type):
 
 @pytest.fixture(autouse=True)
 def skip_by_py_version(request, py_version):
+    """
+    This will cause tests to be skipped w/ py3 containers if "py-version" flag is not set
+    and pytest is running from py2. We can rely on this when py2 is deprecated, but for now
+    we must use "skip_py2_containers"
+    """
     if request.node.get_closest_marker('skip_py2') and py_version != 'py3':
         pytest.skip('Skipping the test because Python 2 is not supported.')
+
+
+@pytest.fixture(autouse=True)
+def skip_test_in_region(request, region):
+    if request.node.get_closest_marker('skip_test_in_region'):
+        if region == 'me-south-1':
+            pytest.skip('Skipping SageMaker test in region {}'.format(region))
 
 
 @pytest.fixture(autouse=True)
@@ -201,3 +213,9 @@ def skip_gpu_instance_restricted_regions(region, instance_type):
     if((region in NO_P2_REGIONS and instance_type.startswith('ml.p2')) or
        (region in NO_P3_REGIONS and instance_type.startswith('ml.p3'))):
         pytest.skip('Skipping GPU test in region {}'.format(region))
+
+@pytest.fixture(autouse=True)
+def skip_py2_containers(request, tag):
+    if request.node.get_closest_marker('skip_py2_containers'):
+        if 'py2' in tag:
+            pytest.skip('Skipping python2 container with tag {}'.format(tag))

@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '1.2.0'
+    FRAMEWORK_VERSION: '1.3.1'
     CPU_PY2_VERSION: '2'
     CPU_PY3_VERSION: '3'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
@@ -38,7 +38,7 @@ phases:
       # create wheel in dist/
       - python3 setup.py bdist_wheel
       - whl_name=$(ls dist/sagemaker_pytorch_container*.whl)
-      - cp $whl_name sagemaker_pytorch_container-1.2-py2.py3-none-any.whl
+      - cp $whl_name sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl
 
       - cpu_dockerfile="Dockerfile.cpu"
       - gpu_dockerfile="Dockerfile.gpu"
