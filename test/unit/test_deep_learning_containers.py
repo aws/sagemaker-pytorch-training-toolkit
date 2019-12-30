@@ -19,7 +19,7 @@ import requests_mock
 import pytest
 
 
-from sagemaker_pytorch_container import deep_learning_container as deep_learning_container_to_test
+from docker import deep_learning_container as deep_learning_container_to_test
 
 
 @pytest.fixture(name='fixture_valid_instance_id')
