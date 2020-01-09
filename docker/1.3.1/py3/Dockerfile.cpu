@@ -77,7 +77,7 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
     typing==3.6.4 \
     "pyopenssl>=17.5.0" \
  && conda install -c conda-forge \
-    awscli==1.16.296 \
+    awscli==1.16.314 \
     opencv==4.0.1 \
  && conda install -y \
     scikit-learn==0.21.2 \
