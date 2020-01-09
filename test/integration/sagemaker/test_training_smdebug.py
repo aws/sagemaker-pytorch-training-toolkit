@@ -22,7 +22,7 @@ from test.integration.sagemaker.timeout import timeout
 @pytest.mark.skip_py2_containers
 def test_training_smdebug(sagemaker_session, ecr_image, instance_type):
     hyperparameters = {'random_seed': True, 'num_steps': 50, 'smdebug_path': '/opt/ml/output/tensors', 'epochs': 1,
-                       'data_dir':training_dir}
+                       'data_dir': training_dir}
 
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=smdebug_mnist_script,

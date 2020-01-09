@@ -45,17 +45,21 @@ phases:
 
       # build py2 images
       - build_dir="docker/$FRAMEWORK_VERSION/py$CPU_PY2_VERSION"
+      - cp sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl $build_dir/
+      - cp -r docker/build_artifacts/* $build_dir/
       - CPU_PY2_TAG="$FRAMEWORK_VERSION-cpu-py2-$BUILD_ID"
       - GPU_PY2_TAG="$FRAMEWORK_VERSION-gpu-py2-$BUILD_ID"
-      - docker build -f "$build_dir/$cpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$CPU_PY2_TAG .
-      - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=2 -t $PREPROD_IMAGE:$GPU_PY2_TAG .
+      - docker build -f "$build_dir/$cpu_dockerfile" -t $PREPROD_IMAGE:$CPU_PY2_TAG $build_dir
+      - docker build -f "$build_dir/$gpu_dockerfile" -t $PREPROD_IMAGE:$GPU_PY2_TAG $build_dir
 
       # build py3 image
       - build_dir="docker/$FRAMEWORK_VERSION/py$GPU_PY3_VERSION"
+      - cp sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl $build_dir/
+      - cp -r docker/build_artifacts/* $build_dir/
       - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3-$BUILD_ID"
       - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3-$BUILD_ID"
-      - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$CPU_PY3_TAG .
-      - docker build -f "$build_dir/$gpu_dockerfile" --build-arg py_version=3 -t $PREPROD_IMAGE:$GPU_PY3_TAG .
+      - docker build -f "$build_dir/$cpu_dockerfile" -t $PREPROD_IMAGE:$CPU_PY3_TAG $build_dir
+      - docker build -f "$build_dir/$gpu_dockerfile" -t $PREPROD_IMAGE:$GPU_PY3_TAG $build_dir
 
       # push images to ecr
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
