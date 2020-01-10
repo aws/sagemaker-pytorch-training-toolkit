@@ -88,8 +88,9 @@ phases:
         if has-matching-changes "test/" "tests/" "src/*.py" "docker/*" "buildspec.yml"; then
           printf "$SETUP_CMDS" > $SETUP_FILE
           py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY3_VERSION --processor gpu --tag $GPU_PY3_TAG"
-          py3_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY2_VERSION --processor gpu --tag $GPU_PY2_TAG"
+          py2_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY2_VERSION --processor gpu --tag $GPU_PY2_TAG"
           remote-test --github-repo $GITHUB_REPO --test-cmd "$py3_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM"
+          remote-test --github-repo $GITHUB_REPO --test-cmd "$py2_cmd" --setup-file $SETUP_FILE --pr-number "$PR_NUM" --skip-setup
         else
           echo "skipping gpu integration tests"
         fi
