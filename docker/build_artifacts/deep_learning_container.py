@@ -10,9 +10,12 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-import re
+from __future__ import absolute_import
+
 import json
 import logging
+import re
+
 import requests
 
 
@@ -20,7 +23,7 @@ def _validate_instance_id(instance_id):
     """
     Validate instance ID
     """
-    instance_id_regex = '^(i-\S{17})'
+    instance_id_regex = r'^(i-\S{17})'
     compiled_regex = re.compile(instance_id_regex)
     match = compiled_regex.match(instance_id)
 
@@ -75,7 +78,8 @@ def query_bucket():
     region = _retrieve_instance_region()
 
     if instance_id is not None and region is not None:
-        url = "https://aws-deep-learning-containers-{0}.s3.{0}.amazonaws.com/dlc-containers.txt?x-instance-id={1}".format(region, instance_id)
+        url = ("https://aws-deep-learning-containers-{0}.s3.{0}.amazonaws.com"
+               "/dlc-containers.txt?x-instance-id={1}".format(region, instance_id))
         response = requests_helper(url, timeout=0.2)
 
     logging.debug("Query bucket finished: {}".format(response))
@@ -86,7 +90,7 @@ def query_bucket():
 def requests_helper(url, timeout):
     response = None
     try:
-        response = requests.get(url,timeout=timeout)
+        response = requests.get(url, timeout=timeout)
     except requests.exceptions.RequestException as e:
         logging.error("Request exception: {}".format(e))
 
@@ -97,7 +101,7 @@ def main():
     """
     Invoke bucket query
     """
-    # Logs are not necessary for normal run. Remove this line while debugging.  
+    # Logs are not necessary for normal run. Remove this line while debugging.
     logging.getLogger().disabled = True
 
     logging.basicConfig(level=logging.ERROR)
