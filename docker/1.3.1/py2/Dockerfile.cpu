@@ -60,7 +60,7 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
  && rm ~/miniconda.sh \
  && /opt/conda/bin/conda install -y -c anaconda \
     python=$PYTHON_VERSION \
-    scipy==1.2.2 \
+    scipy==1.2.1 \
     ipython==5.8.0 \
     mkl==2019.4 \
     mkl-include==2019.4 \
