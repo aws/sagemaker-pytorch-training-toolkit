@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    FRAMEWORK_VERSION: '1.3.1'
+    FRAMEWORK_VERSION: '1.4.0'
     CPU_PY2_VERSION: '2'
     CPU_PY3_VERSION: '3'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
@@ -38,14 +38,14 @@ phases:
       # create wheel in dist/
       - python3 setup.py bdist_wheel
       - whl_name=$(ls dist/sagemaker_pytorch_container*.whl)
-      - cp $whl_name sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl
+      - cp $whl_name sagemaker_pytorch_container-1.4.0-py2.py3-none-any.whl
 
       - cpu_dockerfile="Dockerfile.cpu"
       - gpu_dockerfile="Dockerfile.gpu"
 
       # build py2 images
       - build_dir="docker/$FRAMEWORK_VERSION/py$CPU_PY2_VERSION"
-      - cp sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl $build_dir/
+      - cp sagemaker_pytorch_container-1.4.0-py2.py3-none-any.whl $build_dir/
       - cp -r docker/build_artifacts/* $build_dir/
       - CPU_PY2_TAG="$FRAMEWORK_VERSION-cpu-py2-$BUILD_ID"
       - GPU_PY2_TAG="$FRAMEWORK_VERSION-gpu-py2-$BUILD_ID"
@@ -54,7 +54,7 @@ phases:
 
       # build py3 image
       - build_dir="docker/$FRAMEWORK_VERSION/py$GPU_PY3_VERSION"
-      - cp sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl $build_dir/
+      - cp sagemaker_pytorch_container-1.4.0-py2.py3-none-any.whl $build_dir/
       - cp -r docker/build_artifacts/* $build_dir/
       - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3-$BUILD_ID"
       - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3-$BUILD_ID"
