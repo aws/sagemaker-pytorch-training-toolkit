@@ -68,7 +68,7 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
  && rm ~/miniconda.sh \
  && /opt/conda/bin/conda install -y -c anaconda \
     python=$PYTHON_VERSION \
-    scipy==1.2.1 \
+    numpy==1.16.4 \
     ipython==7.10.1 \
     mkl==2019.4 \
     mkl-include==2019.4 \
@@ -81,6 +81,7 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
  && conda install -y \
     scikit-learn==0.21.2 \
     pandas==0.25.0 \
+    Pillow==6.2.0 \
     h5py==2.9.0 \
     requests==2.22.0 \
  && conda install -c dglteam -y dgl==0.4.1 \

@@ -88,7 +88,7 @@ RUN ompi_info --parsable --all | grep mpi_built_with_cuda_support:value \
  && rm ~/miniconda.sh \
  && /opt/conda/bin/conda install -y anaconda \
     python=$PYTHON_VERSION \
-    scipy==1.2.1 \
+    numpy==1.16.4 \
     ipython==5.8.0 \
     mkl==2019.4 \
     mkl-include==2019.4 \
@@ -104,6 +104,7 @@ RUN conda install -c pytorch magma-cuda101==2.5.1 \
  && conda install -y \
     scikit-learn==0.20.3 \
     pandas==0.24.2 \
+    Pillow==6.2.0 \
     h5py==2.9.0 \
     requests==2.22.0 \
  && pip install -U \
