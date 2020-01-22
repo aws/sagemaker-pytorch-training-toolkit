@@ -60,7 +60,6 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
  && rm ~/miniconda.sh \
  && /opt/conda/bin/conda install -y -c anaconda \
     python=$PYTHON_VERSION \
-    numpy==1.16.4 \
     scipy==1.2.1 \
     ipython==5.8.0 \
     mkl==2019.4 \
@@ -70,12 +69,11 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
     /opt/conda/bin/conda clean -ya
 
 RUN conda install -c conda-forge \
-    awscli==1.16.296 \
+    awscli==1.17.7 \
     opencv==4.0.1 \
  && conda install -y \
     scikit-learn==0.20.3 \
     pandas==0.24.2 \
-    pillow==6.2.1 \
     h5py==2.9.0 \
     requests==2.22.0 \
  && conda clean -ya \
