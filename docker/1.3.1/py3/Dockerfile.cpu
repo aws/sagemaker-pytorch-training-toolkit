@@ -76,7 +76,6 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
     typing==3.6.4 \
     "pyopenssl>=17.5.0" \
  && conda install -c conda-forge \
-    awscli==1.17.7 \
     opencv==4.0.1 \
  && conda install -y \
     scikit-learn==0.21.2 \
@@ -84,6 +83,7 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
     h5py==2.9.0 \
     requests==2.22.0 \
  && conda install -c dglteam -y dgl==0.4.1 \
+ && pip install -U awscli==1.17.7 \
  && /opt/conda/bin/conda clean -ya \
  && conda clean -ya 
 

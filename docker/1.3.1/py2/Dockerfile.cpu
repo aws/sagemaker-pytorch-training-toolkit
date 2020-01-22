@@ -69,13 +69,13 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
     /opt/conda/bin/conda clean -ya
 
 RUN conda install -c conda-forge \
-    awscli==1.17.7 \
     opencv==4.0.1 \
  && conda install -y \
     scikit-learn==0.20.3 \
     pandas==0.24.2 \
     h5py==2.9.0 \
     requests==2.22.0 \
+ && pip install -U awscli==1.17.7 \
  && conda clean -ya \
  && pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org
 
