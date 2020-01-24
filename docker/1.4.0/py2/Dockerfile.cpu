@@ -90,6 +90,7 @@ COPY sagemaker_pytorch_container-1.4.0-py2.py3-none-any.whl /sagemaker_pytorch_c
 # custom versions from an S3 bucket. This will need to be removed in the future
 RUN pip install --no-cache-dir \
     scipy==1.2.2 \
+    future \
     /sagemaker_pytorch_container-1.4.0-py2.py3-none-any.whl \
  && pip uninstall -y torch \
  && pip install -U --no-cache-dir https://s3.amazonaws.com/shaabhn-pt1.4/torch/py2/cpu/torch-1.4.0-cp27-cp27mu-manylinux1_x86_64.whl \
