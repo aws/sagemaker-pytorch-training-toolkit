@@ -69,7 +69,6 @@ RUN wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86
 # Copy workaround script for incorrect hostname
 COPY changehostname.c /
 COPY start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
-COPY deep_learning_container.py /usr/local/bin/deep_learning_container.py
 COPY sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl /sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl
 
 RUN wget https://www.open-mpi.org/software/ompi/v4.0/downloads/openmpi-$OPEN_MPI_VERSION.tar.gz \
@@ -151,8 +150,7 @@ RUN apt-get install -y --no-install-recommends openssh-client openssh-server \
  && echo "    StrictHostKeyChecking no" >> /etc/ssh/ssh_config.new \
  && mv /etc/ssh/ssh_config.new /etc/ssh/ssh_config
 
-RUN chmod +x /usr/local/bin/start_with_right_hostname.sh \
- && chmod +x /usr/local/bin/deep_learning_container.py
+RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
 
 RUN curl -o /license.txt https://aws-dlc-licenses.s3.amazonaws.com/pytorch/license.txt
 
