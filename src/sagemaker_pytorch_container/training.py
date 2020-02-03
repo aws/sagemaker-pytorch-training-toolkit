@@ -47,6 +47,7 @@ def train(training_environment):
 
     logger.info('Invoking user training script.')
     try:
+        framework.modules.download_and_install(training_environment.module_dir)
         framework.entry_point.run(training_environment.module_dir, training_environment.user_entry_point,
                                   training_environment.to_cmd_args(), training_environment.to_env_vars(),
                                   capture_error=True, runner=framework.runner.ProcessRunnerType)
