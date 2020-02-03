@@ -93,10 +93,10 @@ RUN pip install --no-cache-dir \
     future \
     /sagemaker_pytorch_container-1.4.0-py2.py3-none-any.whl \
  && pip uninstall -y torch \
- && pip install -U --no-cache-dir https://s3.amazonaws.com/shaabhn-pt1.4/torch/py2/cpu/torch-1.4.0-cp27-cp27mu-manylinux1_x86_64.whl \
+ && pip install -U --no-cache-dir https://pytorch-aws.s3.amazonaws.com/pytorch-1.4.0/py2/cpu/torch-1.4.0-cp27-cp27mu-manylinux1_x86_64.whl \
  && pip uninstall -y torchvision \
  && pip install --no-cache-dir \
-    https://s3.amazonaws.com/shaabhn-pt1.4/torchvision/py2/cpu/torchvision-0.5.0%2Bcpu-cp27-cp27mu-linux_x86_64.whl \
+    https://torchvision-build.s3.amazonaws.com/1.4.0/py2/cpu/torchvision-0.5.0%2Bcpu-cp27-cp27mu-linux_x86_64.whl \
  && rm /sagemaker_pytorch_container-1.4.0-py2.py3-none-any.whl
 
 WORKDIR /
