@@ -57,19 +57,16 @@ def fixture_user_module_with_save():
     return MagicMock(spec=['train', 'save'])
 
 
-@patch('sagemaker_containers.beta.framework.modules.download_and_install')
 @patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
-def test_train(run_entry_point, download_and_install, training_env):
+def test_train(run_entry_point, training_env):
     train(training_env)
 
-    download_and_install.assert_called_with(training_env.module_dir)
     run_entry_point.assert_called_with(training_env.module_dir, training_env.user_entry_point,
                                        training_env.to_cmd_args(), training_env.to_env_vars(),
                                        capture_error=True, runner=framework.runner.ProcessRunnerType)
 
 
-@patch('sagemaker_containers.beta.framework.modules.download_and_install', MagicMock())
 @patch('sagemaker_containers.beta.framework.entry_point.run', MagicMock())
 @patch('socket.gethostbyname', MagicMock())
 def test_environment(training_env):
@@ -114,7 +111,6 @@ def test_dns_lookup_fail():
     assert not _dns_lookup('algo-1')
 
 
-@patch('sagemaker_containers.beta.framework.modules.download_and_install', MagicMock())
 @patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
 def test_gloo_exception_intercepted(run_entry_point, training_env):
@@ -127,7 +123,6 @@ def test_gloo_exception_intercepted(run_entry_point, training_env):
     run_entry_point.assert_called()
 
 
-@patch('sagemaker_containers.beta.framework.modules.download_and_install', MagicMock())
 @patch('sagemaker_containers.beta.framework.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
 def test_user_script_error_raised(run_entry_point, training_env):
