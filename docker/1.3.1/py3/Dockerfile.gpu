@@ -153,10 +153,10 @@ RUN apt-get install -y --no-install-recommends openssh-client openssh-server \
 
 WORKDIR /
 
-COPY sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl /sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl
+COPY sagemaker_pytorch_training.whl /sagemaker_pytorch_training.whl
 
-RUN pip install --no-cache-dir /sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl \
- && rm /sagemaker_pytorch_container-1.3.1-py2.py3-none-any.whl
+RUN pip install --no-cache-dir /sagemaker_pytorch_training.whl \
+ && rm /sagemaker_pytorch_training.whl
 
 RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
 
