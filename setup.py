@@ -12,12 +12,12 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import os
 from glob import glob
+import os
 from os.path import basename
 from os.path import splitext
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 
 def read(fname):
@@ -35,6 +35,7 @@ setup(
 
     long_description=read('README.rst'),
     author='Amazon Web Services',
+    url='https://github.com/aws/sagemaker-pytorch-containers',
     license='Apache License 2.0',
 
     classifiers=[
@@ -46,6 +47,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
     ],
+
     install_requires=['numpy==1.16.4', 'Pillow==6.2.0', 'retrying==1.3.3', 'sagemaker-containers>=2.6.2',
                       'six==1.12.0', 'torch==1.3.1'],
     extras_require={
