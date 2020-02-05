@@ -153,10 +153,10 @@ RUN apt-get install -y --no-install-recommends openssh-client openssh-server \
 
 WORKDIR /
 
-COPY sagemaker_pytorch_training.whl /sagemaker_pytorch_training.whl
+COPY sagemaker_pytorch_training.tar.gz /sagemaker_pytorch_training.tar.gz
 
-RUN pip install --no-cache-dir /sagemaker_pytorch_training.whl \
- && rm /sagemaker_pytorch_training.whl
+RUN pip install --no-cache-dir /sagemaker_pytorch_training.tar.gz \
+ && rm /sagemaker_pytorch_training.tar.gz
 
 RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
 
