@@ -35,7 +35,7 @@ setup(
 
     long_description=read('README.rst'),
     author='Amazon Web Services',
-    url='https://github.com/aws/sagemaker-pytorch-containers',
+    url='https://github.com/aws/sagemaker-pytorch-container',
     license='Apache License 2.0',
 
     classifiers=[
