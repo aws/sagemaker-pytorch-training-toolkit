@@ -32,6 +32,9 @@ phases:
       - pip3 install -U -e .
       - pip3 install -U -e .[test]
 
+      # run linter
+      - tox -e flake8
+
       # run unit tests
       - pytest test/unit
 
