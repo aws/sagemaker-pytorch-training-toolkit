@@ -1,5 +1,44 @@
 # Changelog
 
+## v1.1.0 (2020-02-09)
+
+### Features
+
+ * Add release to PyPI. Change package name to sagemaker-pytorch-training.
+
+### Bug Fixes and Other Changes
+
+ * Fix flake8 erros. Add flake configuration to run during PR.
+ * Add twine section to tox.
+ * Update build artifacts
+ * update: Bump awscli version and constrain spyder on conda
+ * update: bump smdebug version to 0.5.0.post0
+ * Create __init__.py
+ * run local GPU tests for Python 3
+ * update: Update buildspec for PyTorch 1.3.1
+ * update copyright year in license header
+ * Added changes for DLC 2.1 with PyTorch v1.3.1
+ * Remove stale-bot config
+ * upgrade sagemaker-containers to 2.5.11
+ * upgrade pillow to 6.2.0
+ * use SageMaker Containers' ProcessRunner for executing the entry point
+ * use regional endpoint for STS in builds
+ * update instance type region availability.
+ * Update Dockerfile.gpu
+ * Removing extra packages to optimize space
+ * Adding function to skip test for py2 verison
+ * Installing tochvision from official pip wheel
+ * Add /bin/bash as default CMD
+ * Pytorch 1.2 py2 py3 dockerfiles added
+ * Add wait on entrypoint
+ * Add entrypoint script
+ * split training and serving logic
+
+### Testing and Release Infrastructure
+
+ * properly fail build if has-matching-changes fails
+ * properly fail build if has-matching-changes fails
+
 ## v1.0.9 (2019-08-15)
 
 ### Bug fixes and other changes
@@ -79,4 +118,3 @@
  * Add support for fastai (https://github.com/fastai/fastai) library.
  * Remove "requsests" from tests dependencies to avoid regular conflicts with "requests" package from "sagemaker" dependencies.
  * Add support for PyTorch-1.0.
- 
