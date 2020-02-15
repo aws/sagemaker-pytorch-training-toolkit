@@ -105,7 +105,7 @@ RUN pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pytho
 
 RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
 
-RUN curl -o /license.txt https://aws-dlc-licenses.s3.amazonaws.com/pytorch/license.txt
+RUN curl -o /license.txt https://aws-dlc-licenses.s3.amazonaws.com/pytorch-1.4.0/license.txt
 
 # Starts framework
 ENTRYPOINT ["bash", "-m", "start_with_right_hostname.sh"]
