@@ -1,3 +1,3 @@
 [flake8]
-application_import_names = image_utils, local_mode_utils, sagemaker_pytorch_container, test, timeout
+application_import_names = image_utils, local_mode_utils, sagemaker_pytorch_container, test, test-toolkit, timeout
 import-order-style = google
