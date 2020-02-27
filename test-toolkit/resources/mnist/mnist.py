@@ -16,7 +16,6 @@ import logging
 import os
 import sys
 
-import cv2 as cv
 import sagemaker_containers
 import torch
 import torch.distributed as dist
@@ -207,9 +206,6 @@ def assert_can_track_sagemaker_experiments():
 
 
 if __name__ == '__main__':
-    # test opencv
-    print(cv.__version__)
-
     parser = argparse.ArgumentParser()
 
     # Data and model checkpoints directories
