@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.2.0 (2020-02-27)
+
+### Features
+
+ * Remove unnecessary dependencies.
+
+### Bug Fixes and Other Changes
+
+ * Fix python 2 tox dependencies.
+ * copy all tests to test-toolkit folder.
+ * Update license URL
+ * Adding changes for PyTorch 1.4.0 DLC
+
 ## v1.1.0 (2020-02-09)
 
 ### Features
