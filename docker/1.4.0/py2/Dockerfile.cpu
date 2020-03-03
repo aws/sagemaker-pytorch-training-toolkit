@@ -69,7 +69,6 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
     /opt/conda/bin/conda clean -ya
 
 RUN conda install -c conda-forge \
-    awscli \
     opencv==4.0.1 \
  && conda install -y \
     scikit-learn==0.20.3 \
@@ -88,6 +87,7 @@ COPY sagemaker_pytorch_training.tar.gz /sagemaker_pytorch_training.tar.gz
 # The following section uninstalls torch and torchvision before installing the
 # custom versions from an S3 bucket. This will need to be removed in the future
 RUN pip install --no-cache-dir \
+    awscli \
     scipy==1.2.2 \
     sphinxcontrib-websupport==1.1.2 \
     future \
