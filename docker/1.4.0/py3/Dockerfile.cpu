@@ -76,7 +76,6 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
     typing==3.6.4 \
     "pyopenssl>=17.5.0" \
  && conda install -c conda-forge \
-    awscli \
     opencv==4.0.1 \
  && conda install -y \
     scikit-learn==0.21.2 \
@@ -93,6 +92,7 @@ RUN curl -o ~/miniconda.sh -O  https://repo.continuum.io/miniconda/Miniconda3-la
 RUN pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org \
  && ln -s /opt/conda/bin/pip /usr/local/bin/pip3 \
  && pip install --no-cache-dir -U \
+    awscli \
     fastai==1.0.59 \
     scipy==1.2.2 \
     ${SMDEBUG_URL} \
