@@ -32,7 +32,7 @@ phases:
       - tox -e flake8,twine
 
       # run unit tests
-      - tox -e py36,py27 test-toolkit/unit --parallel all
+      - tox -e py36,py27 test-toolkit/unit
 
       # define tags
       - DEFAULT_TAG="$FRAMEWORK_VERSION-pytorch-$BUILD_ID"
