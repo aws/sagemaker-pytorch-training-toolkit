@@ -33,7 +33,7 @@ phases:
       - tox -e flake8,twine
 
       # run unit tests
-      - tox -e py36,py27 --parallel all -- tests/unit
+      - tox -e py36,py27 --parallel all -- test-toolkit/unit
 
       # define tags
       - DEFAULT_TAG="$FRAMEWORK_VERSION-pytorch-$BUILD_ID"
@@ -47,31 +47,31 @@ phases:
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
       # run local cpu integration tests (build and push the image to ecr repo)
-      - test_cmd="pytest -B test/integration/local -B -P -T pytorch --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --tag $DEFAULT_TAG"
+      - test_cmd="pytest -B test-toolkit/integration/local -B -P -T pytorch --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --tag $DEFAULT_TAG"
       - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
-      - test_cmd="pytest -B test/integration/local -B -P -T dlc.cpu --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --tag $DLC_CPU_TAG"
+      - test_cmd="pytest -B test-toolkit/integration/local -B -P -T dlc.cpu --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --tag $DLC_CPU_TAG"
       - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
 
       # run gpu local integration tests
       - printf "$SETUP_CMDS" > $SETUP_FILE
       # no reason to rebuild the image again since it was already built and pushed to ecr during CPU tests
-      - default_cmd="pytest test/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DEFAULT_TAG"
+      - default_cmd="pytest test-toolkit/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DEFAULT_TAG"
       - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$py3_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
       - execute-command-if-has-matching-changes "$default_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
-      - dlc_cmd="pytest test/integration/local -B -P -T dlc.gpu --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DLC_GPU_TAG"
+      - dlc_cmd="pytest test-toolkit/integration/local -B -P -T dlc.gpu --region $AWS_DEFAULT_REGION --docker-base-name $PREPROD_IMAGE --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DLC_GPU_TAG"
       - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$dlc_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\" --skip-setup"
       - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
 
       # run cpu sagemaker integration tests
-      - test_cmd="pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY3_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $DEFAULT_TAG"
+      - test_cmd="pytest test-toolkit/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY3_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $DEFAULT_TAG"
       - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
-      - test_cmd="pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY2_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $DLC_CPU_TAG"
+      - test_cmd="pytest test-toolkit/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY2_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $DLC_CPU_TAG"
       - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
 
       # run gpu sagemaker integration tests
-      - test_cmd="pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY3_VERSION --processor gpu --instance-type $CPU_INSTANCE_TYPE --tag $DEFAULT_TAG"
+      - test_cmd="pytest test-toolkit/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY3_VERSION --processor gpu --instance-type $CPU_INSTANCE_TYPE --tag $DEFAULT_TAG"
       - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
-      - test_cmd="pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY2_VERSION --processor cgu --instance-type $CPU_INSTANCE_TYPE --tag $DLC_GPU_TAG"
+      - test_cmd="pytest test-toolkit/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY2_VERSION --processor cgu --instance-type $CPU_INSTANCE_TYPE --tag $DLC_GPU_TAG"
       - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
     finally:
       # shut down remote gpu instance
