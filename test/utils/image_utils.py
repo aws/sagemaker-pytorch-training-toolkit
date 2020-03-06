@@ -39,12 +39,10 @@ def build_image(framework_name, framework_version, py_version, processor, tag, c
 
     image_uri = get_image_uri(framework_name, tag)
 
-    dockerfile_location = os.path.join('docker', framework_version, 'final',
-                                       'Dockerfile.{}'.format(processor))
+    dockerfile_location = os.path.join('test-toolkit', 'docker', 'Dockerfile.gpu')
 
     subprocess.check_call(
-        ['docker', 'build', '-t', image_uri, '-f', dockerfile_location, '--build-arg',
-         'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
+        ['docker', 'build', '-t', image_uri, '-f', dockerfile_location, cwd], cwd=cwd)
     print('created image {}'.format(image_uri))
     return image_uri
 

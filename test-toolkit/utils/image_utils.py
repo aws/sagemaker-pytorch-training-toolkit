@@ -18,50 +18,40 @@ import sys
 
 CYAN_COLOR = '\033[36m'
 END_COLOR = '\033[0m'
+DLC_AWS_ID = '763104351884'
 
 
-def build_base_image(framework_name, framework_version, py_version,
-                     processor, base_image_tag, cwd='.'):
-    base_image_uri = get_base_image_uri(framework_name, base_image_tag)
+def build_image(framework_version, dockerfile, image_uri, region, cwd='.'):
+    _check_call('python setup.py sdist')
 
-    dockerfile_location = os.path.join('docker', framework_version, 'base',
-                                       'Dockerfile.{}'.format(processor))
+    if 'dlc' in dockerfile:
+        ecr_login(region, DLC_AWS_ID)
 
-    subprocess.check_call(['docker', 'build', '-t', base_image_uri,
-                           '-f', dockerfile_location, '--build-arg',
-                           'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
-    print('created image {}'.format(base_image_uri))
-    return base_image_uri
-
-
-def build_image(framework_name, framework_version, py_version, processor, tag, cwd='.'):
-    _check_call('python setup.py bdist_wheel')
-
-    image_uri = get_image_uri(framework_name, tag)
-
-    dockerfile_location = os.path.join('docker', framework_version, 'final',
-                                       'Dockerfile.{}'.format(processor))
+    dockerfile_location = os.path.join('test-toolkit', 'docker', framework_version, dockerfile)
 
     subprocess.check_call(
         ['docker', 'build', '-t', image_uri, '-f', dockerfile_location, '--build-arg',
-         'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
+         'region={}'.format(region), cwd], cwd=cwd)
     print('created image {}'.format(image_uri))
     return image_uri
 
 
-def get_base_image_uri(framework_name, base_image_tag):
-    return '{}-base:{}'.format(framework_name, base_image_tag)
+def push_image(ecr_image, region, aws_id):
+    ecr_login(region, aws_id)
+    _check_call('docker push {}'.format(ecr_image))
 
 
-def get_image_uri(framework_name, tag):
-    return '{}:{}'.format(framework_name, tag)
+def ecr_login(region, aws_id):
+    login = _check_call('aws ecr get-login --registry-ids {} '.format(aws_id)
+                        + '--no-include-email --region {}'.format(region))
+    _check_call(login.decode('utf-8').rstrip('\n'))
 
 
 def _check_call(cmd, *popenargs, **kwargs):
     if isinstance(cmd, str):
         cmd = cmd.split(" ")
     _print_cmd(cmd)
-    subprocess.check_call(cmd, *popenargs, **kwargs)
+    return subprocess.check_output(cmd, *popenargs, **kwargs)
 
 
 def _print_cmd(cmd):

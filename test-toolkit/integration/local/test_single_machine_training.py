@@ -16,8 +16,8 @@ import os
 
 from sagemaker.pytorch import PyTorch
 
-from test.utils.local_mode_utils import assert_files_exist
-from test.integration import data_dir, mnist_script, ROLE
+from utils.local_mode_utils import assert_files_exist
+from integration import data_dir, mnist_script, ROLE
 
 
 def test_mnist(docker_image, processor, instance_type, sagemaker_local_session, tmpdir):
