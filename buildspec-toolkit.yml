@@ -26,7 +26,6 @@ phases:
       - PY_COLORS=0
 
       # install
-      - pip3 install -U -e .
       - pip3 install -U -e .[test]
 
       # run linters
