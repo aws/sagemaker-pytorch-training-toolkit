@@ -101,11 +101,6 @@ def fixture_tag(request, framework_version, processor, py_version):
     return provided_tag if provided_tag else default_tag
 
 
-@pytest.fixture(scope='session', name='docker_image')
-def fixture_docker_image(docker_base_name, tag):
-    return '{}:{}'.format(docker_base_name, tag)
-
-
 @pytest.fixture
 def opt_ml():
     tmp = tempfile.mkdtemp()
