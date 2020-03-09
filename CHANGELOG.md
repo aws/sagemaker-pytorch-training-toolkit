@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.1 (2020-03-09)
+
+### Bug Fixes and Other Changes
+
+ * Install awscli from pypi instead of conda for PyTorch containers
+
 ## v1.2.0 (2020-02-27)
 
 ### Features
