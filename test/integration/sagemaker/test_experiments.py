@@ -17,15 +17,16 @@ import time
 import pytest
 from sagemaker.pytorch import PyTorch
 from sagemaker import utils
-from smexperiments.experiment import Experiment
-from smexperiments.trial import Trial
-from smexperiments.trial_component import TrialComponent
 from test.integration import training_dir, smdebug_mnist_script, DEFAULT_TIMEOUT
 from test.integration.sagemaker.timeout import timeout
 
 
 @pytest.mark.skip_py2_containers
 def test_training(sagemaker_session, ecr_image, instance_type):
+
+    from smexperiments.experiment import Experiment
+    from smexperiments.trial import Trial
+    from smexperiments.trial_component import TrialComponent
 
     sm_client = sagemaker_session.sagemaker_client
 
