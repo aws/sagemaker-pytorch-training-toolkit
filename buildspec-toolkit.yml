@@ -7,6 +7,7 @@ env:
     GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-pytorch-container'
+    DLC_ACCOUNT: '763104351884'
     SETUP_FILE: 'setup_cmds.sh'
     SETUP_CMDS: '#!/bin/bash\npip install --upgrade pip\npip install -U -e .\npip install -U -e .[test]'
 
@@ -51,13 +52,22 @@ phases:
       - create-key-pair
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
 
+      # build dlc gpu image because the base dlc image is too big and takes too long to build as part of the test
+      - python3 setup.py sdist
+      - build_dir="test-toolkit/docker/$FRAMEWORK_VERSION"
+      - $(aws ecr get-login --registry-ids $DLC_ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker build -f "$build_dir/Dockerfile.dlc.gpu" -t $PREPROD_IMAGE:$DLC_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
+      # push dlc gpu image to ecr
+      - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
+      - docker push $PREPROD_IMAGE:$DLC_GPU_TAG
+
       # run gpu local integration tests
       - printf "$SETUP_CMDS" > $SETUP_FILE
       # no reason to rebuild the image again since it was already built and pushed to ecr during CPU tests
       - generic_cmd="pytest test-toolkit/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $GENERIC_TAG"
       - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$generic_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
       - execute-command-if-has-matching-changes "test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
-      - dlc_cmd="pytest test-toolkit/integration/local --build-image --push-image --dockerfile-type dlc.gpu --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DLC_GPU_TAG"
+      - dlc_cmd="pytest test-toolkit/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DLC_GPU_TAG"
       - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$dlc_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\" --skip-setup"
       - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
 
