@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.2.3 (2020-03-11)
+
+### Bug Fixes and Other Changes
+
+ * Update smdebug to 0.7.0
+ * install sagemaker-experiments package only for 3.6
+
+## v1.2.2 (2020-03-10)
+
+### Bug Fixes and Other Changes
+
+ * upgrade to latest sagemaker-experiments
+ * install SageMaker Python SDK into Python 3 images
+
 ## v1.2.1 (2020-03-09)
 
 ### Bug Fixes and Other Changes
