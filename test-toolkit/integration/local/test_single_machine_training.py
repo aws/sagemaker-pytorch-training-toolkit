@@ -20,10 +20,10 @@ from utils.local_mode_utils import assert_files_exist
 from integration import data_dir, mnist_script, ROLE
 
 
-def test_mnist(ecr_image, processor, instance_type, sagemaker_local_session, tmpdir):
+def test_mnist(image_uri, processor, instance_type, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=mnist_script,
                         role=ROLE,
-                        image_name=ecr_image,
+                        image_name=image_uri,
                         train_instance_count=1,
                         train_instance_type=instance_type,
                         sagemaker_session=sagemaker_local_session,

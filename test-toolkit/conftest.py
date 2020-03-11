@@ -121,23 +121,23 @@ def fixture_use_gpu(processor):
 
 
 @pytest.fixture(scope='session', name='build_image', autouse=True)
-def fixture_build_image(request, framework_version, dockerfile, ecr_image, region):
+def fixture_build_image(request, framework_version, dockerfile, image_uri, region):
     build_image = request.config.getoption('--build-image')
     if build_image:
         return image_utils.build_image(framework_version=framework_version,
                                        dockerfile=dockerfile,
-                                       image_uri=ecr_image,
+                                       image_uri=image_uri,
                                        region=region,
                                        cwd=os.path.join(dir_path, '..'))
 
-    return ecr_image
+    return image_uri
 
 
 @pytest.fixture(scope='session', name='push_image', autouse=True)
-def fixture_push_image(request, ecr_image, region, aws_id):
+def fixture_push_image(request, image_uri, region, aws_id):
     push_image = request.config.getoption('--push-image')
     if push_image:
-        return image_utils.push_image(ecr_image, region, aws_id)
+        return image_utils.push_image(image_uri, region, aws_id)
     return None
 
 
@@ -168,8 +168,8 @@ def fixture_docker_registry(aws_id, region):
     return '{}.dkr.ecr.{}.amazonaws.com'.format(aws_id, region) if aws_id else None
 
 
-@pytest.fixture(name='ecr_image', scope='session')
-def fixture_ecr_image(docker_registry, docker_base_name, tag):
+@pytest.fixture(name='image_uri', scope='session')
+def fixture_image_uri(docker_registry, docker_base_name, tag):
     if docker_registry:
         return '{}/{}:{}'.format(docker_registry, docker_base_name, tag)
     return '{}:{}'.format(docker_base_name, tag)
