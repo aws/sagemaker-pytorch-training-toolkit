@@ -66,7 +66,7 @@ phases:
       # no reason to rebuild the image again since it was already built and pushed to ecr during CPU tests
       - generic_cmd="pytest test-toolkit/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $GENERIC_TAG"
       - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$generic_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\""
-      - execute-command-if-has-matching-changes "test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
+      - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
       - dlc_cmd="pytest test-toolkit/integration/local --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --processor gpu --tag $DLC_GPU_TAG"
       - test_cmd="remote-test --github-repo $GITHUB_REPO --test-cmd \"$dlc_cmd\" --setup-file $SETUP_FILE --pr-number \"$PR_NUM\" --skip-setup"
       - execute-command-if-has-matching-changes "$test_cmd" "test-toolkit/" "src/*.py" "setup.py" "setup.cfg" "buildspec-toolkit.yml" "docker/build_artifacts/*"
