@@ -50,7 +50,7 @@ phases:
       - prefix='ml.'
       - instance_type=${GPU_INSTANCE_TYPE#"$prefix"}
       - create-key-pair
-      - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu
+      - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu-latest
 
       # build dlc gpu image because the base dlc image is too big and takes too long to build as part of the test
       - python3 setup.py sdist
