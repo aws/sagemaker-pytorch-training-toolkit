@@ -94,7 +94,7 @@ RUN pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pytho
     awscli \
     fastai==1.0.59 \
     scipy==1.2.2 \
-    smdebug==0.5.0.post0 \
+    smdebug==0.7.0 \
     sagemaker==1.50.17 \
     sagemaker-experiments==0.1.7 \
     /sagemaker_pytorch_training.tar.gz \
