@@ -45,7 +45,8 @@ NO_P3_REGIONS = ['ap-east-1', 'ap-northeast-3', 'ap-southeast-1', 'ap-southeast-
 def pytest_addoption(parser):
     parser.addoption('--build-image', '-B', action='store_true')
     parser.addoption('--push-image', '-P', action='store_true')
-    parser.addoption('--dockerfile-type', '-T', choices=['pytorch', 'dlc'], default='pytorch')
+    parser.addoption('--dockerfile-type', '-T', choices=['dlc.cpu', 'dlc.gpu', 'pytorch'],
+                     default='pytorch')
     parser.addoption('--dockerfile', '-D', default=None)
     parser.addoption('--aws-id', default=None)
     parser.addoption('--instance-type')
