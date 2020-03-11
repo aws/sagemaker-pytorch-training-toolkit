@@ -1,4 +1,4 @@
-# Copyright 2018-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2019-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -39,10 +39,12 @@ def build_image(framework_name, framework_version, py_version, processor, tag, c
 
     image_uri = get_image_uri(framework_name, tag)
 
-    dockerfile_location = os.path.join('test-toolkit', 'docker', 'Dockerfile.gpu')
+    dockerfile_location = os.path.join('docker', framework_version, 'final',
+                                       'Dockerfile.{}'.format(processor))
 
     subprocess.check_call(
-        ['docker', 'build', '-t', image_uri, '-f', dockerfile_location, cwd], cwd=cwd)
+        ['docker', 'build', '-t', image_uri, '-f', dockerfile_location, '--build-arg',
+         'py_version={}'.format(py_version[-1]), cwd], cwd=cwd)
     print('created image {}'.format(image_uri))
     return image_uri
 
