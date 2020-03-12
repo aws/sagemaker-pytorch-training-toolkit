@@ -22,11 +22,19 @@ from test.integration.sagemaker.timeout import timeout
 
 
 @pytest.mark.skip_py2_containers
-def test_training(sagemaker_session, ecr_image, instance_type):
+def test_training(sagemaker_session, ecr_image, instance_type, py_version):
 
-    from smexperiments.experiment import Experiment
-    from smexperiments.trial import Trial
-    from smexperiments.trial_component import TrialComponent
+    if py_version is None or '2' in py_version:
+        pytest.skip('Skipping python2 {}'.format(py_version))
+        return
+
+    try:
+        from smexperiments.experiment import Experiment
+        from smexperiments.trial import Trial
+        from smexperiments.trial_component import TrialComponent
+    except ImportError:
+        pytest.skip('smexperiments module not found')
+        return
 
     sm_client = sagemaker_session.sagemaker_client
 
