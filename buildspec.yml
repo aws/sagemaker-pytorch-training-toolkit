@@ -28,27 +28,14 @@ phases:
 
   build:
     commands:
-      # install
-      - pip3 install -U -e .
-      - pip3 install -U -e .[test]
-
       # run linter
       - tox -e flake8
-
-      # run unit tests
-      - pytest test/unit
-
-      # create wheel in dist/
-      - python3 setup.py sdist
-      - tar_name=$(ls dist/sagemaker_pytorch_training-*.tar.gz)
-      - cp $tar_name sagemaker_pytorch_training.tar.gz
 
       - cpu_dockerfile="Dockerfile.cpu"
       - gpu_dockerfile="Dockerfile.gpu"
 
       # build py2 images
       - build_dir="docker/$FRAMEWORK_VERSION/py$CPU_PY2_VERSION"
-      - cp sagemaker_pytorch_training.tar.gz $build_dir/
       - cp -r docker/build_artifacts/* $build_dir/
       - CPU_PY2_TAG="$FRAMEWORK_VERSION-cpu-py2-$BUILD_ID"
       - GPU_PY2_TAG="$FRAMEWORK_VERSION-gpu-py2-$BUILD_ID"
@@ -57,7 +44,6 @@ phases:
 
       # build py3 image
       - build_dir="docker/$FRAMEWORK_VERSION/py$GPU_PY3_VERSION"
-      - cp sagemaker_pytorch_training.tar.gz $build_dir/
       - cp -r docker/build_artifacts/* $build_dir/
       - CPU_PY3_TAG="$FRAMEWORK_VERSION-cpu-py3-$BUILD_ID"
       - GPU_PY3_TAG="$FRAMEWORK_VERSION-gpu-py3-$BUILD_ID"
