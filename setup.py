@@ -16,6 +16,7 @@ from glob import glob
 import os
 from os.path import basename
 from os.path import splitext
+import sys
 
 from setuptools import find_packages, setup
 
@@ -23,6 +24,13 @@ from setuptools import find_packages, setup
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
+
+test_dependencies = ['boto3==1.10.32', 'coverage==4.5.3', 'docker-compose==1.23.2', 'flake8==3.7.7', 'Flask==1.1.1',
+                     'mock==2.0.0', 'pytest==4.4.0', 'pytest-cov==2.7.1', 'pytest-xdist==1.28.0', 'PyYAML==3.10',
+                     'sagemaker==1.28.1', 'torch==1.4.0', 'torchvision==0.5.0', 'tox==3.7.0', 'requests_mock==1.6.0']
+
+if sys.version_info.major > 2:
+    test_dependencies.append('sagemaker-experiments==0.1.7')
 
 setup(
     name='sagemaker_pytorch_training',
@@ -48,11 +56,12 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
 
-    install_requires=['retrying', 'sagemaker-containers>=2.6.2', 'six>=1.12.0'],
+    install_requires=[
+        'retrying',
+        'sagemaker-containers>=2.6.2',
+        'six>=1.12.0',
+        'sagemaker-experiments==0.1.7;python_version>="3.6"'],
     extras_require={
-        'test': ['boto3==1.10.32', 'coverage==4.5.3', 'docker-compose==1.23.2', 'flake8==3.7.7', 'Flask==1.1.1',
-                 'mock==2.0.0', 'pytest==4.4.0', 'pytest-cov==2.7.1', 'pytest-xdist==1.28.0', 'PyYAML==3.10',
-                 'sagemaker==1.28.1', 'torch==1.4.0', 'torchvision==0.5.0', 'tox==3.7.0', 'requests_mock==1.6.0'],
-        ':python_version=="3.6"': ['sagemaker-experiments==0.1.7']
+        'test': test_dependencies
     },
 )
