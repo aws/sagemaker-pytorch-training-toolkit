@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.2.4 (2020-03-12)
+
+### Bug Fixes and Other Changes
+
+ * install sm experiments always when python 3.6 or greater
+
 ## v1.2.3 (2020-03-11)
 
 ### Bug Fixes and Other Changes

@@ -88,7 +88,7 @@ phases:
       # run gpu sagemaker tests
       - test_cmd="pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY3_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE --tag $GPU_PY3_TAG"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "tests/" "src/*.py" "setup.py" "setup.cfg" "docker/*" "buildspec.yml"
-      - test_cmd="pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $CPU_PY2_VERSION --processor cpu --instance-type $CPU_INSTANCE_TYPE --tag $GPU_PY2_TAG"
+      - test_cmd="pytest test/integration/sagemaker --region $AWS_DEFAULT_REGION --docker-base-name $ECR_REPO --aws-id $ACCOUNT --framework-version $FRAMEWORK_VERSION --py-version $GPU_PY2_VERSION --processor gpu --instance-type $GPU_INSTANCE_TYPE --tag $GPU_PY2_TAG"
       - execute-command-if-has-matching-changes "$test_cmd" "test/" "tests/" "src/*.py" "setup.py" "setup.cfg" "docker/*" "buildspec.yml"
 
     finally:

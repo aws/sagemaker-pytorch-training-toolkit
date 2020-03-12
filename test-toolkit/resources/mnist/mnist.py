@@ -16,7 +16,6 @@ import logging
 import os
 import sys
 
-import cv2 as cv
 import sagemaker_containers
 import torch
 import torch.distributed as dist
@@ -157,9 +156,6 @@ def train(args):
         test(model, test_loader, device)
     save_model(model, args.model_dir)
 
-    if is_distributed and host_rank == 0 or not is_distributed:
-        assert_can_track_sagemaker_experiments()
-
 
 def test(model, test_loader, device):
     model.eval()
@@ -194,22 +190,7 @@ def save_model(model, model_dir):
     torch.save(model.state_dict(), path)
 
 
-def assert_can_track_sagemaker_experiments():
-    in_sagemaker_training = 'TRAINING_JOB_ARN' in os.environ
-    in_python_three = sys.version_info[0] == 3
-
-    if in_sagemaker_training and in_python_three:
-        import smexperiments.tracker
-
-        with smexperiments.tracker.Tracker.load() as tracker:
-            tracker.log_parameter('param', 1)
-            tracker.log_metric('metric', 1.0)
-
-
 if __name__ == '__main__':
-    # test opencv
-    print(cv.__version__)
-
     parser = argparse.ArgumentParser()
 
     # Data and model checkpoints directories
