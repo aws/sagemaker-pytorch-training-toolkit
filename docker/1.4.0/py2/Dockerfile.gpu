@@ -117,7 +117,7 @@ RUN conda install -c pytorch magma-cuda101==2.5.1 \
 # custom versions from an S3 bucket. This will need to be removed in the future
 RUN /opt/conda/bin/conda config --set ssl_verify False \
  && pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pythonhosted.org \
-    sagemaker-pytorch-training<2 \
+    "sagemaker-pytorch-training<2" \
  && pip uninstall torch -y \
  && pip install -U --no-cache-dir \
     https://pytorch-aws.s3.amazonaws.com/pytorch-1.4.0/py2/gpu/torch-1.4.0-cp27-cp27mu-manylinux1_x86_64.whl \

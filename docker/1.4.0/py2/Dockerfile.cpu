@@ -90,7 +90,7 @@ RUN pip install --no-cache-dir \
     scipy==1.2.2 \
     sphinxcontrib-websupport==1.1.2 \
     future \
-    sagemaker-pytorch-training<2 \
+    "sagemaker-pytorch-training<2" \
  && pip uninstall -y torch \
  && pip install -U --no-cache-dir https://pytorch-aws.s3.amazonaws.com/pytorch-1.4.0/py2/cpu/torch-1.4.0-cp27-cp27mu-manylinux1_x86_64.whl \
  && pip uninstall -y torchvision \
