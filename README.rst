@@ -114,12 +114,6 @@ Build your "base" image. Make sure it is named and tagged in accordance with you
 Dockerfile.
 
 
-::
-
-    # Create the SageMaker PyTorch Container Python package.
-    cd sagemaker-pytorch-container
-    python setup.py bdist_wheel
-
 If you want to build "final" Docker images, then use:
 
 ::
