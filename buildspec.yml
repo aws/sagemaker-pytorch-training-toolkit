@@ -28,6 +28,9 @@ phases:
 
   build:
     commands:
+      # install
+      - pip3 install -U -e .[test]
+
       # run linter
       - tox -e flake8
 
