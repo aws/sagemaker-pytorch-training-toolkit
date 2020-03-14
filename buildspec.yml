@@ -61,7 +61,7 @@ phases:
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
       - push_cmd="docker push $PREPROD_IMAGE:$CPU_PY2_TAG"
       - execute-command-if-has-matching-changes "$push_cmd" "test/" "tests/" "docker/*" "buildspec.yml"
-      - push_cmd="build_cmd="docker push $PREPROD_IMAGE:$CPU_PY3_TAG"
+      - push_cmd="docker push $PREPROD_IMAGE:$CPU_PY3_TAG"
       - execute-command-if-has-matching-changes "$push_cmd" "test/" "tests/" "docker/*" "buildspec.yml"
       - push_cmd="docker push $PREPROD_IMAGE:$GPU_PY2_TAG"
       - execute-command-if-has-matching-changes "$push_cmd" "test/" "tests/" "docker/*" "buildspec.yml"
