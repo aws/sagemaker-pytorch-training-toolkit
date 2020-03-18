@@ -86,6 +86,7 @@ RUN ompi_info --parsable --all | grep mpi_built_with_cuda_support:value \
  && rm ~/miniconda.sh \
  && /opt/conda/bin/conda install -y anaconda \
     python=$PYTHON_VERSION \
+    jupyter_client==5.3.4 \
     numpy==1.16.4 \
     ipython==5.8.0 \
     mkl==2019.4 \
