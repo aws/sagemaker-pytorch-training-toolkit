@@ -58,7 +58,7 @@ setup(
 
     install_requires=[
         'retrying',
-        'sagemaker-containers>=2.6.2',
+        'sagemaker-containers>=2.8.2',
         'six>=1.12.0',
         'sagemaker-experiments==0.1.7;python_version>="3.6"'],
     extras_require={
