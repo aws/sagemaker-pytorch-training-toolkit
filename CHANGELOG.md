@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.3.0 (2020-03-23)
+
+### Features
+
+ * Install toolkit from PyPI.
+
+### Bug Fixes and Other Changes
+
+ * upgrade sagemaker-containers to 2.8.2
+ * Install jupyter_client 5.3.4 in advanced for py2 gpu image
+ * update smdebug
+
+### Testing and Release Infrastructure
+
+ * run test-toolkit unit tests for release
+ * run build steps only when necessary.
+ * refactor toolkit tests.
+
 ## v1.2.4 (2020-03-12)
 
 ### Bug Fixes and Other Changes
