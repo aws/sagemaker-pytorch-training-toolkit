@@ -98,7 +98,6 @@ RUN conda install -c pytorch magma-cuda101==2.5.1 \
     opencv==4.0.1 \
  && conda install -y scikit-learn==0.21.2 \
     pandas==0.25.0 \
-    Pillow==6.2.0 \
     h5py==2.9.0 \
     requests==2.22.0 \
  && conda clean -ya
@@ -124,6 +123,7 @@ RUN pip install \
     --no-cache-dir fastai==1.0.59 \
     awscli \
     scipy==1.2.2 \
+    Pillow==7.1.0 \
  && pip install --no-cache-dir -U https://pytorch-aws.s3.amazonaws.com/pytorch-1.4.0/py3/gpu/torch-1.4.0-cp36-cp36m-manylinux1_x86_64.whl \
  && pip uninstall -y torchvision \
  && pip install --no-cache-dir -U \

@@ -73,7 +73,6 @@ RUN conda install -c conda-forge \
  && conda install -y \
     scikit-learn==0.20.3 \
     pandas==0.24.2 \
-    Pillow==6.2.0 \
     h5py==2.9.0 \
     requests==2.22.0 \
  && conda clean -ya \
@@ -88,6 +87,7 @@ COPY start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
 RUN pip install --no-cache-dir \
     awscli \
     scipy==1.2.2 \
+    Pillow==6.2.2 \
     sphinxcontrib-websupport==1.1.2 \
     future \
     "sagemaker-pytorch-training<2" \
