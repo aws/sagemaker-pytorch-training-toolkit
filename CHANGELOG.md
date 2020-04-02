@@ -1,5 +1,12 @@
 # Changelog
 
+## v1.3.1 (2020-04-02)
+
+### Bug Fixes and Other Changes
+
+ * upgrade pillow etc. to fix safety issues
+ * Upgrade sagemaker-containers and test with more than 1 epoch
+
 ## v1.3.0 (2020-03-23)
 
 ### Features
