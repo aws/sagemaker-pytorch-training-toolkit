@@ -16,6 +16,7 @@ import os
 
 import boto3
 import pytest
+from sagemaker import utils
 from sagemaker.pytorch import PyTorch
 from six.moves.urllib.parse import urlparse
 
@@ -59,7 +60,9 @@ def test_mnist_gpu(sagemaker_session, image_uri, dist_gpu_backend):
 
         training_input = sagemaker_session.upload_data(path=os.path.join(data_dir, 'training'),
                                                        key_prefix='pytorch/mnist')
-        pytorch.fit({'training': training_input})
+
+        job_name = utils.unique_name_from_base('test-pytorch-dist-ops')
+        pytorch.fit({'training': training_input}, job_name=job_name)
 
 
 def _test_dist_operations(sagemaker_session, image_uri, instance_type, dist_backend, train_instance_count=3):
@@ -71,10 +74,13 @@ def _test_dist_operations(sagemaker_session, image_uri, instance_type, dist_back
                           sagemaker_session=sagemaker_session,
                           image_name=image_uri,
                           hyperparameters={'backend': dist_backend})
+
         pytorch.sagemaker_session.default_bucket()
         fake_input = pytorch.sagemaker_session.upload_data(path=dist_operations_path,
                                                            key_prefix='pytorch/distributed_operations')
-        pytorch.fit({'required_argument': fake_input})
+
+        job_name = utils.unique_name_from_base('test-pytorch-dist-ops')
+        pytorch.fit({'required_argument': fake_input}, job_name=job_name)
 
 
 def _assert_s3_file_exists(region, s3_url):

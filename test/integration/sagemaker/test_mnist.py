@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 
 import pytest
+from sagemaker import utils
 from sagemaker.pytorch import PyTorch
 
 from test.integration import training_dir, mnist_script, DEFAULT_TIMEOUT
@@ -40,6 +41,9 @@ def _test_mnist_distributed(sagemaker_session, ecr_image, instance_type, dist_ba
                           sagemaker_session=sagemaker_session,
                           image_name=ecr_image,
                           hyperparameters={'backend': dist_backend, 'epochs': 2})
+
         training_input = pytorch.sagemaker_session.upload_data(path=training_dir,
                                                                key_prefix='pytorch/mnist')
-        pytorch.fit({'training': training_input})
+        job_name = utils.unique_name_from_base('test-pytorch-mnist')
+
+        pytorch.fit({'training': training_input}, job_name=job_name)
