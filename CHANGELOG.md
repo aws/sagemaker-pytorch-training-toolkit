@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.3.3 (2020-04-16)
+
+### Bug Fixes and Other Changes
+
+ * change miniconda installation in 1.4.0 Dockerfiles
+
+### Testing and Release Infrastructure
+
+ * parallelize SageMaker integ test runs
+ * remove (unused) model_fn from training scripts
+
 ## v1.3.2 (2020-04-07)
 
 ### Bug Fixes and Other Changes
