@@ -17,7 +17,7 @@ import os
 import sys
 
 import cv2 as cv
-import sagemaker_containers
+from sagemaker_training import environment
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -58,7 +58,7 @@ class Net(nn.Module):
 
 
 def parse_args():
-    env = sagemaker_containers.training_env()
+    env = environment.Environment()
     parser = argparse.ArgumentParser(description="PyTorch MNIST Example")
 
     parser.add_argument('--data_dir', type=str)

@@ -18,7 +18,7 @@ import os
 import sys
 
 import cv2 as cv
-import sagemaker_containers
+from sagemaker_training import environment
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -225,7 +225,7 @@ if __name__ == '__main__':
                         help='backend for distributed training')
 
     # Container environment
-    env = sagemaker_containers.training_env()
+    env = environment.Environment()
     parser.add_argument('--hosts', type=list, default=env.hosts)
     parser.add_argument('--current-host', type=str, default=env.current_host)
     parser.add_argument('--model-dir', type=str, default=env.model_dir)
