@@ -17,7 +17,7 @@ from retrying import retry
 import six
 import socket
 import sys
-import sagemaker_containers.beta.framework as framework
+from sagemaker_training import entry_point, environment, errors, runner
 
 MASTER_PORT = '7777'
 
@@ -47,11 +47,13 @@ def train(training_environment):
 
     logger.info('Invoking user training script.')
     try:
-        framework.modules.download_and_install(training_environment.module_dir)
-        framework.entry_point.run(training_environment.module_dir, training_environment.user_entry_point,
-                                  training_environment.to_cmd_args(), training_environment.to_env_vars(),
-                                  capture_error=True, runner=framework.runner.ProcessRunnerType)
-    except framework.errors.ExecuteUserScriptError as err:
+        entry_point.run(uri=training_environment.module_dir,
+                        user_entry_point=training_environment.user_entry_point,
+                        args=training_environment.to_cmd_args(),
+                        env_vars=training_environment.to_env_vars(),
+                        capture_error=True,
+                        runner_type=runner.ProcessRunnerType)
+    except errors.ExecuteUserScriptError as err:
         message = str(err)
         if message.find('terminate called after throwing an instance of \'gloo::EnforceNotMet\'') > -1:
             logger.warn('Known exception: {}'.format(message))
@@ -96,4 +98,4 @@ def _set_nccl_environment(network_interface_name):
 
 
 def main():
-    train(framework.training_env())
+    train(environment.Environment())

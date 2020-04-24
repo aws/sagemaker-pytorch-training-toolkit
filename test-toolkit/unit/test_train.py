@@ -17,7 +17,7 @@ import shutil
 import tempfile
 
 import pytest
-import sagemaker_containers.beta.framework as framework
+from sagemaker_training import errors, runner
 import six
 import torch.nn as nn
 from mock import MagicMock, PropertyMock
@@ -57,20 +57,20 @@ def fixture_user_module_with_save():
     return MagicMock(spec=['train', 'save'])
 
 
-@patch('sagemaker_containers.beta.framework.modules.download_and_install')
-@patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('sagemaker_training.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
-def test_train(run_entry_point, download_and_install, training_env):
+def test_train(run_entry_point, training_env):
     train(training_env)
 
-    download_and_install.assert_called_with(training_env.module_dir)
-    run_entry_point.assert_called_with(training_env.module_dir, training_env.user_entry_point,
-                                       training_env.to_cmd_args(), training_env.to_env_vars(),
-                                       capture_error=True, runner=framework.runner.ProcessRunnerType)
+    run_entry_point.assert_called_with(uri=training_env.module_dir,
+                                       user_entry_point=training_env.user_entry_point,
+                                       args=training_env.to_cmd_args(),
+                                       env_vars=training_env.to_env_vars(),
+                                       capture_error=True,
+                                       runner_type=runner.ProcessRunnerType)
 
 
-@patch('sagemaker_containers.beta.framework.modules.download_and_install', MagicMock())
-@patch('sagemaker_containers.beta.framework.entry_point.run', MagicMock())
+@patch('sagemaker_training.entry_point.run', MagicMock())
 @patch('socket.gethostbyname', MagicMock())
 def test_environment(training_env):
     train(training_env)
@@ -86,7 +86,7 @@ def test_environment(training_env):
 
 
 @patch('sagemaker_pytorch_container.training.train')
-@patch('sagemaker_containers.beta.framework.training_env')
+@patch('sagemaker_training.environment.Environment')
 def test_training_start(mock_training_env, mock_train, training_env):
     mock_training_env.return_value = training_env
     main()
@@ -114,12 +114,11 @@ def test_dns_lookup_fail():
     assert not _dns_lookup('algo-1')
 
 
-@patch('sagemaker_containers.beta.framework.modules.download_and_install', MagicMock())
-@patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('sagemaker_training.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
 def test_gloo_exception_intercepted(run_entry_point, training_env):
     output = 'terminate called after throwing an instance of \'gloo::EnforceNotMet\''
-    run_entry_point.side_effect = framework.errors.ExecuteUserScriptError(
+    run_entry_point.side_effect = errors.ExecuteUserScriptError(
         cmd='Command "/usr/bin/python -m userscript"',
         output=output.encode('latin1') if six.PY3 else output
     )
@@ -127,14 +126,13 @@ def test_gloo_exception_intercepted(run_entry_point, training_env):
     run_entry_point.assert_called()
 
 
-@patch('sagemaker_containers.beta.framework.modules.download_and_install', MagicMock())
-@patch('sagemaker_containers.beta.framework.entry_point.run')
+@patch('sagemaker_training.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
 def test_user_script_error_raised(run_entry_point, training_env):
     output = 'Not \'gloo::EnforceNotMet\' exception.'
-    run_entry_point.side_effect = framework.errors.ExecuteUserScriptError(
+    run_entry_point.side_effect = errors.ExecuteUserScriptError(
         cmd='Command "/usr/bin/python -m userscript"',
         output=output.encode('latin1') if six.PY3 else output
     )
-    with pytest.raises(framework.errors.ExecuteUserScriptError):
+    with pytest.raises(errors.ExecuteUserScriptError):
         train(training_env)
