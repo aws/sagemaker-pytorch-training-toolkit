@@ -252,3 +252,4 @@ if __name__ == '__main__':
     parser.add_argument('--num-gpus', type=int, default=env.num_gpus)
 
     train(parser.parse_args())
+    
