@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.0.0 (2020-04-27)
+
+### Breaking Changes
+
+ * Replace sagemaker-containers with sagemaker-training
+
 ## v1.3.3 (2020-04-16)
 
 ### Bug Fixes and Other Changes
