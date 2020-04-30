@@ -25,9 +25,9 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-test_dependencies = ['boto3==1.10.32', 'coverage==4.5.3', 'docker-compose==1.23.2', 'flake8==3.7.7', 'Flask==1.1.1',
-                     'mock==2.0.0', 'pytest==4.4.0', 'pytest-cov==2.7.1', 'pytest-xdist==1.28.0', 'PyYAML==3.10',
-                     'sagemaker==1.28.1', 'torch==1.4.0', 'torchvision==0.5.0', 'tox==3.7.0', 'requests_mock==1.6.0']
+test_dependencies = ['boto3==1.12.47', 'coverage==5.1', 'docker-compose==1.25.5', 'flake8==3.7.9', 'Flask==1.1.1',
+                     'mock==4.0.2', 'pytest==5.4.1', 'pytest-cov==2.8.1', 'pytest-xdist==1.31.0', 'PyYAML==5.3.1',
+                     'sagemaker==1.50.17', 'torch==1.5.0', 'torchvision==0.6.0', 'tox==3.14.6', 'requests_mock==1.7.0']
 
 if sys.version_info.major > 2:
     test_dependencies.append('sagemaker-experiments==0.1.7')
