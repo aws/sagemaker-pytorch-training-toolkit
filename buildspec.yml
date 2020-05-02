@@ -6,7 +6,7 @@ env:
     CPU_PY3_VERSION: '3'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
     GPU_PY3_VERSION: '3'
-    GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
+    GPU_INSTANCE_TYPE: 'ml.p2.8xlarge'
     LOCAL_BASE_REPO: 'pytorch-base'
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-pytorch-container'
