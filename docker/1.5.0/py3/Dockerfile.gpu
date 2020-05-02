@@ -157,11 +157,13 @@ RUN mv /home/.openmpi/bin/mpirun /home/.openmpi/bin/mpirun.real \
  && echo NCCL_SOCKET_IFNAME=^docker0 >> /etc/nccl.conf
 
 # Install OpenSSH for MPI to communicate between containers, Allow OpenSSH to talk to containers without asking for confirmation
-RUN apt-get install -y --no-install-recommends openssh-client openssh-server \
+RUN apt-get update && apt-get install -y --no-install-recommends openssh-client openssh-server \
  && mkdir -p /var/run/sshd \
  && cat /etc/ssh/ssh_config | grep -v StrictHostKeyChecking > /etc/ssh/ssh_config.new \
  && echo "    StrictHostKeyChecking no" >> /etc/ssh/ssh_config.new \
- && mv /etc/ssh/ssh_config.new /etc/ssh/ssh_config
+ && mv /etc/ssh/ssh_config.new /etc/ssh/ssh_config \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /
 
