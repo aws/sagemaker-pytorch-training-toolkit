@@ -4,7 +4,7 @@ env:
   variables:
     FRAMEWORK_VERSION: '1.4.0'
     CPU_INSTANCE_TYPE: 'ml.c4.xlarge'
-    GPU_INSTANCE_TYPE: 'ml.p2.xlarge'
+    GPU_INSTANCE_TYPE: 'ml.p2.8xlarge'
     ECR_REPO: 'sagemaker-test'
     GITHUB_REPO: 'sagemaker-pytorch-container'
     DLC_ACCOUNT: '763104351884'

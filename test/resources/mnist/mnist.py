@@ -11,7 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
-
 import argparse
 import logging
 import os
@@ -26,6 +25,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
+
 from torchvision import datasets, transforms
 
 logger = logging.getLogger(__name__)
@@ -122,18 +122,25 @@ def train(args):
         100. * len(test_loader.sampler) / len(test_loader.dataset)
     ))
 
-    model = Net().to(device)
+    model = Net()
     if is_distributed and use_cuda:
         # multi-machine multi-gpu case
         logger.debug("Multi-machine multi-gpu: using DistributedDataParallel.")
-        model = torch.nn.parallel.DistributedDataParallel(model)
+        # establish host rank and set device on this node
+        torch.cuda.set_device(host_rank)
+        model.cuda(host_rank)
+        # for multiprocessing distributed, the DDP constructor should always set
+        # the single device scope. otherwise, DDP will use all available devices.
+        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[host_rank], output_device=host_rank)
     elif use_cuda:
         # single-machine multi-gpu case
         logger.debug("Single-machine multi-gpu: using DataParallel().cuda().")
+        model =  model.to(device)
         model = torch.nn.DataParallel(model).to(device)
     else:
         # single-machine or multi-machine cpu case
         logger.debug("Single-machine/multi-machine cpu: using DataParallel.")
+        model =  model.to(device)
         model = torch.nn.DataParallel(model)
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
@@ -141,7 +148,11 @@ def train(args):
     for epoch in range(1, args.epochs + 1):
         model.train()
         for batch_idx, (data, target) in enumerate(train_loader, 1):
-            data, target = data.to(device), target.to(device)
+            if is_distributed and use_cuda:
+                # multi-machine multi-gpu case - allow asynchrous GPU copies of the data
+                data, target = data.cuda(non_blocking=True), target.cuda(non_blocking=True)
+            else:
+                data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
@@ -177,6 +188,14 @@ def test(model, test_loader, device):
     logger.debug('Test set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
+
+
+def model_fn(model_dir):
+    logger.info('model_fn')
+    model = torch.nn.DataParallel(Net())
+    with open(os.path.join(model_dir, 'model.pth'), 'rb') as f:
+        model.load_state_dict(torch.load(f))
+    return model
 
 
 def save_model(model, model_dir):
@@ -233,3 +252,4 @@ if __name__ == '__main__':
     parser.add_argument('--num-gpus', type=int, default=env.num_gpus)
 
     train(parser.parse_args())
+    
