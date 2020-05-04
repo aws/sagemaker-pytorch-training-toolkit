@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.1.0 (2020-05-04)
+
+### Features
+
+ * add Dockerfiles for PyTorch 1.5.0
+
 ## v2.0.0 (2020-04-27)
 
 ### Breaking Changes
