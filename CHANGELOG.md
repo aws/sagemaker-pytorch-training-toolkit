@@ -1,5 +1,23 @@
 # Changelog
 
+## v2.1.1 (2020-05-05)
+
+### Bug Fixes and Other Changes
+
+ * Pin Smdebug to the latest version (0.7.2)
+
+## v2.1.0 (2020-05-04)
+
+### Features
+
+ * add Dockerfiles for PyTorch 1.5.0
+
+## v2.0.0 (2020-04-27)
+
+### Breaking Changes
+
+ * Replace sagemaker-containers with sagemaker-training
+
 ## v1.3.3 (2020-04-16)
 
 ### Bug Fixes and Other Changes
