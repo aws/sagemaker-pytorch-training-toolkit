@@ -9,7 +9,7 @@ env:
     GITHUB_REPO: 'sagemaker-pytorch-container'
     DLC_ACCOUNT: '763104351884'
     SETUP_FILE: 'setup_cmds.sh'
-    SETUP_CMDS: '#!/bin/bash\npip install --upgrade pip\npip install -U -e .\npip install -U -e .[test]'
+    SETUP_CMDS: '#!/bin/bash\npython3.6 -m pip install --upgrade pip\npython3.6 -m pip install -U -e .\npython3.6 -m pip install -U -e .[test]'
 
 phases:
   pre_build:
@@ -25,9 +25,6 @@ phases:
     commands:
       - TOX_PARALLEL_NO_SPINNER=1
       - PY_COLORS=0
-
-      # install
-      - pip3 install -U -e .[test]
 
       # run linters
       - tox -e flake8,twine
@@ -53,7 +50,7 @@ phases:
       - launch-ec2-instance --instance-type $instance_type --ami-name dlami-ubuntu-latest
 
       # build DLC GPU image because the base DLC image is too big and takes too long to build as part of the test
-      - python3 setup.py sdist
+      - python3.6 setup.py sdist
       - build_dir="test-toolkit/docker/$FRAMEWORK_VERSION"
       - $(aws ecr get-login --registry-ids $DLC_ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
       - docker build -f "$build_dir/Dockerfile.dlc.gpu" -t $PREPROD_IMAGE:$DLC_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
