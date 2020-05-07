@@ -54,11 +54,12 @@ setup(
         "Programming Language :: Python",
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
 
     install_requires=[
         'retrying',
-        'sagemaker-training>=3.4.2',
+        'sagemaker-training>=3.5.0',
         'six>=1.12.0',
         'sagemaker-experiments==0.1.7;python_version>="3.6"'],
     extras_require={
