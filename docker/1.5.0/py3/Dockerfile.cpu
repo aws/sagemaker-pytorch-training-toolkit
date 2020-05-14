@@ -91,6 +91,7 @@ RUN pip install --upgrade pip --trusted-host pypi.org --trusted-host files.pytho
  && pip install --no-cache-dir -U \
     awscli \
     fastai==1.0.59 \
+    ipywidgets==7.5.1 \
     scipy==1.2.2 \
     smdebug==0.7.2 \
     sagemaker==1.50.17 \
