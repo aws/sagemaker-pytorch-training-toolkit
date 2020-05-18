@@ -59,7 +59,7 @@ setup(
 
     install_requires=[
         'retrying',
-        'sagemaker-training>=3.5.0',
+        'sagemaker-training>=3.5.1',
         'six>=1.12.0',
         'sagemaker-experiments==0.1.7;python_version>="3.6"'],
     extras_require={
