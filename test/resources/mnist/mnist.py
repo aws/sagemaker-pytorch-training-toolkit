@@ -11,13 +11,13 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
+
 import argparse
 import logging
 import os
 import sys
 
-import cv2 as cv
-import sagemaker_containers
+from sagemaker_training import environment
 import torch
 import torch.distributed as dist
 import torch.nn as nn
@@ -25,7 +25,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 import torch.utils.data
 import torch.utils.data.distributed
-
 from torchvision import datasets, transforms
 
 logger = logging.getLogger(__name__)
@@ -122,25 +121,18 @@ def train(args):
         100. * len(test_loader.sampler) / len(test_loader.dataset)
     ))
 
-    model = Net()
+    model = Net().to(device)
     if is_distributed and use_cuda:
         # multi-machine multi-gpu case
         logger.debug("Multi-machine multi-gpu: using DistributedDataParallel.")
-        # establish host rank and set device on this node
-        torch.cuda.set_device(host_rank)
-        model.cuda(host_rank)
-        # for multiprocessing distributed, the DDP constructor should always set
-        # the single device scope. otherwise, DDP will use all available devices.
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[host_rank], output_device=host_rank)
+        model = torch.nn.parallel.DistributedDataParallel(model)
     elif use_cuda:
         # single-machine multi-gpu case
         logger.debug("Single-machine multi-gpu: using DataParallel().cuda().")
-        model =  model.to(device)
         model = torch.nn.DataParallel(model).to(device)
     else:
         # single-machine or multi-machine cpu case
         logger.debug("Single-machine/multi-machine cpu: using DataParallel.")
-        model =  model.to(device)
         model = torch.nn.DataParallel(model)
 
     optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
@@ -148,11 +140,7 @@ def train(args):
     for epoch in range(1, args.epochs + 1):
         model.train()
         for batch_idx, (data, target) in enumerate(train_loader, 1):
-            if is_distributed and use_cuda:
-                # multi-machine multi-gpu case - allow asynchrous GPU copies of the data
-                data, target = data.cuda(non_blocking=True), target.cuda(non_blocking=True)
-            else:
-                data, target = data.to(device), target.to(device)
+            data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
             loss = F.nll_loss(output, target)
@@ -167,9 +155,6 @@ def train(args):
                     100. * batch_idx / len(train_loader), loss.item()))
         test(model, test_loader, device)
     save_model(model, args.model_dir)
-
-    if is_distributed and host_rank == 0 or not is_distributed:
-        assert_can_track_sagemaker_experiments()
 
 
 def test(model, test_loader, device):
@@ -190,14 +175,6 @@ def test(model, test_loader, device):
         100. * correct / len(test_loader.dataset)))
 
 
-def model_fn(model_dir):
-    logger.info('model_fn')
-    model = torch.nn.DataParallel(Net())
-    with open(os.path.join(model_dir, 'model.pth'), 'rb') as f:
-        model.load_state_dict(torch.load(f))
-    return model
-
-
 def save_model(model, model_dir):
     logger.info("Saving the model.")
     path = os.path.join(model_dir, 'model.pth')
@@ -205,22 +182,7 @@ def save_model(model, model_dir):
     torch.save(model.state_dict(), path)
 
 
-def assert_can_track_sagemaker_experiments():
-    in_sagemaker_training = 'TRAINING_JOB_ARN' in os.environ
-    in_python_three = sys.version_info[0] == 3
-
-    if in_sagemaker_training and in_python_three:
-        import smexperiments.tracker
-
-        with smexperiments.tracker.Tracker.load() as tracker:
-            tracker.log_parameter('param', 1)
-            tracker.log_metric('metric', 1.0)
-
-
 if __name__ == '__main__':
-    # test opencv
-    print(cv.__version__)
-
     parser = argparse.ArgumentParser()
 
     # Data and model checkpoints directories
@@ -244,7 +206,7 @@ if __name__ == '__main__':
                         help='backend for distributed training')
 
     # Container environment
-    env = sagemaker_containers.training_env()
+    env = environment.Environment()
     parser.add_argument('--hosts', type=list, default=env.hosts)
     parser.add_argument('--current-host', type=str, default=env.current_host)
     parser.add_argument('--model-dir', type=str, default=env.model_dir)
@@ -252,4 +214,3 @@ if __name__ == '__main__':
     parser.add_argument('--num-gpus', type=int, default=env.num_gpus)
 
     train(parser.parse_args())
-    

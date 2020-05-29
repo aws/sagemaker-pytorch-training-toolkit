@@ -17,8 +17,8 @@ import os
 import pytest
 from sagemaker.pytorch import PyTorch
 
-from test.integration import data_dir, dist_operations_path, mnist_script, ROLE
-from test.utils.local_mode_utils import assert_files_exist
+from integration import data_dir, dist_operations_path, mnist_script, ROLE
+from utils.local_mode_utils import assert_files_exist
 
 MODEL_SUCCESS_FILES = {
     'model': ['success'],
@@ -32,10 +32,10 @@ def fixture_dist_gpu_backend(request):
 
 
 @pytest.mark.skip_gpu
-def test_dist_operations_path_cpu(docker_image, dist_cpu_backend, sagemaker_local_session, tmpdir):
+def test_dist_operations_path_cpu(image_uri, dist_cpu_backend, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=dist_operations_path,
                         role=ROLE,
-                        image_name=docker_image,
+                        image_name=image_uri,
                         train_instance_count=2,
                         train_instance_type='local',
                         sagemaker_session=sagemaker_local_session,
@@ -46,10 +46,10 @@ def test_dist_operations_path_cpu(docker_image, dist_cpu_backend, sagemaker_loca
 
 
 @pytest.mark.skip_cpu
-def test_dist_operations_path_gpu_nccl(docker_image, sagemaker_local_session, tmpdir):
+def test_dist_operations_path_gpu_nccl(image_uri, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=dist_operations_path,
                         role=ROLE,
-                        image_name=docker_image,
+                        image_name=image_uri,
                         train_instance_count=1,
                         train_instance_type='local_gpu',
                         sagemaker_session=sagemaker_local_session,
@@ -60,10 +60,10 @@ def test_dist_operations_path_gpu_nccl(docker_image, sagemaker_local_session, tm
 
 
 @pytest.mark.skip_gpu
-def test_cpu_nccl(docker_image, sagemaker_local_session, tmpdir):
+def test_cpu_nccl(image_uri, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=mnist_script,
                         role=ROLE,
-                        image_name=docker_image,
+                        image_name=image_uri,
                         train_instance_count=2,
                         train_instance_type='local',
                         sagemaker_session=sagemaker_local_session,
@@ -78,10 +78,10 @@ def test_cpu_nccl(docker_image, sagemaker_local_session, tmpdir):
 
 
 @pytest.mark.skip_gpu
-def test_mnist_cpu(docker_image, dist_cpu_backend, sagemaker_local_session, tmpdir):
+def test_mnist_cpu(image_uri, dist_cpu_backend, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=mnist_script,
                         role=ROLE,
-                        image_name=docker_image,
+                        image_name=image_uri,
                         train_instance_count=2,
                         train_instance_type='local',
                         sagemaker_session=sagemaker_local_session,

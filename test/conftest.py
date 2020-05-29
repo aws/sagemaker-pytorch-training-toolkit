@@ -22,7 +22,8 @@ import sys
 import tempfile
 
 from sagemaker import LocalSession, Session
-from sagemaker.pytorch import PyTorch
+
+from utils import image_utils
 
 logger = logging.getLogger(__name__)
 logging.getLogger('boto').setLevel(logging.INFO)
@@ -42,15 +43,31 @@ NO_P3_REGIONS = ['ap-east-1', 'ap-northeast-3', 'ap-southeast-1', 'ap-southeast-
 
 
 def pytest_addoption(parser):
-    parser.addoption('--aws-id')
+    parser.addoption('--build-image', '-B', action='store_true')
+    parser.addoption('--push-image', '-P', action='store_true')
+    parser.addoption('--dockerfile-type', '-T', choices=['dlc.cpu', 'dlc.gpu', 'pytorch'],
+                     default='pytorch')
+    parser.addoption('--dockerfile', '-D', default=None)
+    parser.addoption('--aws-id', default=None)
     parser.addoption('--instance-type')
-    parser.addoption('--docker-base-name', default='pytorch')
+    parser.addoption('--docker-base-name', default='sagemaker-pytorch-training')
     parser.addoption('--region', default='us-west-2')
-    parser.addoption('--framework-version', default=PyTorch.LATEST_VERSION)
+    parser.addoption('--framework-version', default="1.4.0")
     parser.addoption('--py-version', choices=['2', '3'], default=str(sys.version_info.major))
     parser.addoption('--processor', choices=['gpu', 'cpu'], default='cpu')
     # If not specified, will default to {framework-version}-{processor}-py{py-version}
     parser.addoption('--tag', default=None)
+
+
+@pytest.fixture(scope='session', name='dockerfile_type')
+def fixture_dockerfile_type(request):
+    return request.config.getoption('--dockerfile-type')
+
+
+@pytest.fixture(scope='session', name='dockerfile')
+def fixture_dockerfile(request, dockerfile_type):
+    dockerfile = request.config.getoption('--dockerfile')
+    return dockerfile if dockerfile else 'Dockerfile.{}'.format(dockerfile_type)
 
 
 @pytest.fixture(scope='session', name='docker_base_name')
@@ -85,11 +102,6 @@ def fixture_tag(request, framework_version, processor, py_version):
     return provided_tag if provided_tag else default_tag
 
 
-@pytest.fixture(scope='session', name='docker_image')
-def fixture_docker_image(docker_base_name, tag):
-    return '{}:{}'.format(docker_base_name, tag)
-
-
 @pytest.fixture
 def opt_ml():
     tmp = tempfile.mkdtemp()
@@ -106,6 +118,27 @@ def opt_ml():
 @pytest.fixture(scope='session', name='use_gpu')
 def fixture_use_gpu(processor):
     return processor == 'gpu'
+
+
+@pytest.fixture(scope='session', name='build_image', autouse=True)
+def fixture_build_image(request, framework_version, dockerfile, image_uri, region):
+    build_image = request.config.getoption('--build-image')
+    if build_image:
+        return image_utils.build_image(framework_version=framework_version,
+                                       dockerfile=dockerfile,
+                                       image_uri=image_uri,
+                                       region=region,
+                                       cwd=os.path.join(dir_path, '..'))
+
+    return image_uri
+
+
+@pytest.fixture(scope='session', name='push_image', autouse=True)
+def fixture_push_image(request, image_uri, region, aws_id):
+    push_image = request.config.getoption('--push-image')
+    if push_image:
+        return image_utils.push_image(image_uri, region, aws_id)
+    return None
 
 
 @pytest.fixture(scope='session', name='sagemaker_session')
@@ -132,12 +165,14 @@ def fixture_instance_type(request, processor):
 
 @pytest.fixture(name='docker_registry', scope='session')
 def fixture_docker_registry(aws_id, region):
-    return '{}.dkr.ecr.{}.amazonaws.com'.format(aws_id, region)
+    return '{}.dkr.ecr.{}.amazonaws.com'.format(aws_id, region) if aws_id else None
 
 
-@pytest.fixture(name='ecr_image', scope='session')
-def fixture_ecr_image(docker_registry, docker_base_name, tag):
-    return '{}/{}:{}'.format(docker_registry, docker_base_name, tag)
+@pytest.fixture(name='image_uri', scope='session')
+def fixture_image_uri(docker_registry, docker_base_name, tag):
+    if docker_registry:
+        return '{}/{}:{}'.format(docker_registry, docker_base_name, tag)
+    return '{}:{}'.format(docker_base_name, tag)
 
 
 @pytest.fixture(scope='session', name='dist_cpu_backend', params=['gloo'])
