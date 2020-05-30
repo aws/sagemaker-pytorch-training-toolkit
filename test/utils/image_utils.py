@@ -27,7 +27,7 @@ def build_image(framework_version, dockerfile, image_uri, region, cwd='.'):
     if 'dlc' in dockerfile:
         ecr_login(region, DLC_AWS_ID)
 
-    dockerfile_location = os.path.join('test-toolkit', 'container', framework_version, dockerfile)
+    dockerfile_location = os.path.join('test', 'container', framework_version, dockerfile)
 
     subprocess.check_call(
         ['docker', 'build', '-t', image_uri, '-f', dockerfile_location, '--build-arg',
