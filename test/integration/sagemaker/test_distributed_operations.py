@@ -20,9 +20,8 @@ from sagemaker import utils
 from sagemaker.pytorch import PyTorch
 from six.moves.urllib.parse import urlparse
 
-from test.integration import (data_dir, dist_operations_path, fastai_path, mnist_script,
-                              DEFAULT_TIMEOUT)
-from test.integration.sagemaker.timeout import timeout
+from integration import data_dir, dist_operations_path, mnist_script, DEFAULT_TIMEOUT
+from integration.sagemaker.timeout import timeout
 
 MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
 
@@ -30,75 +29,50 @@ MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
 @pytest.mark.skip_gpu
 @pytest.mark.deploy_test
 @pytest.mark.skip_test_in_region
-def test_dist_operations_cpu(sagemaker_session, ecr_image, instance_type, dist_cpu_backend):
+def test_dist_operations_cpu(sagemaker_session, image_uri, instance_type, dist_cpu_backend):
     instance_type = instance_type or 'ml.c4.xlarge'
-    _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_cpu_backend)
+    _test_dist_operations(sagemaker_session, image_uri, instance_type, dist_cpu_backend)
 
 
 @pytest.mark.skip_cpu
 @pytest.mark.deploy_test
-def test_dist_operations_gpu(sagemaker_session, instance_type, ecr_image, dist_gpu_backend):
+def test_dist_operations_gpu(sagemaker_session, instance_type, image_uri, dist_gpu_backend):
     instance_type = instance_type or 'ml.p2.xlarge'
-    _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_gpu_backend)
+    _test_dist_operations(sagemaker_session, image_uri, instance_type, dist_gpu_backend)
 
 
 @pytest.mark.skip_cpu
-def test_dist_operations_multi_gpu(sagemaker_session, ecr_image, dist_gpu_backend):
-    _test_dist_operations(sagemaker_session, ecr_image, MULTI_GPU_INSTANCE, dist_gpu_backend, 1)
-
-
-@pytest.mark.skip_cpu
-@pytest.mark.skip_py2_containers
-def test_dist_operations_fastai_gpu(sagemaker_session, ecr_image):
-    with timeout(minutes=DEFAULT_TIMEOUT):
-        pytorch = PyTorch(entry_point='train_cifar.py',
-                          source_dir=os.path.join(fastai_path, 'cifar'),
-                          role='SageMakerRole',
-                          train_instance_count=1,
-                          train_instance_type=MULTI_GPU_INSTANCE,
-                          sagemaker_session=sagemaker_session,
-                          image_name=ecr_image)
-
-        pytorch.sagemaker_session.default_bucket()
-        training_input = pytorch.sagemaker_session.upload_data(
-            path=os.path.join(fastai_path, 'cifar_tiny', 'training'),
-            key_prefix='pytorch/distributed_operations'
-        )
-
-        job_name = utils.unique_name_from_base('test-pytorch-dist-ops')
-        pytorch.fit({'training': training_input}, job_name=job_name)
-
-    model_s3_url = pytorch.create_model().model_data
-    _assert_s3_file_exists(sagemaker_session.boto_region_name, model_s3_url)
+def test_dist_operations_multi_gpu(sagemaker_session, image_uri, dist_gpu_backend):
+    _test_dist_operations(sagemaker_session, image_uri, MULTI_GPU_INSTANCE, dist_gpu_backend, 1)
 
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_py2_containers
-def test_mnist_gpu(sagemaker_session, ecr_image, dist_gpu_backend):
+def test_mnist_gpu(sagemaker_session, image_uri, dist_gpu_backend):
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=mnist_script,
                           role='SageMakerRole',
                           train_instance_count=2,
-                          image_name=ecr_image,
+                          image_name=image_uri,
                           train_instance_type=MULTI_GPU_INSTANCE,
                           sagemaker_session=sagemaker_session,
                           hyperparameters={'backend': dist_gpu_backend})
 
         training_input = sagemaker_session.upload_data(path=os.path.join(data_dir, 'training'),
                                                        key_prefix='pytorch/mnist')
-        job_name = utils.unique_name_from_base('test-pytorch-dist-ops')
 
+        job_name = utils.unique_name_from_base('test-pytorch-dist-ops')
         pytorch.fit({'training': training_input}, job_name=job_name)
 
 
-def _test_dist_operations(sagemaker_session, ecr_image, instance_type, dist_backend, train_instance_count=3):
+def _test_dist_operations(sagemaker_session, image_uri, instance_type, dist_backend, train_instance_count=3):
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=dist_operations_path,
                           role='SageMakerRole',
                           train_instance_count=train_instance_count,
                           train_instance_type=instance_type,
                           sagemaker_session=sagemaker_session,
-                          image_name=ecr_image,
+                          image_name=image_uri,
                           hyperparameters={'backend': dist_backend})
 
         pytorch.sagemaker_session.default_bucket()
