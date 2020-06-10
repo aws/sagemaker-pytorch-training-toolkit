@@ -4,8 +4,8 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends jq \
  && rm -rf /var/lib/apt/lists/*
 
-COPY docker/build_artifacts/changehostname.c /
-COPY docker/build_artifacts/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
+COPY lib/changehostname.c /
+COPY lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
 RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
 
 COPY dist/sagemaker_pytorch_training-*.tar.gz /sagemaker_pytorch_training.tar.gz
