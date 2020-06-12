@@ -4,9 +4,13 @@ SageMaker PyTorch Training Toolkit
 ==================================
 
 SageMaker PyTorch Training Toolkit is an open-source library for using PyTorch to train models on Amazon SageMaker.
+
 For inference, see `SageMaker PyTorch Inference Toolkit <https://github.com/aws/sagemaker-pytorch-serving-container>`__.
+
 For the Dockerfiles used for building SageMaker PyTorch Containers, see `AWS Deep Learning Containers <https://github.com/aws/deep-learning-containers>`__.
+
 For information on running PyTorch jobs on Amazon SageMaker, please refer to the `SageMaker Python SDK documentation <https://github.com/aws/sagemaker-python-sdk>`__.
+
 For notebook examples: `SageMaker Notebook
 Examples <https://github.com/awslabs/amazon-sagemaker-examples>`__.
 
