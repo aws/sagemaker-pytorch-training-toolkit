@@ -27,7 +27,7 @@ def read(fname):
 
 test_dependencies = ['boto3', 'coverage', 'docker-compose', 'flake8', 'future', 'mock',
                      'pytest', 'pytest-cov', 'pytest-xdist', 'sagemaker==1.28.1',
-                     'torch==1.4.0', 'torchvision==0.5.0', 'tox']
+                     'torch', 'torchvision', 'tox']
 
 setup(
     name='sagemaker_pytorch_training',
