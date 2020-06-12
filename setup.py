@@ -25,8 +25,8 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-test_dependencies = ['boto3', 'coverage', 'docker-compose', 'flake8', 'future', 'mock', 
-                     'pytest', 'pytest-cov', 'pytest-xdist', 'sagemaker==1.62.0', 
+test_dependencies = ['boto3', 'coverage', 'docker-compose', 'flake8', 'future', 'mock',
+                     'pytest', 'pytest-cov', 'pytest-xdist', 'sagemaker==1.62.0',
                      'torch==1.4.0', 'torchvision==0.5.0', 'tox']
 
 if sys.version_info.major > 2:
