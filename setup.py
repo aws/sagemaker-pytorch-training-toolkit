@@ -29,13 +29,10 @@ test_dependencies = ['boto3', 'coverage', 'docker-compose', 'flake8', 'future', 
                      'pytest', 'pytest-cov', 'pytest-xdist', 'sagemaker==1.28.1',
                      'torch==1.4.0', 'torchvision==0.5.0', 'tox']
 
-if sys.version_info.major > 2:
-    test_dependencies.append('sagemaker-experiments==0.1.7')
-
 setup(
     name='sagemaker_pytorch_training',
     version=read('VERSION').strip(),
-    description='Open source library for creating PyTorch containers to run on Amazon SageMaker.',
+    description='Open source library for using PyTorch to train models on Amazon SageMaker.',
 
     packages=find_packages(where='src', exclude=('test',)),
     package_dir={'': 'src'},
@@ -43,7 +40,7 @@ setup(
 
     long_description=read('README.rst'),
     author='Amazon Web Services',
-    url='https://github.com/aws/sagemaker-pytorch-container',
+    url='https://github.com/aws/sagemaker-pytorch-training-toolkit',
     license='Apache License 2.0',
 
     classifiers=[
