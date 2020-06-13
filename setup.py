@@ -16,7 +16,6 @@ from glob import glob
 import os
 from os.path import basename
 from os.path import splitext
-import sys
 
 from setuptools import find_packages, setup
 
