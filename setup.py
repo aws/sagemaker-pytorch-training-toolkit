@@ -24,9 +24,8 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-test_dependencies = ['boto3', 'coverage', 'docker-compose', 'flake8', 'future', 'mock',
-                     'pytest', 'pytest-cov', 'pytest-xdist', 'sagemaker==1.28.1',
-                     'torch', 'torchvision', 'tox']
+test_dependencies = ['boto3', 'coverage', 'flake8', 'future', 'mock', 'pytest', 'pytest-cov',
+                     'pytest-xdist', 'sagemaker[local]', 'torch', 'torchvision', 'tox']
 
 setup(
     name='sagemaker_pytorch_training',
@@ -38,6 +37,7 @@ setup(
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
 
     long_description=read('README.rst'),
+    long_description_content_type='text/x-rst',
     author='Amazon Web Services',
     url='https://github.com/aws/sagemaker-pytorch-training-toolkit',
     license='Apache License 2.0',
@@ -53,10 +53,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
 
-    install_requires=[
-        'retrying',
-        'sagemaker-training>=3.5.1',
-        'six>=1.12.0'],
+    install_requires=['retrying', 'sagemaker-training>=3.5.1', 'six>=1.12.0'],
     extras_require={
         'test': test_dependencies
     },
