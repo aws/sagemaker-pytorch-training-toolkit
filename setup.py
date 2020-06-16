@@ -16,7 +16,6 @@ from glob import glob
 import os
 from os.path import basename
 from os.path import splitext
-import sys
 
 from setuptools import find_packages, setup
 
@@ -25,25 +24,22 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-test_dependencies = ['boto3==1.10.32', 'coverage==4.5.3', 'docker-compose==1.23.2', 'flake8==3.7.7', 'Flask==1.1.1',
-                     'mock==2.0.0', 'pytest==4.4.0', 'pytest-cov==2.7.1', 'pytest-xdist==1.28.0', 'PyYAML==3.10',
-                     'sagemaker==1.28.1', 'torch==1.4.0', 'torchvision==0.5.0', 'tox==3.7.0', 'requests_mock==1.6.0']
-
-if sys.version_info.major > 2:
-    test_dependencies.append('sagemaker-experiments==0.1.7')
+test_dependencies = ['boto3', 'coverage', 'flake8', 'future', 'mock', 'pytest', 'pytest-cov',
+                     'pytest-xdist', 'sagemaker[local]', 'torch', 'torchvision', 'tox']
 
 setup(
     name='sagemaker_pytorch_training',
     version=read('VERSION').strip(),
-    description='Open source library for creating PyTorch containers to run on Amazon SageMaker.',
+    description='Open source library for using PyTorch to train models on Amazon SageMaker.',
 
     packages=find_packages(where='src', exclude=('test',)),
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
 
     long_description=read('README.rst'),
+    long_description_content_type='text/x-rst',
     author='Amazon Web Services',
-    url='https://github.com/aws/sagemaker-pytorch-container',
+    url='https://github.com/aws/sagemaker-pytorch-training-toolkit',
     license='Apache License 2.0',
 
     classifiers=[
@@ -57,11 +53,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
 
-    install_requires=[
-        'retrying',
-        'sagemaker-training>=3.5.1',
-        'six>=1.12.0',
-        'sagemaker-experiments==0.1.7;python_version>="3.6"'],
+    install_requires=['retrying', 'sagemaker-training>=3.5.1', 'six>=1.12.0'],
     extras_require={
         'test': test_dependencies
     },

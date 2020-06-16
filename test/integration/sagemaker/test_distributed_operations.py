@@ -56,6 +56,7 @@ def test_mnist_gpu(sagemaker_session, image_uri, dist_gpu_backend):
                           image_name=image_uri,
                           train_instance_type=MULTI_GPU_INSTANCE,
                           sagemaker_session=sagemaker_session,
+                          debugger_hook_config=False,
                           hyperparameters={'backend': dist_gpu_backend})
 
         training_input = sagemaker_session.upload_data(path=os.path.join(data_dir, 'training'),
@@ -73,6 +74,7 @@ def _test_dist_operations(sagemaker_session, image_uri, instance_type, dist_back
                           train_instance_type=instance_type,
                           sagemaker_session=sagemaker_session,
                           image_name=image_uri,
+                          debugger_hook_config=False,
                           hyperparameters={'backend': dist_backend})
 
         pytorch.sagemaker_session.default_bucket()

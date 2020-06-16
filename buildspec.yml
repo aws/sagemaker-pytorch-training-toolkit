@@ -56,10 +56,12 @@ phases:
       - python3 setup.py sdist
       - build_dir="test/container/$FRAMEWORK_VERSION"
       - $(aws ecr get-login --registry-ids $DLC_ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
-      - docker build -f "$build_dir/Dockerfile.dlc.gpu" -t $PREPROD_IMAGE:$DLC_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION .
+      - build_cmd="docker build -f "$build_dir/Dockerfile.dlc.gpu" -t $PREPROD_IMAGE:$DLC_GPU_TAG --build-arg region=$AWS_DEFAULT_REGION ."
+      - execute-command-if-has-matching-changes "$build_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml" "lib/*"
       # push DLC GPU image to ECR
       - $(aws ecr get-login --registry-ids $ACCOUNT --no-include-email --region $AWS_DEFAULT_REGION)
-      - docker push $PREPROD_IMAGE:$DLC_GPU_TAG
+      - push_cmd="docker push $PREPROD_IMAGE:$DLC_GPU_TAG"
+      - execute-command-if-has-matching-changes "$push_cmd" "test/" "src/*.py" "setup.py" "setup.cfg" "buildspec.yml" "lib/*"
 
       # run GPU local integration tests
       - printf "$SETUP_CMDS" > $SETUP_FILE
