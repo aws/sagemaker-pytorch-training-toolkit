@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.2.1.post1 (2020-06-16)
+
+### Documentation Changes
+
+ * remove confusing information from the Readme.
+
+### Testing and Release Infrastructure
+
+ * do not duplicate test dependencies in tox.ini
+ * Rename buildspec files.
+
 ## v2.2.1.post0 (2020-06-05)
 
 ### Testing and Release Infrastructure
