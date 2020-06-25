@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.2.1.post2 (2020-06-25)
+
+### Testing and Release Infrastructure
+
+ * add issue templates
+
 ## v2.2.1.post1 (2020-06-16)
 
 ### Documentation Changes
