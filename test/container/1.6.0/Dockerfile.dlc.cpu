@@ -1,5 +1,5 @@
 ARG region
-from 763104351884.dkr.ecr.$region.amazonaws.com/pytorch-training:1.4.0-gpu-py3
+from 763104351884.dkr.ecr.$region.amazonaws.com/pytorch-training:1.5.0-cpu-py2
 
 COPY lib/changehostname.c /
 COPY lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
