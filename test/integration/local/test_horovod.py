@@ -22,13 +22,6 @@ from sagemaker.pytorch import PyTorch
 from integration import resources_path, training_dir
 
 
-@pytest.mark.skip_gpu
-@pytest.mark.skip_generic
-@pytest.mark.parametrize('instances, processes', [(1, 2), (2, 1), (2, 2), (5, 2)])
-def test_horovod_cpu(instances, processes, session, image_uri, framework_version, tmpdir):
-    _test_horovod(instances, processes, "local", session, image_uri, framework_version, tmpdir)
-
-
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
 def test_horovod_gpu(instances, processes, session, image_uri, framework_version, tmpdir):
