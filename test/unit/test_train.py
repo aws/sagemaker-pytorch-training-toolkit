@@ -36,6 +36,7 @@ def fixture_training_env():
     os.makedirs(os.path.join(tmp, 'model'))
     env.model_dir = os.path.join(tmp, 'model')
     env.user_entry_point = 'user_script'
+    env.additional_framework_parameters = {}
     yield env
     shutil.rmtree(tmp)
 
