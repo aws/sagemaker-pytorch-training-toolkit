@@ -194,6 +194,13 @@ def skip_by_device_type(request, use_gpu, instance_type):
 
 
 @pytest.fixture(autouse=True)
+def skip_by_dockerfile_type(request, dockerfile_type):
+    is_generic = (dockerfile_type == 'pytorch')
+    if request.node.get_closest_marker('skip_generic') and is_generic:
+        pytest.skip('Skipping because running generic image without MPI.')
+
+
+@pytest.fixture(autouse=True)
 def skip_by_py_version(request, py_version):
     """
     This will cause tests to be skipped w/ py3 containers if "py-version" flag is not set

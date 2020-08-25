@@ -45,6 +45,13 @@ def train(training_environment):
 
     _set_distributed_environment(training_environment.hosts)
 
+    mpi_enabled = training_environment.additional_framework_parameters.get('sagemaker_mpi_enabled')
+
+    if mpi_enabled:
+        runner_type = runner.MPIRunnerType
+    else:
+        runner_type = runner.ProcessRunnerType
+
     logger.info('Invoking user training script.')
     try:
         entry_point.run(uri=training_environment.module_dir,
@@ -52,7 +59,7 @@ def train(training_environment):
                         args=training_environment.to_cmd_args(),
                         env_vars=training_environment.to_env_vars(),
                         capture_error=True,
-                        runner_type=runner.ProcessRunnerType)
+                        runner_type=runner_type)
     except errors.ExecuteUserScriptError as err:
         message = str(err)
         if message.find('terminate called after throwing an instance of \'gloo::EnforceNotMet\'') > -1:
