@@ -24,7 +24,7 @@ from integration import resources_path, training_dir
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
-def test_horovod_gpu(instances, processes, session, image_uri, framework_version, tmpdir):
+def test_horovod_gpu(session, image_uri, framework_version, tmpdir):
     _test_horovod(1, 2, "local_gpu", session, image_uri, framework_version, tmpdir)
 
 
