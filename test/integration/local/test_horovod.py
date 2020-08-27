@@ -24,7 +24,7 @@ from integration import resources_path, training_dir
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
-def test_horovod(sagemaker_local_session, image_uri, framework_version, tmpdir):
+def test_horovod_simple(sagemaker_local_session, image_uri, framework_version, tmpdir):
     instances, processes = 1, 2
     output_path = 'file://' + str(tmpdir)
 
@@ -40,7 +40,7 @@ def test_horovod(sagemaker_local_session, image_uri, framework_version, tmpdir):
         hyperparameters={'sagemaker_mpi_enabled': True,
                          'sagemaker_mpi_num_of_processes_per_host': processes})
 
-    estimator.fit('file://{}'.format(training_dir))
+    estimator.fit()
 
     with tarfile.open(os.path.join(str(tmpdir), 'model.tar.gz')) as tar:
         tar.extractall(tmpdir)
@@ -49,6 +49,7 @@ def test_horovod(sagemaker_local_session, image_uri, framework_version, tmpdir):
 
     for rank in range(size):
         local_rank = rank % processes
+       # The simple.py script should create a JSON file with this name
         filename = 'local-rank-%s-rank-%s.json' % (local_rank, rank)
 
         with open(os.path.join(str(tmpdir), filename)) as file:
@@ -56,3 +57,21 @@ def test_horovod(sagemaker_local_session, image_uri, framework_version, tmpdir):
         expected = {'local-rank': local_rank, 'rank': rank, 'size': size}
 
         assert actual == expected
+
+
+@pytest.mark.skip_cpu
+@pytest.mark.skip_generic
+def test_horovod_training(sagemaker_local_session, image_uri, framework_version, tmpdir):
+    estimator = PyTorch(
+        entry_point=os.path.join(resources_path, 'horovod', 'train.py'),
+        role='SageMakerRole',
+        train_instance_type="local_gpu",
+        sagemaker_session=sagemaker_local_session,
+        train_instance_count=1,
+        image_name=image_uri,
+        framework_version=framework_version,
+        hyperparameters={'sagemaker_mpi_enabled': True,
+                         'sagemaker_mpi_num_of_processes_per_host': 2,
+                         'epochs': 1})
+
+    estimator.fit()
