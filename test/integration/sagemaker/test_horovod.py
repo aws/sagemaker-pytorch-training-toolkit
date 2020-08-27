@@ -66,4 +66,3 @@ def test_horovod(instances, processes, sagemaker_session, image_uri, framework_v
         expected = {'local-rank': local_rank, 'rank': rank, 'size': size}
 
         assert actual == expected
-
