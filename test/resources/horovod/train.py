@@ -1,3 +1,4 @@
+# Retrieved from https://github.com/horovod/horovod/blob/master/examples/pytorch_mnist.py
 import argparse
 import torch.multiprocessing as mp
 import torch.nn as nn
