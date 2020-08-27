@@ -97,7 +97,7 @@ def test_horovod_training(
     estimator = PyTorch(
         entry_point=os.path.join(resources_path, "horovod", "train.py"),
         role="SageMakerRole",
-        train_instance_type="ml.p2.8xlarge",
+        train_instance_type=instance_type,
         sagemaker_session=sagemaker_session,
         train_instance_count=instances,
         image_name=image_uri,
