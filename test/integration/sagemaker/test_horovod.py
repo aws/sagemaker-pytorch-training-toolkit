@@ -26,7 +26,7 @@ from integration import resources_path
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
     "instances, processes, train_instance_type",
-    [(1, 8, "ml.p2.8xlarge"), (2, 2, "g3.8xlarge")],
+    [(1, 8, "ml.p2.8xlarge"), (2, 4, "ml.g4dn.12xlarge")],
 )
 def test_horovod_simple(
     instances,
@@ -83,7 +83,7 @@ def test_horovod_simple(
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
     "instances, processes, train_instance_type",
-    [(1, 8, "ml.p2.8xlarge"), (2, 2, "g3.8xlarge")],
+    [(1, 8, "ml.p2.8xlarge"), (2, 4, "ml.g4dn.12xlarge")],
 )
 def test_horovod_training(
     instances,
