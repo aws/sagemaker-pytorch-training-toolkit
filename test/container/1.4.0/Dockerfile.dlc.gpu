@@ -1,8 +1,10 @@
 ARG region
 from 763104351884.dkr.ecr.$region.amazonaws.com/pytorch-training:1.4.0-gpu-py3
 
-# TODO(@bvveeram): Remove once DLC images fix OpenSSH config
-# OpenSSH config for MPI communication
+# TODO(@bvveeram): Remove once the 1.4.0-gpu-py3 DLC image installs mpi4py
+RUN pip3 install mpi4py==3.0.3
+
+# TODO(@bvveeram): Remove once the 1.4.0-gpu-py3 DLC image fixes OpenSSH config
 RUN mkdir -p /var/run/sshd && \
  sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 

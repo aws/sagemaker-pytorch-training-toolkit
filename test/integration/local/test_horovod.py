@@ -24,12 +24,12 @@ from integration import resources_path, training_dir
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
-def test_horovod_gpu(session, image_uri, framework_version, tmpdir):
-    _test_horovod(1, 2, "local_gpu", session, image_uri, framework_version, tmpdir)
+def test_horovod_gpu(sagemaker_local_session, image_uri, framework_version, tmpdir):
+    _test_horovod(1, 2, "local_gpu", sagemaker_local_session, image_uri, framework_version, tmpdir)
 
 
 def _test_horovod(
-    instances, processes, instance_type, session, image_uri, framework_version, tmpdir
+    instances, processes, instance_type, sagemaker_local_session, image_uri, framework_version, tmpdir
 ):
     output_path = 'file://' + str(tmpdir)
 
@@ -37,7 +37,7 @@ def _test_horovod(
         entry_point=os.path.join(resources_path, 'horovod', 'simple.py'),
         role='SageMakerRole',
         train_instance_type=instance_type,
-        sagemaker_session=session,
+        sagemaker_session=sagemaker_local_session,
         train_instance_count=instances,
         image_name=image_uri,
         output_path=output_path,
@@ -55,7 +55,7 @@ def _test_horovod(
 
     for rank in range(size):
         local_rank = rank % processes
-        filename = 'local-rank-%s-rank-%s' % (local_rank, rank)
+        filename = 'local-rank-%s-rank-%s.json' % (local_rank, rank)
 
         with open(os.path.join(str(tmpdir), filename)) as file:
             actual = json.load(file)

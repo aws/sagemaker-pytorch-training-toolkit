@@ -2,7 +2,7 @@
 import json
 import os
 
-import horovod.pytorch as hvd
+import horovod.torch as hvd
 
 hvd.init()
 
