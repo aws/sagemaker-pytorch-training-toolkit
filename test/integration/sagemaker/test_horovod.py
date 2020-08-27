@@ -25,13 +25,13 @@ from integration import resources_path
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
-    "instances, processes, instance_type",
+    "instances, processes, train_instance_type",
     [(1, 8, "ml.p2.8xlarge"), (2, 2, "g3.8xlarge")],
 )
 def test_horovod_simple(
     instances,
     processes,
-    instance_type,
+    train_instance_type,
     sagemaker_session,
     image_uri,
     framework_version,
@@ -43,7 +43,7 @@ def test_horovod_simple(
     estimator = PyTorch(
         entry_point=os.path.join(resources_path, "horovod", "simple.py"),
         role="SageMakerRole",
-        train_instance_type=instance_type,
+        train_instance_type=train_instance_type,
         sagemaker_session=sagemaker_session,
         train_instance_count=instances,
         image_name=image_uri,
@@ -82,13 +82,13 @@ def test_horovod_simple(
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
-    "instances, processes, instance_type",
+    "instances, processes, train_instance_type",
     [(1, 8, "ml.p2.8xlarge"), (2, 2, "g3.8xlarge")],
 )
 def test_horovod_training(
     instances,
     processes,
-    instance_type,
+    train_instance_type,
     sagemaker_session,
     image_uri,
     framework_version,
@@ -97,7 +97,7 @@ def test_horovod_training(
     estimator = PyTorch(
         entry_point=os.path.join(resources_path, "horovod", "train.py"),
         role="SageMakerRole",
-        train_instance_type=instance_type,
+        train_instance_type=train_instance_type,
         sagemaker_session=sagemaker_session,
         train_instance_count=instances,
         image_name=image_uri,
