@@ -19,7 +19,8 @@ import tarfile
 import pytest
 from sagemaker.pytorch import PyTorch
 
-from integration import resources_path
+from integration import resources_path, DEFAULT_TIMEOUT
+from integration.sagemaker.timeout import timeout
 
 
 @pytest.mark.skip_cpu
@@ -55,7 +56,8 @@ def test_horovod_simple(
         },
     )
 
-    estimator.fit()
+    with timeout(minutes=DEFAULT_TIMEOUT):
+        estimator.fit()
 
     bucket, key_prefix = estimator.model_data.replace("s3://", "").split("/", 1)
     sagemaker_session.download_data(
@@ -109,4 +111,5 @@ def test_horovod_training(
         },
     )
 
-    estimator.fit()
+    with timeout(minutes=DEFAULT_TIMEOUT):
+        estimator.fit()
