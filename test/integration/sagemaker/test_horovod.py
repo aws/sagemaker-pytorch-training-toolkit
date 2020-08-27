@@ -19,7 +19,7 @@ import tarfile
 import pytest
 from sagemaker.pytorch import PyTorch
 
-from integration import resources_path, training_dir
+from integration import resources_path
 
 
 @pytest.mark.skip_cpu
