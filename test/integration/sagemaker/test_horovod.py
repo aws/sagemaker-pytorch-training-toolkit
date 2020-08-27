@@ -24,34 +24,45 @@ from integration import resources_path
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
-def test_horovod_simple(sagemaker_session, image_uri, framework_version, tmpdir):
-    instances, processes = 1, 8
-
+@pytest.mark.parametrize(
+    "instances, processes, instance_type",
+    [(1, 8, "ml.p2.8xlarge"), (2, 2, "g3.8xlarge")],
+)
+def test_horovod_simple(
+    instances,
+    processes,
+    instance_type,
+    sagemaker_session,
+    image_uri,
+    framework_version,
+    tmpdir,
+):
     default_bucket = sagemaker_session.default_bucket()
     output_path = "s3://" + os.path.join(default_bucket, "pytorch/horovod")
 
     estimator = PyTorch(
-        entry_point=os.path.join(resources_path, 'horovod', 'simple.py'),
-        role='SageMakerRole',
-        train_instance_type="ml.p2.8xlarge",
+        entry_point=os.path.join(resources_path, "horovod", "simple.py"),
+        role="SageMakerRole",
+        train_instance_type=instance_type,
         sagemaker_session=sagemaker_session,
         train_instance_count=instances,
         image_name=image_uri,
         output_path=output_path,
         framework_version=framework_version,
-        hyperparameters={'sagemaker_mpi_enabled': True,
-                         'sagemaker_mpi_num_of_processes_per_host': processes})
+        hyperparameters={
+            "sagemaker_mpi_enabled": True,
+            "sagemaker_mpi_num_of_processes_per_host": processes,
+        },
+    )
 
     estimator.fit()
 
     bucket, key_prefix = estimator.model_data.replace("s3://", "").split("/", 1)
     sagemaker_session.download_data(
-        path=str(tmpdir),
-        bucket=bucket,
-        key_prefix=key_prefix
+        path=str(tmpdir), bucket=bucket, key_prefix=key_prefix
     )
 
-    with tarfile.open(os.path.join(str(tmpdir), 'model.tar.gz')) as tar:
+    with tarfile.open(os.path.join(str(tmpdir), "model.tar.gz")) as tar:
         tar.extractall(tmpdir)
 
     size = instances * processes
@@ -59,30 +70,43 @@ def test_horovod_simple(sagemaker_session, image_uri, framework_version, tmpdir)
     for rank in range(size):
         local_rank = rank % processes
         # The simple.py script should create a JSON file with this name
-        filename = 'local-rank-%s-rank-%s.json' % (local_rank, rank)
+        filename = "local-rank-%s-rank-%s.json" % (local_rank, rank)
 
         with open(os.path.join(str(tmpdir), filename)) as file:
             actual = json.load(file)
-        expected = {'local-rank': local_rank, 'rank': rank, 'size': size}
+        expected = {"local-rank": local_rank, "rank": rank, "size": size}
 
         assert actual == expected
 
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
-def test_horovod_training(sagemaker_session, image_uri, framework_version, tmpdir):
-    instances, processes = 1, 8
-
+@pytest.mark.parametrize(
+    "instances, processes, instance_type",
+    [(1, 8, "ml.p2.8xlarge"), (2, 2, "g3.8xlarge")],
+)
+def test_horovod_training(
+    instances,
+    processes,
+    instance_type,
+    sagemaker_session,
+    image_uri,
+    framework_version,
+    tmpdir,
+):
     estimator = PyTorch(
-        entry_point=os.path.join(resources_path, 'horovod', 'train.py'),
-        role='SageMakerRole',
+        entry_point=os.path.join(resources_path, "horovod", "train.py"),
+        role="SageMakerRole",
         train_instance_type="ml.p2.8xlarge",
         sagemaker_session=sagemaker_session,
         train_instance_count=instances,
         image_name=image_uri,
         framework_version=framework_version,
-        hyperparameters={'sagemaker_mpi_enabled': True,
-                         'sagemaker_mpi_num_of_processes_per_host': processes,
-                         'epochs': 1})
+        hyperparameters={
+            "sagemaker_mpi_enabled": True,
+            "sagemaker_mpi_num_of_processes_per_host": processes,
+            "epochs": 1,
+        },
+    )
 
     estimator.fit()
