@@ -49,7 +49,7 @@ def test_horovod_simple(sagemaker_local_session, image_uri, framework_version, t
 
     for rank in range(size):
         local_rank = rank % processes
-       # The simple.py script should create a JSON file with this name
+        # The simple.py script should create a JSON file with this name
         filename = 'local-rank-%s-rank-%s.json' % (local_rank, rank)
 
         with open(os.path.join(str(tmpdir), filename)) as file:
