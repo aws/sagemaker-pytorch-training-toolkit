@@ -24,8 +24,9 @@ from integration import resources_path
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
-@pytest.mark.parametrize("instances, processes", [(1, 8), (2, 8)])
-def test_horovod_simple(instances, processes, sagemaker_session, image_uri, framework_version, tmpdir):
+def test_horovod_simple(sagemaker_session, image_uri, framework_version, tmpdir):
+    instances, processes = 1, 8
+
     default_bucket = sagemaker_session.default_bucket()
     output_path = "s3://" + os.path.join(default_bucket, "pytorch/horovod")
 
@@ -69,8 +70,9 @@ def test_horovod_simple(instances, processes, sagemaker_session, image_uri, fram
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
-@pytest.mark.parametrize("instances, processes", [(1, 8), (2, 8)])
-def test_horovod_training(instances, processes, sagemaker_session, image_uri, framework_version, tmpdir):
+def test_horovod_training(sagemaker_session, image_uri, framework_version, tmpdir):
+    instances, processes = 1, 8
+
     estimator = PyTorch(
         entry_point=os.path.join(resources_path, 'horovod', 'train.py'),
         role='SageMakerRole',
