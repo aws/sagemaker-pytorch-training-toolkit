@@ -27,7 +27,7 @@ from integration.sagemaker.timeout import timeout
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
     "instances, processes, train_instance_type",
-    [(1, 8, "ml.p2.8xlarge"), (2, 4, "ml.g4dn.12xlarge")],
+    [(1, 8, "ml.p2.8xlarge")],
 )
 def test_horovod_simple(
     instances,
@@ -85,7 +85,7 @@ def test_horovod_simple(
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
     "instances, processes, train_instance_type",
-    [(1, 8, "ml.p2.8xlarge"), (2, 4, "ml.g4dn.12xlarge")],
+    [(1, 8, "ml.p2.8xlarge")],
 )
 def test_horovod_training(
     instances,
