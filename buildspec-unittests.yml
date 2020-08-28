@@ -1,0 +1,16 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - TOX_PARALLEL_NO_SPINNER=1
+      - PY_COLORS=0
+
+      # install
+      - pip3 install -U -e .[test]
+
+      # run linters
+      - tox -e flake8,twine
+
+      # run unit tests
+      - tox -e py27,py36,py37 test/unit
