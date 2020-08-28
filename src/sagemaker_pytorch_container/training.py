@@ -25,16 +25,19 @@ logger = logging.getLogger(__name__)
 
 
 def train(training_environment):
-    """ Runs PyTorch training on a user supplied module in either a local or distributed
-    SageMaker environment.
+    """Run PyTorch training on a user supplied module.
+
+    The user supplied module is run in either a local or distributed SageMaker
+    environment.
+
     The user supplied module and its dependencies are downloaded from S3.
     Training is invoked by calling a "train" function in the user supplied module.
     if the environment contains multiple hosts, then a distributed learning
     task is started.
 
     Args:
-        training_environment: training environment object containing environment variables,
-                               training arguments and hyperparameters
+        training_environment: training environment object containing environment
+            variables, training arguments and hyperparameters.
     """
     # Block until all host DNS lookups succeed. Relies on retrying dns_lookup.
     logger.info('Block until all host DNS lookups succeed.')
@@ -73,13 +76,13 @@ def train(training_environment):
        wait_exponential_multiplier=100,
        wait_exponential_max=30000)
 def _dns_lookup(host):
-    """ Retrying dns lookup on host """
+    """Retry DNS lookup on host."""
     return socket.gethostbyname(host)
 
 
 def _set_distributed_environment(hosts):
-    """
-    Sets environment variable for distributed training.
+    """Set environment variable for distributed training.
+
     Args:
         hosts: list of hosts that are used for training.
     """
@@ -90,11 +93,13 @@ def _set_distributed_environment(hosts):
 
 
 def _set_nccl_environment(network_interface_name):
-    """ Sets NCCL environment variables for the container:
+    """Set NCCL environment variables for the container.
+
     https://docs.nvidia.com/deeplearning/sdk/nccl-developer-guide/index.html#ncclknobs
 
     Args:
-        network_interface_name: The name of the network interface to use for distributed training.
+        network_interface_name: The name of the network interface to use for
+            distributed training.
     """
     # Set the network interface for inter node communication
     os.environ['NCCL_SOCKET_IFNAME'] = network_interface_name
