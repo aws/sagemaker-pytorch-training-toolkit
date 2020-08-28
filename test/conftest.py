@@ -46,7 +46,7 @@ def pytest_addoption(parser):
     parser.addoption('--build-image', '-B', action='store_true')
     parser.addoption('--push-image', '-P', action='store_true')
     parser.addoption('--dockerfile-type', '-T', choices=['dlc.cpu', 'dlc.gpu', 'pytorch'],
-                     default='pytorch')
+                     default=None)
     parser.addoption('--dockerfile', '-D', default=None)
     parser.addoption('--aws-id', default=None)
     parser.addoption('--instance-type')
@@ -67,7 +67,11 @@ def fixture_dockerfile_type(request):
 @pytest.fixture(scope='session', name='dockerfile')
 def fixture_dockerfile(request, dockerfile_type):
     dockerfile = request.config.getoption('--dockerfile')
-    return dockerfile if dockerfile else 'Dockerfile.{}'.format(dockerfile_type)
+    if dockerfile:
+        return dockerfile
+    if dockerfile_type:
+        return 'Dockerfile.{}'.format(dockerfile_type)
+    return None
 
 
 @pytest.fixture(scope='session', name='docker_base_name')
@@ -191,6 +195,13 @@ def skip_by_device_type(request, use_gpu, instance_type):
     if (request.node.get_closest_marker('skip_gpu') and is_gpu) or \
             (request.node.get_closest_marker('skip_cpu') and not is_gpu):
         pytest.skip('Skipping because running on \'{}\' instance'.format(instance_type))
+
+
+@pytest.fixture(autouse=True)
+def skip_by_dockerfile_type(request, dockerfile_type):
+    is_generic = (dockerfile_type == 'pytorch')
+    if request.node.get_closest_marker('skip_generic') and is_generic:
+        pytest.skip('Skipping because running generic image without MPI.')
 
 
 @pytest.fixture(autouse=True)
