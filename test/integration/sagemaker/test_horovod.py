@@ -19,14 +19,15 @@ import tarfile
 import pytest
 from sagemaker.pytorch import PyTorch
 
-from integration import resources_path
+from integration import resources_path, DEFAULT_TIMEOUT
+from integration.sagemaker.timeout import timeout
 
 
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
     "instances, processes, train_instance_type",
-    [(1, 8, "ml.p2.8xlarge"), (2, 4, "ml.g4dn.12xlarge")],
+    [(1, 8, "ml.p2.8xlarge")],
 )
 def test_horovod_simple(
     instances,
@@ -55,7 +56,8 @@ def test_horovod_simple(
         },
     )
 
-    estimator.fit()
+    with timeout(minutes=DEFAULT_TIMEOUT):
+        estimator.fit()
 
     bucket, key_prefix = estimator.model_data.replace("s3://", "").split("/", 1)
     sagemaker_session.download_data(
@@ -83,7 +85,7 @@ def test_horovod_simple(
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
     "instances, processes, train_instance_type",
-    [(1, 8, "ml.p2.8xlarge"), (2, 4, "ml.g4dn.12xlarge")],
+    [(1, 8, "ml.p2.8xlarge")],
 )
 def test_horovod_training(
     instances,
@@ -109,4 +111,5 @@ def test_horovod_training(
         },
     )
 
-    estimator.fit()
+    with timeout(minutes=DEFAULT_TIMEOUT):
+        estimator.fit()
