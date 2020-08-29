@@ -17,6 +17,9 @@ phases:
 
   build:
     commands:
+      # install
+      - pip3 install -U -e .[test]
+      
       # define tags
       - GENERIC_TAG="$FRAMEWORK_VERSION-pytorch-$BUILD_ID"
       - DLC_CPU_TAG="$FRAMEWORK_VERSION-dlc-cpu-$BUILD_ID"
