@@ -1,5 +1,21 @@
 # Changelog
 
+## v2.3.0 (2020-08-31)
+
+### Features
+
+ * Use MPIRunnerType
+
+### Bug Fixes and Other Changes
+
+ * Update main buildspec to only perform CPU integration tests
+ * Add GPU and unit test buildspecs
+ * Pin SageMaker version to less than v2
+
+### Documentation Changes
+
+ * improve training.py doc style
+
 ## v2.2.1.post2 (2020-06-25)
 
 ### Testing and Release Infrastructure
