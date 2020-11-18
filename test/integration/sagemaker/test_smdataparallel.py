@@ -12,9 +12,7 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import json
 import os
-import tarfile
 
 import pytest
 from sagemaker.pytorch import PyTorch
@@ -30,7 +28,9 @@ from integration.sagemaker.timeout import timeout
     "instances, train_instance_type",
     [(1, "ml.p3.16xlarge"), (2, "ml.p3.16xlarge"), (1, "ml.p3dn.24xlarge"), (2, "ml.p3dn.24xlarge")],
 )
-def test_smdataparallel_training(instances, train_instance_type, sagemaker_session, image_uri, framework_version, tmpdir):
+def test_smdataparallel_training(
+    instances, train_instance_type, sagemaker_session, image_uri, framework_version, tmpdir
+):
     default_bucket = sagemaker_session.default_bucket()
     output_path = "s3://" + os.path.join(default_bucket, "pytorch/smdataparallel")
 
