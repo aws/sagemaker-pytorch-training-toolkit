@@ -20,6 +20,7 @@ import sys
 from sagemaker_training import entry_point, environment, errors, runner
 
 MASTER_PORT = '7777'
+LAUNCH_SMDATAPARALLEL_ENV_NAME = 'sagemaker_distributed_dataparallel_enabled'
 
 logger = logging.getLogger(__name__)
 
@@ -50,8 +51,15 @@ def train(training_environment):
 
     mpi_enabled = training_environment.additional_framework_parameters.get('sagemaker_mpi_enabled')
 
+    smdataparallel_enabled = training_environment.additional_framework_parameters.get(
+        LAUNCH_SMDATAPARALLEL_ENV_NAME, False
+    )
+
     if mpi_enabled:
         runner_type = runner.MPIRunnerType
+    elif smdataparallel_enabled:
+        runner_type = runner.SMDataParallelRunnerType
+        logger.info('Invoking SMDataParallel')
     else:
         runner_type = runner.ProcessRunnerType
 

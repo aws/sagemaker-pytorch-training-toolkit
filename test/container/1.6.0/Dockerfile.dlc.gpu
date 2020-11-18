@@ -1,0 +1,28 @@
+ARG region
+from 763104351884.dkr.ecr.$region.amazonaws.com/pytorch-training:1.6.0-gpu-py36-cu101-ubuntu16.04
+
+# TODO: Remove once the 1.6.0-gpu-py3 DLC image installs mpi4py
+RUN pip3 install mpi4py==3.0.3
+
+# TODO: Remove once the 1.6.0-gpu-py3 DLC image fixes OpenSSH config
+# Configure OpenSSH so that nodes can communicate with each other
+RUN mkdir -p /var/run/sshd && \
+ sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
+
+RUN rm -rf /root/.ssh/ && \
+ mkdir -p /root/.ssh/ && \
+ ssh-keygen -q -t rsa -N '' -f /root/.ssh/id_rsa && \
+ cp /root/.ssh/id_rsa.pub /root/.ssh/authorized_keys \
+ && printf "Host *\n StrictHostKeyChecking no\n" >> /root/.ssh/config
+
+# TODO: Remove once the 1.6.0-gpu-py3 DLC image fixes MPI config
+# Comment line in MPI config to prevent mutually exclusive MCA settings
+RUN sed -i '62,62 s/^/#/' /home/.openmpi/etc/openmpi-mca-params.conf
+
+COPY lib/changehostname.c /
+COPY lib/start_with_right_hostname.sh /usr/local/bin/start_with_right_hostname.sh
+RUN chmod +x /usr/local/bin/start_with_right_hostname.sh
+
+COPY dist/sagemaker_pytorch_training-*.tar.gz /sagemaker_pytorch_training.tar.gz
+RUN pip install --upgrade --no-cache-dir /sagemaker_pytorch_training.tar.gz && \
+    rm /sagemaker_pytorch_training.tar.gz
