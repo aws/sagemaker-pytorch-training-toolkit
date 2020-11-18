@@ -72,6 +72,7 @@ def test_train(run_entry_point, training_env):
 
 
 @patch("sagemaker_training.entry_point.run")
+@patch('socket.gethostbyname', MagicMock())
 def test_train_smdataparallel(run_module, training_env):
     training_env.additional_framework_parameters["sagemaker_distributed_dataparallel_enabled"] = True
 

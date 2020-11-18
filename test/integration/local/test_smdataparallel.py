@@ -12,15 +12,14 @@
 # language governing permissions and limitations under the License.
 from __future__ import absolute_import
 
-import json
 import os
-import tarfile
 
 import pytest
 from sagemaker.pytorch import PyTorch
 
 from integration import resources_path
 from utils.local_mode_utils import assert_files_exist
+
 
 # TODO: Enable the test once SMDataParallel DLC is publicly accessibly
 @pytest.mark.skip(reason="SMDataParallel DLC is not publicly accessible")
