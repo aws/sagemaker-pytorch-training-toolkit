@@ -53,7 +53,7 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
 
-    install_requires=['retrying', 'sagemaker-training>=3.5.1', 'six>=1.12.0'],
+    install_requires=['retrying', 'sagemaker-training>=3.7.0', 'six>=1.12.0'],
     extras_require={
         'test': test_dependencies
     },

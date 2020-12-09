@@ -21,7 +21,6 @@ from integration import resources_path, DEFAULT_TIMEOUT
 from integration.sagemaker.timeout import timeout
 
 
-@pytest.mark.skip(reason="SMDataParallel DLC is not publicly accessible")
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
