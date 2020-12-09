@@ -21,8 +21,6 @@ from integration import resources_path
 from utils.local_mode_utils import assert_files_exist
 
 
-# TODO: Enable the test once SMDataParallel DLC is publicly accessibly
-@pytest.mark.skip(reason="SMDataParallel DLC is not publicly accessible")
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
 def test_smdataparallel_training(sagemaker_local_session, image_uri, framework_version, tmpdir):
