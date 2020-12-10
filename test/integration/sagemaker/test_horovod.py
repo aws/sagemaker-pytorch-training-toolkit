@@ -81,6 +81,7 @@ def test_horovod_simple(
         assert actual == expected
 
 
+@pytest.mark.skip(reason="Temporarily skip for 1.6.0")
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
