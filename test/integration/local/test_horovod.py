@@ -59,6 +59,7 @@ def test_horovod_simple(sagemaker_local_session, image_uri, framework_version, t
         assert actual == expected
 
 
+@pytest.mark.skip(reason="Temporarily skip for 1.6.0")
 @pytest.mark.skip_cpu
 @pytest.mark.skip_generic
 def test_horovod_training(sagemaker_local_session, image_uri, framework_version, tmpdir):
