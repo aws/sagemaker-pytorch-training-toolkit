@@ -25,7 +25,7 @@ from integration.sagemaker.timeout import timeout
 @pytest.mark.skip_generic
 @pytest.mark.parametrize(
     "instances, train_instance_type",
-    [(1, "ml.p3.16xlarge"), (2, "ml.p3.16xlarge"), (1, "ml.p3dn.24xlarge"), (2, "ml.p3dn.24xlarge")],
+    [(2, "ml.p3.16xlarge")],
 )
 def test_smdataparallel_training(
     instances, train_instance_type, sagemaker_session, image_uri, framework_version, tmpdir
