@@ -1,5 +1,21 @@
 # Changelog
 
+## v2.4.0 (2020-12-11)
+
+### Features
+
+ * add data parallelism support (#11) (#12)
+
+### Bug Fixes and Other Changes
+
+ * use ubuntu 18.04 base image in dlc gpu image
+ * remove TODOs in 1.6.0 dlc gpu dockerfile and reduce parameters for data parallel integ test
+ * use base cuda 11 image for test dlc gpu image
+ * use 1.6.0 for gpu tests and disable horovod tests
+ * remove local data parallel integ test
+ * use sagemaker-training 3.7.0 and enable data parallel integ tests
+ * patch socket call and update flake8 violations
+
 ## v2.3.0 (2020-08-31)
 
 ### Features
