@@ -1,5 +1,5 @@
 ARG region
-from 763104351884.dkr.ecr.$region.amazonaws.com/pytorch-training:1.6.0-gpu-py36-cu110-ubuntu16.04
+from 763104351884.dkr.ecr.$region.amazonaws.com/pytorch-training:1.6.0-gpu-py36-cu110-ubuntu18.04
 
 COPY dist/sagemaker_pytorch_training-*.tar.gz /sagemaker_pytorch_training.tar.gz
 RUN pip install --upgrade --no-cache-dir /sagemaker_pytorch_training.tar.gz && \
