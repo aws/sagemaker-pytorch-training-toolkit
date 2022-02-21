@@ -20,8 +20,9 @@ import sys
 from sagemaker_training import entry_point, environment, errors, runner
 
 MASTER_PORT = '7777'
+LAUNCH_MPI_ENV_NAME = 'sagemaker_mpi_enabled'
 LAUNCH_SMDATAPARALLEL_ENV_NAME = 'sagemaker_distributed_dataparallel_enabled'
-
+LAUNCH_PT_DDP_ENV_NAME = "sagemaker_vanilla_ddp_enabled"
 logger = logging.getLogger(__name__)
 
 
@@ -49,7 +50,11 @@ def train(training_environment):
 
     _set_distributed_environment(training_environment.hosts)
 
-    mpi_enabled = training_environment.additional_framework_parameters.get('sagemaker_mpi_enabled')
+    mpi_enabled = training_environment.additional_framework_parameters.get(LAUNCH_MPI_ENV_NAME)
+
+    vanilla_ddp_enabled = training_environment.additional_framework_parameters.get(
+        LAUNCH_PT_DDP_ENV_NAME, False
+    )
 
     smdataparallel_enabled = training_environment.additional_framework_parameters.get(
         LAUNCH_SMDATAPARALLEL_ENV_NAME, False
@@ -57,6 +62,9 @@ def train(training_environment):
 
     if mpi_enabled:
         runner_type = runner.MPIRunnerType
+    elif vanilla_ddp_enabled:
+        runner_type = runner.VanillaDDPRunnerType
+        logger.info('Invoking Torch native DistributedDataParallel')
     elif smdataparallel_enabled:
         runner_type = runner.SMDataParallelRunnerType
         logger.info('Invoking SMDataParallel')
