@@ -86,9 +86,10 @@ def test_train_smdataparallel(run_module, training_env):
         runner_type=runner.SMDataParallelRunnerType,
     )
 
+
 @patch("sagemaker_training.entry_point.run")
 @patch('socket.gethostbyname', MagicMock())
-def test_train_smdataparallel(run_module, training_env):
+def test_train_vanilla_ddp(run_module, training_env):
     training_env.additional_framework_parameters["sagemaker_vanilla_ddp_enabled"] = True
 
     train(training_env)
@@ -100,6 +101,7 @@ def test_train_smdataparallel(run_module, training_env):
         capture_error=True,
         runner_type=runner.VanillaDDPRunnerType,
     )
+
 
 @patch('sagemaker_training.entry_point.run', MagicMock())
 @patch('socket.gethostbyname', MagicMock())

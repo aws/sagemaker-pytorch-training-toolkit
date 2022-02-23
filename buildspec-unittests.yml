@@ -13,4 +13,4 @@ phases:
       - tox -e flake8,twine
 
       # run unit tests
-      - tox -e py27,py36,py37 test/unit
+      - tox -e py36,py37,py38,py39 test/unit
