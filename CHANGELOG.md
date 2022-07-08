@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.0 (2022-07-08)
+
+### Features
+
+ * Add Heterogeneous Cluster support
+
 ## v2.4.1 (2022-07-08)
 
 ### Bug Fixes and Other Changes
