@@ -54,15 +54,15 @@ def train(training_environment):
     smdataparallel_enabled = training_environment.additional_framework_parameters.get(
         LAUNCH_SMDATAPARALLEL_ENV_NAME, False
     )
+    # default scenario
+    runner_type = runner.ProcessRunnerType
 
-    if mpi_enabled:
-        runner_type = runner.MPIRunnerType
-    elif smdataparallel_enabled:
-        runner_type = runner.SMDataParallelRunnerType
-        logger.info('Invoking SMDataParallel')
-    else:
-        runner_type = runner.ProcessRunnerType
-
+    if training_environment.current_instance_group in training_environment.distribution_instance_groups:
+        if mpi_enabled:
+            runner_type = runner.MPIRunnerType
+        elif smdataparallel_enabled:
+            runner_type = runner.SMDataParallelRunnerType
+            logger.info('Invoking SMDataParallel')
     logger.info('Invoking user training script.')
     try:
         entry_point.run(uri=training_environment.module_dir,
