@@ -56,9 +56,8 @@ def train(training_environment):
     )
     # default scenario
     runner_type = runner.ProcessRunnerType
-    env = environment.Environment()
 
-    if env.current_instance_group in env.distribution_instance_groups:
+    if training_environment.current_instance_group in training_environment.distribution_instance_groups:
         if mpi_enabled:
             runner_type = runner.MPIRunnerType
         elif smdataparallel_enabled:
