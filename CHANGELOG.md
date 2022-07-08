@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.4.1 (2022-07-08)
+
+### Bug Fixes and Other Changes
+
+ * CI
+
 ## v2.4.0 (2020-12-11)
 
 ### Features
