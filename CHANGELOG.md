@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.1 (2022-07-21)
+
+### Bug Fixes and Other Changes
+
+ * deriver master node from training environment
+
 ## v2.5.0 (2022-07-08)
 
 ### Features
