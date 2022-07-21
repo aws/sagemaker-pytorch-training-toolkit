@@ -31,6 +31,7 @@ def fixture_training_env():
     env = MagicMock()
     env.current_host = 'algo-1'
     env.hosts = ['algo-1']
+    env.master_hostname = 'algo-1'
     env.network_interface_name = 'eth0'
     tmp = tempfile.mkdtemp()
     os.makedirs(os.path.join(tmp, 'model'))
@@ -96,7 +97,7 @@ def test_environment(training_env):
 
     # distributed training specific environment
     assert MASTER_PORT == os.environ['MASTER_PORT']
-    assert training_env.hosts[0] == os.environ['MASTER_ADDR']
+    assert training_env.master_hostname == os.environ['MASTER_ADDR']
 
     # nccl specific environment
     assert training_env.network_interface_name == os.environ['NCCL_SOCKET_IFNAME']
