@@ -47,7 +47,7 @@ def train(training_environment):
 
     _set_nccl_environment(training_environment.network_interface_name)
 
-    _set_distributed_environment(training_environment.hosts)
+    _set_distributed_environment(training_environment)
 
     mpi_enabled = training_environment.additional_framework_parameters.get('sagemaker_mpi_enabled')
 
@@ -88,7 +88,7 @@ def _dns_lookup(host):
     return socket.gethostbyname(host)
 
 
-def _set_distributed_environment(hosts):
+def _set_distributed_environment(training_env):
     """Set environment variable for distributed training.
 
     Args:
@@ -96,7 +96,7 @@ def _set_distributed_environment(hosts):
     """
     # According to https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-training-algo.html
     # hosts are sorted lexicographically.
-    os.environ['MASTER_ADDR'] = hosts[0]
+    os.environ['MASTER_ADDR'] = training_env.master_hostname
     os.environ['MASTER_PORT'] = MASTER_PORT
 
 
