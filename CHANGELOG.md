@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.6.0 (2022-08-03)
+
+### Features
+
+ * add support for native PyTorch DDP distribution
+
 ## v2.5.1 (2022-07-21)
 
 ### Bug Fixes and Other Changes
