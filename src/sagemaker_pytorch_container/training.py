@@ -23,6 +23,7 @@ MASTER_PORT = '7777'
 LAUNCH_SMDATAPARALLEL_ENV_NAME = 'sagemaker_distributed_dataparallel_enabled'
 LAUNCH_MPI_ENV_NAME = 'sagemaker_mpi_enabled'
 LAUNCH_PYTORCH_DDP_ENV_NAME = "sagemaker_pytorch_ddp_enabled"
+LAUNCH_PYTORCH_XLA_ENV_NAME = "sagemaker_pytorch_xla_multi_worker_enabled"
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,10 @@ def train(training_environment):
     smdataparallel_enabled = training_environment.additional_framework_parameters.get(
         LAUNCH_SMDATAPARALLEL_ENV_NAME, False
     )
+
+    pytorch_xla_enabled = training_environment.additional_framework_parameters.get(
+        LAUNCH_PYTORCH_XLA_ENV_NAME, False
+    )
     # default scenario
     runner_type = runner.ProcessRunnerType
 
@@ -72,6 +77,9 @@ def train(training_environment):
         elif smdataparallel_enabled:
             runner_type = runner.SMDataParallelRunnerType
             logger.info('Invoking SMDataParallel')
+        elif pytorch_xla_enabled:
+            runner_type = runner.PyTorchXLARunnerType
+            logger.info('Invoking PT-XLA Runner')
     logger.info('Invoking user training script.')
     try:
         entry_point.run(uri=training_environment.module_dir,
