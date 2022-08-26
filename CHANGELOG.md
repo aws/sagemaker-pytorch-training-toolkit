@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.6.2 (2022-08-26)
+
+### Bug Fixes and Other Changes
+
+ * provide option to use native process launcher
+
 ## v2.6.1 (2022-08-15)
 
 ## v2.6.0 (2022-08-03)
