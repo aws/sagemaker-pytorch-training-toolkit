@@ -81,12 +81,19 @@ def train(training_environment):
             runner_type = runner.PyTorchXLARunnerType
             logger.info('Invoking PT-XLA Runner')
     logger.info('Invoking user training script.')
+
+    # get capture_error from framework parameters
+    capture_error = True
+    if training_environment.additional_framework_parameters.get("sagemaker_toolkit_native_launcher_enabled"):
+        capture_error = False
+        logger.info(f'capture_error is {capture_error}. Default is True')
+
     try:
         entry_point.run(uri=training_environment.module_dir,
                         user_entry_point=training_environment.user_entry_point,
                         args=training_environment.to_cmd_args(),
                         env_vars=training_environment.to_env_vars(),
-                        capture_error=True,
+                        capture_error=capture_error,
                         runner_type=runner_type)
     except errors.ExecuteUserScriptError as err:
         message = str(err)
