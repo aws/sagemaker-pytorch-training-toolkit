@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.6.2.post0 (2022-09-21)
+
+### Documentation Changes
+
+ * update README and contributing guidelines
+
 ## v2.6.2 (2022-08-26)
 
 ### Bug Fixes and Other Changes
