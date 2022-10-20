@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.7.0 (2022-10-20)
+
+### Features
+
+ * Add torch_distributed support for Trainium
+
 ## v2.6.2.post0 (2022-09-21)
 
 ### Documentation Changes
