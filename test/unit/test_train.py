@@ -122,6 +122,22 @@ def test_train_pytorch_ddp(run_module, training_env):
 
 @patch("sagemaker_training.entry_point.run")
 @patch('socket.gethostbyname', MagicMock())
+def test_train_torch_distributed(run_module, training_env):
+    training_env.additional_framework_parameters["sagemaker_torch_distributed_enabled"] = True
+
+    train(training_env)
+    run_module.assert_called_with(
+        uri=training_env.module_dir,
+        user_entry_point=training_env.user_entry_point,
+        args=training_env.to_cmd_args(),
+        env_vars=training_env.to_env_vars(),
+        capture_error=True,
+        runner_type=runner.TorchDistributedRunnerType,
+    )
+
+
+@patch("sagemaker_training.entry_point.run")
+@patch('socket.gethostbyname', MagicMock())
 def test_train_pytorch_xla_distributed(run_module, training_env):
     training_env.additional_framework_parameters[LAUNCH_PYTORCH_XLA_ENV_NAME] = True
 

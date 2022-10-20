@@ -24,6 +24,7 @@ LAUNCH_SMDATAPARALLEL_ENV_NAME = 'sagemaker_distributed_dataparallel_enabled'
 LAUNCH_MPI_ENV_NAME = 'sagemaker_mpi_enabled'
 LAUNCH_PYTORCH_DDP_ENV_NAME = "sagemaker_pytorch_ddp_enabled"
 LAUNCH_PYTORCH_XLA_ENV_NAME = "sagemaker_pytorch_xla_multi_worker_enabled"
+LAUNCH_TORCH_DISTRIBUTED_ENV_NAME = "sagemaker_torch_distributed_enabled"
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,10 @@ def train(training_environment):
     pytorch_xla_enabled = training_environment.additional_framework_parameters.get(
         LAUNCH_PYTORCH_XLA_ENV_NAME, False
     )
+
+    torch_distributed_enabled = training_environment.additional_framework_parameters.get(
+        LAUNCH_TORCH_DISTRIBUTED_ENV_NAME, False
+    )
     # default scenario
     runner_type = runner.ProcessRunnerType
 
@@ -74,6 +79,9 @@ def train(training_environment):
         elif pytorch_ddp_enabled:
             runner_type = runner.SMDataParallelRunnerType
             logger.info('Invoking SMDataParallel for native PT DDP job')
+        elif torch_distributed_enabled:
+            runner_type = runner.TorchDistributedRunnerType
+            logger.info('Invoking TorchDistributed...')
         elif smdataparallel_enabled:
             runner_type = runner.SMDataParallelRunnerType
             logger.info('Invoking SMDataParallel')
