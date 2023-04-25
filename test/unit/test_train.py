@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import os
 import shutil
+import sys
 import tempfile
 
 import pytest
@@ -23,7 +24,14 @@ import torch.nn as nn
 from mock import MagicMock, PropertyMock
 from mock import patch
 
-from sagemaker_pytorch_container.training import main, train, _dns_lookup, LAUNCH_PYTORCH_XLA_ENV_NAME, MASTER_PORT
+from sagemaker_pytorch_container.training import (
+    main,
+    train,
+    _dns_lookup,
+    LAUNCH_PYTORCH_XLA_ENV_NAME,
+    MASTER_PORT,
+    _set_torch_version_environment,
+)
 
 
 @pytest.fixture(name='training_env')
@@ -218,3 +226,11 @@ def test_user_script_error_raised(run_entry_point, training_env):
     )
     with pytest.raises(errors.ExecuteUserScriptError):
         train(training_env)
+
+
+def test_set_torch_version_environment():
+    mock_torch = MagicMock()
+    mock_torch.__version__ = '2.0.0'
+    sys.modules['torch'] = mock_torch
+    _set_torch_version_environment()
+    assert os.environ.get("SM_DLC_TORCH_VERSION") == '2.0.0'

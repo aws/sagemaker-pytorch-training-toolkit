@@ -96,6 +96,7 @@ def train(training_environment):
         capture_error = False
         logger.info(f'capture_error is {capture_error}. Default is True')
 
+    _set_torch_version_environment()
     try:
         entry_point.run(uri=training_environment.module_dir,
                         user_entry_point=training_environment.user_entry_point,
@@ -147,6 +148,23 @@ def _set_nccl_environment(network_interface_name):
     os.environ['NCCL_IB_DISABLE'] = '1'
     # Set to INFO for more NCCL debugging information
     os.environ['NCCL_DEBUG'] = 'WARN'
+
+
+def _set_torch_version_environment():
+    """Set PyTorch version environment variable.
+
+    This is the PyTorch version of the DLC.
+    """
+    try:
+        import torch
+
+        os.environ["SM_DLC_TORCH_VERSION"] = torch.__version__
+    except ModuleNotFoundError:
+        logger.warn("PyTorch cannot be found")
+    except ImportError:
+        logger.warn("PyTorch can be found, but cannot be imported")
+    except Exception:
+        logger.warn("Torch version environment variable cannot be set")
 
 
 def main():
