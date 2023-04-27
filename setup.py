@@ -24,7 +24,7 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 
-test_dependencies = ['boto3', 'coverage', 'flake8', 'future', 'mock', 'pytest', 'pytest-cov',
+test_dependencies = ['boto3', 'coverage==6.5.0', 'flake8', 'future', 'mock', 'pytest', 'pytest-cov',
                      'pytest-xdist', 'sagemaker[local]<2', 'torch', 'torchvision', 'tox']
 
 setup(
