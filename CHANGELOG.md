@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.8.0 (2023-04-28)
+
+### Features
+
+ * add PyTorch version environment variable, to facilitate SMTT
+
+### Bug Fixes and Other Changes
+
+ * pin coverage version to fix pipeline issue
+
 ## v2.7.0 (2022-10-20)
 
 ### Features
