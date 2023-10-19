@@ -98,6 +98,7 @@ def test_train_with_sm_studio_local_mode_enabled(run_entry_point, dns_lookup, tr
                                        runner_type=runner.ProcessRunnerType)
     del os.environ['SM_STUDIO_LOCAL_MODE']
 
+
 @patch('sagemaker_training.entry_point.run')
 @patch('socket.gethostbyname', MagicMock())
 def test_train_no_capture_error(run_entry_point, training_env):
