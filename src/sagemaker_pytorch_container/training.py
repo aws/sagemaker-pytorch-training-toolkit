@@ -44,10 +44,15 @@ def train(training_environment):
         training_environment: training environment object containing environment
             variables, training arguments and hyperparameters.
     """
-    # Block until all host DNS lookups succeed. Relies on retrying dns_lookup.
-    logger.info('Block until all host DNS lookups succeed.')
-    for host in training_environment.hosts:
-        _dns_lookup(host)
+    _sm_studio_local_mode = os.environ.get("SM_STUDIO_LOCAL_MODE", "False").lower() == "true"
+
+    if not _sm_studio_local_mode:
+        # Block until all host DNS lookups succeed. Relies on retrying dns_lookup.
+        logger.info('Block until all host DNS lookups succeed.')
+        for host in training_environment.hosts:
+            _dns_lookup(host)
+    else:
+        logger.info('Bypass DNS check in case of Studio Local Mode execution.')
 
     _set_nccl_environment(training_environment.network_interface_name)
 
