@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.8.1 (2023-10-23)
+
+### Bug Fixes and Other Changes
+
+ * bypass DNS check for studio local exec
+
 ## v2.8.0 (2023-04-28)
 
 ### Features
