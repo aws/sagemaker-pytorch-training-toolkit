@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.9.0 (2025-06-04)
+
+### Features
+
+ * Add Code Owners file
+
+### Bug Fixes and Other Changes
+
+ * upper bounding dependency on sagemaker-training-toolkit
+
 ## v2.8.1 (2023-10-23)
 
 ### Bug Fixes and Other Changes
