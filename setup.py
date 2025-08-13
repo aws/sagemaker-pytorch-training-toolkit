@@ -48,12 +48,11 @@ setup(
         "Natural Language :: English",
         "License :: OSI Approved :: Apache Software License",
         "Programming Language :: Python",
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
     ],
 
-    install_requires=['retrying', 'sagemaker-training>=4.3.0,<=4.8.3', 'six>=1.12.0'],
+    install_requires=['retrying', 'sagemaker-training>=5.0.0,<6.0.0', 'six>=1.12.0'],
     extras_require={
         'test': test_dependencies
     },
