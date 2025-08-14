@@ -1,8 +1,15 @@
-[![Latest Version](https://img.shields.io/pypi/v/sagemaker-pytorch-training.svg)](https://pypi.python.org/pypi/sagemaker-pytorch-training) [![Supported Python Versions](https://img.shields.io/pypi/pyversions/sagemaker-pytorch-training.svg)](https://pypi.python.org/pypi/sagemaker-pytorch-training)
-
 ==================================
 SageMaker PyTorch Training Toolkit
 ==================================
+
+.. image:: https://img.shields.io/pypi/v/sagemaker-pytorch-training.svg
+   :target: https://pypi.python.org/pypi/sagemaker-pytorch-training
+   :alt: Latest Version
+
+.. image:: https://img.shields.io/pypi/pyversions/sagemaker-pytorch-training.svg
+   :target: https://pypi.python.org/pypi/sagemaker-pytorch-training
+   :alt: Supported Python Versions
+
 
 SageMaker PyTorch Training Toolkit is an open-source library for using PyTorch to train models on Amazon SageMaker.
 
