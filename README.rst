@@ -1,3 +1,4 @@
+[![Latest Version](https://img.shields.io/pypi/v/sagemaker-pytorch-training.svg)](https://pypi.python.org/pypi/sagemaker-pytorch-training) [![Supported Python Versions](https://img.shields.io/pypi/pyversions/sagemaker-pytorch-training.svg)](https://pypi.python.org/pypi/sagemaker-pytorch-training)
 
 ==================================
 SageMaker PyTorch Training Toolkit
