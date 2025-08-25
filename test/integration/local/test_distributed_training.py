@@ -35,9 +35,9 @@ def fixture_dist_gpu_backend(request):
 def test_dist_operations_path_cpu(image_uri, dist_cpu_backend, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=dist_operations_path,
                         role=ROLE,
-                        image_name=image_uri,
-                        train_instance_count=2,
-                        train_instance_type='local',
+                        image_uri=image_uri,
+                        instance_count=2,
+                        instance_type='local',
                         sagemaker_session=sagemaker_local_session,
                         hyperparameters={'backend': dist_cpu_backend},
                         output_path='file://{}'.format(tmpdir))
@@ -49,9 +49,9 @@ def test_dist_operations_path_cpu(image_uri, dist_cpu_backend, sagemaker_local_s
 def test_dist_operations_path_gpu_nccl(image_uri, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=dist_operations_path,
                         role=ROLE,
-                        image_name=image_uri,
-                        train_instance_count=1,
-                        train_instance_type='local_gpu',
+                        image_uri=image_uri,
+                        instance_count=1,
+                        instance_type='local_gpu',
                         sagemaker_session=sagemaker_local_session,
                         hyperparameters={'backend': 'nccl'},
                         output_path='file://{}'.format(tmpdir))
@@ -63,9 +63,9 @@ def test_dist_operations_path_gpu_nccl(image_uri, sagemaker_local_session, tmpdi
 def test_cpu_nccl(image_uri, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=mnist_script,
                         role=ROLE,
-                        image_name=image_uri,
-                        train_instance_count=2,
-                        train_instance_type='local',
+                        image_uri=image_uri,
+                        instance_count=2,
+                        instance_type='local',
                         sagemaker_session=sagemaker_local_session,
                         hyperparameters={'backend': 'nccl'},
                         output_path='file://{}'.format(tmpdir))
@@ -81,9 +81,9 @@ def test_cpu_nccl(image_uri, sagemaker_local_session, tmpdir):
 def test_mnist_cpu(image_uri, dist_cpu_backend, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=mnist_script,
                         role=ROLE,
-                        image_name=image_uri,
-                        train_instance_count=2,
-                        train_instance_type='local',
+                        image_uri=image_uri,
+                        instance_count=2,
+                        instance_type='local',
                         sagemaker_session=sagemaker_local_session,
                         hyperparameters={'backend': dist_cpu_backend},
                         output_path='file://{}'.format(tmpdir))

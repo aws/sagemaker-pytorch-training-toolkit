@@ -23,9 +23,9 @@ from integration import data_dir, mnist_script, ROLE
 def test_mnist(image_uri, processor, instance_type, sagemaker_local_session, tmpdir):
     estimator = PyTorch(entry_point=mnist_script,
                         role=ROLE,
-                        image_name=image_uri,
-                        train_instance_count=1,
-                        train_instance_type=instance_type,
+                        image_uri=image_uri,
+                        instance_count=1,
+                        instance_type=instance_type,
                         sagemaker_session=sagemaker_local_session,
                         hyperparameters={'processor': processor},
                         output_path='file://{}'.format(tmpdir))

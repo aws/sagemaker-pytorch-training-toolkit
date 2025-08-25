@@ -15,6 +15,7 @@ from __future__ import absolute_import
 import pytest
 from sagemaker import utils
 from sagemaker.pytorch import PyTorch
+from sagemaker.local import LocalSession
 
 from integration import training_dir, mnist_script, DEFAULT_TIMEOUT
 from integration.sagemaker.timeout import timeout
@@ -23,12 +24,16 @@ from integration.sagemaker.timeout import timeout
 @pytest.mark.skip_gpu
 def test_mnist_distributed_cpu(sagemaker_session, image_uri, instance_type, dist_cpu_backend):
     instance_type = instance_type or 'ml.c4.xlarge'
+    if "local" in instance_type:
+        sagemaker_session = LocalSession()
     _test_mnist_distributed(sagemaker_session, image_uri, instance_type, dist_cpu_backend)
 
 
 @pytest.mark.skip_cpu
 def test_mnist_distributed_gpu(sagemaker_session, image_uri, instance_type, dist_gpu_backend):
     instance_type = instance_type or 'ml.p2.xlarge'
+    if "local" in instance_type:
+        sagemaker_session = LocalSession()
     _test_mnist_distributed(sagemaker_session, image_uri, instance_type, dist_gpu_backend)
 
 
@@ -36,10 +41,10 @@ def _test_mnist_distributed(sagemaker_session, image_uri, instance_type, dist_ba
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=mnist_script,
                           role='SageMakerRole',
-                          train_instance_count=2,
-                          train_instance_type=instance_type,
+                          instance_count=2,
+                          instance_type=instance_type,
                           sagemaker_session=sagemaker_session,
-                          image_name=image_uri,
+                          image_uri=image_uri,
                           debugger_hook_config=False,
                           hyperparameters={'backend': dist_backend, 'epochs': 2})
         training_input = pytorch.sagemaker_session.upload_data(path=training_dir,
