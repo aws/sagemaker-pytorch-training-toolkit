@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.0.0 (2025-08-25)
+
+### Breaking Changes
+
+ * Update sagemaker-training version >=5.0.0
+
 ## v2.9.0 (2025-06-04)
 
 ### Features
