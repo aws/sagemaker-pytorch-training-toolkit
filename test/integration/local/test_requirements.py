@@ -23,9 +23,9 @@ def test_requirements_file(image_uri, instance_type, sagemaker_local_session, tm
         entry_point=requirements_script,
         source_dir=requirements_dir,
         role=ROLE,
-        image_name=image_uri,
-        train_instance_count=1,
-        train_instance_type=instance_type,
+        image_uri=image_uri,
+        instance_count=1,
+        instance_type=instance_type,
         sagemaker_session=sagemaker_local_session,
         output_path='file://{}'.format(tmpdir)
     )

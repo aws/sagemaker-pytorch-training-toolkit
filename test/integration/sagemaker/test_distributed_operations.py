@@ -18,6 +18,7 @@ import boto3
 import pytest
 from sagemaker import utils
 from sagemaker.pytorch import PyTorch
+from sagemaker.local import LocalSession
 from six.moves.urllib.parse import urlparse
 
 from integration import data_dir, dist_operations_path, mnist_script, DEFAULT_TIMEOUT
@@ -31,6 +32,8 @@ MULTI_GPU_INSTANCE = 'ml.p3.8xlarge'
 @pytest.mark.skip_test_in_region
 def test_dist_operations_cpu(sagemaker_session, image_uri, instance_type, dist_cpu_backend):
     instance_type = instance_type or 'ml.c4.xlarge'
+    if "local" in instance_type:
+        sagemaker_session = LocalSession()
     _test_dist_operations(sagemaker_session, image_uri, instance_type, dist_cpu_backend)
 
 
@@ -38,6 +41,8 @@ def test_dist_operations_cpu(sagemaker_session, image_uri, instance_type, dist_c
 @pytest.mark.deploy_test
 def test_dist_operations_gpu(sagemaker_session, instance_type, image_uri, dist_gpu_backend):
     instance_type = instance_type or 'ml.p2.xlarge'
+    if "local" in instance_type:
+        sagemaker_session = LocalSession()
     _test_dist_operations(sagemaker_session, image_uri, instance_type, dist_gpu_backend)
 
 
@@ -52,9 +57,9 @@ def test_mnist_gpu(sagemaker_session, image_uri, dist_gpu_backend):
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=mnist_script,
                           role='SageMakerRole',
-                          train_instance_count=2,
-                          image_name=image_uri,
-                          train_instance_type=MULTI_GPU_INSTANCE,
+                          instance_count=2,
+                          image_uri=image_uri,
+                          instance_type=MULTI_GPU_INSTANCE,
                           sagemaker_session=sagemaker_session,
                           debugger_hook_config=False,
                           hyperparameters={'backend': dist_gpu_backend})
@@ -70,10 +75,10 @@ def _test_dist_operations(sagemaker_session, image_uri, instance_type, dist_back
     with timeout(minutes=DEFAULT_TIMEOUT):
         pytorch = PyTorch(entry_point=dist_operations_path,
                           role='SageMakerRole',
-                          train_instance_count=train_instance_count,
-                          train_instance_type=instance_type,
+                          instance_count=train_instance_count,
+                          instance_type=instance_type,
                           sagemaker_session=sagemaker_session,
-                          image_name=image_uri,
+                          image_uri=image_uri,
                           debugger_hook_config=False,
                           hyperparameters={'backend': dist_backend})
 

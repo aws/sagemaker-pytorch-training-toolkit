@@ -44,10 +44,10 @@ def test_horovod_simple(
     estimator = PyTorch(
         entry_point=os.path.join(resources_path, "horovod", "simple.py"),
         role="SageMakerRole",
-        train_instance_type=train_instance_type,
+        instance_type=train_instance_type,
         sagemaker_session=sagemaker_session,
-        train_instance_count=instances,
-        image_name=image_uri,
+        instance_count=instances,
+        image_uri=image_uri,
         output_path=output_path,
         framework_version=framework_version,
         hyperparameters={
@@ -100,10 +100,10 @@ def test_horovod_training(
     estimator = PyTorch(
         entry_point=os.path.join(resources_path, "horovod", "train.py"),
         role="SageMakerRole",
-        train_instance_type=train_instance_type,
+        instance_type=train_instance_type,
         sagemaker_session=sagemaker_session,
-        train_instance_count=instances,
-        image_name=image_uri,
+        instance_count=instances,
+        image_uri=image_uri,
         framework_version=framework_version,
         hyperparameters={
             "sagemaker_mpi_enabled": True,
